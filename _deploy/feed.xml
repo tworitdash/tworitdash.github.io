@@ -1,0 +1,1284 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Twor Bot</title>
+    <description>The more Persnickety, The more Hippy.
+</description>
+    <link>http://tworitdash.in/</link>
+    <atom:link href="http://tworitdash.in/feed.xml" rel="self" type="application/rss+xml"/>
+    <pubDate>Sat, 01 Sep 2018 14:43:36 +0200</pubDate>
+    <lastBuildDate>Sat, 01 Sep 2018 14:43:36 +0200</lastBuildDate>
+    <generator>Jekyll v3.0.5</generator>
+    
+      <item>
+        <title>IoT with phoenix part 3</title>
+        <description>&lt;p&gt;This is the last part in the series.&lt;/p&gt;
+
+&lt;p&gt;In the previous blog post, the browser client was getting messages from the elixir interpreter inside the project directory using the &lt;code&gt;Endpoint.broadcast&lt;/code&gt; method. Now, for monitoring sensor outputs, we have to send and receive data from sensors, we need to remotely configure a client. I am using a raspberry pi with python GPIO module to interface the sensors. So, we are going to accomplish the following tasks in this part 3.&lt;/p&gt;
+
+&lt;ol&gt;
+&lt;li&gt;Join the phoenix channel and send a random value form a python client using websockets.&lt;/li&gt;
+&lt;li&gt;Sending data from the serialport. (Sensors)&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;p&gt;The Phoenix channel API is damn easy to understand. It has &lt;code&gt;phx_join&lt;/code&gt; event is for joining a channel, &lt;code&gt;phx_reply&lt;/code&gt; for a reply after join. Following the previous blog, we have a event called sensor&lt;em&gt;output with a topic `users:user&lt;/em&gt;token` (user_token is the token generated for a user). So, the following python code is capable of joining the channel topic and sending a sample random value.&lt;/p&gt;
+&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-python&quot; data-lang=&quot;python&quot;&gt;    &lt;span class=&quot;kn&quot;&gt;import&lt;/span&gt; &lt;span class=&quot;nn&quot;&gt;asyncio&lt;/span&gt;
+    &lt;span class=&quot;kn&quot;&gt;import&lt;/span&gt; &lt;span class=&quot;nn&quot;&gt;websockets&lt;/span&gt;
+    &lt;span class=&quot;kn&quot;&gt;import&lt;/span&gt; &lt;span class=&quot;nn&quot;&gt;json&lt;/span&gt;
+    &lt;span class=&quot;kn&quot;&gt;import&lt;/span&gt; &lt;span class=&quot;nn&quot;&gt;time&lt;/span&gt;
+    &lt;span class=&quot;kn&quot;&gt;from&lt;/span&gt; &lt;span class=&quot;nn&quot;&gt;random&lt;/span&gt; &lt;span class=&quot;kn&quot;&gt;import&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;randint&lt;/span&gt;
+
+    &lt;span class=&quot;n&quot;&gt;async&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;def&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;hello&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;():&lt;/span&gt;
+        &lt;span class=&quot;n&quot;&gt;async&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;with&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;websockets&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;connect&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&#39;ws://127.0.0.1:4000/socket/websocket&#39;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;as&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;websocket&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt;
+            &lt;span class=&quot;n&quot;&gt;data&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;nb&quot;&gt;dict&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;topic&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;users:your_user_token&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;event&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;phx_join&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;payload&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;{},&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;ref&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;1&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+
+            &lt;span class=&quot;c&quot;&gt;#data is a dictionary containing necessary info for a join request to the topic.&lt;/span&gt;
+
+            &lt;span class=&quot;n&quot;&gt;await&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;websocket&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;send&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;json&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;dumps&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;data&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;))&lt;/span&gt;
+            &lt;span class=&quot;k&quot;&gt;print&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;joined&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+
+            &lt;span class=&quot;k&quot;&gt;print&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;Joined&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;c&quot;&gt;#joined the topic user:user_token&lt;/span&gt;
+            &lt;span class=&quot;k&quot;&gt;while&lt;/span&gt; &lt;span class=&quot;bp&quot;&gt;True&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt;
+                &lt;span class=&quot;n&quot;&gt;msg&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;await&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;retrieve&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;()&lt;/span&gt; &lt;span class=&quot;c&quot;&gt;#waiting for retrieve function to return a value&lt;/span&gt;
+
+                &lt;span class=&quot;n&quot;&gt;await&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;websocket&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;send&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;json&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;dumps&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;msg&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;))&lt;/span&gt;
+                &lt;span class=&quot;c&quot;&gt;#sending the message to the phoenix channel&lt;/span&gt;
+
+                &lt;span class=&quot;n&quot;&gt;call&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;await&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;websocket&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;recv&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;()&lt;/span&gt; &lt;span class=&quot;c&quot;&gt;#constantly receiving data from the channel&lt;/span&gt;
+                &lt;span class=&quot;n&quot;&gt;control&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;json&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;loads&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;call&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;c&quot;&gt;#converting to json&lt;/span&gt;
+                &lt;span class=&quot;k&quot;&gt;print&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;control&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+
+                &lt;span class=&quot;n&quot;&gt;time&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;sleep&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;mf&quot;&gt;0.5&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;c&quot;&gt;#0.5 second delay&lt;/span&gt;
+
+        &lt;span class=&quot;n&quot;&gt;async&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;def&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;retrieve&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;():&lt;/span&gt;
+
+          &lt;span class=&quot;n&quot;&gt;msg&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;nb&quot;&gt;dict&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;topic&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;users:your_user_token&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;event&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;sensor_output&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;payload&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;load&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;1000&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&quot;pf&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt;&lt;span class=&quot;nb&quot;&gt;str&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;randint&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;0&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;100&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)),&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&quot;thd&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;120&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&quot;reading&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;1800&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;},&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;ref&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;bp&quot;&gt;None&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+
+          &lt;span class=&quot;c&quot;&gt;#message dictionary containing necessary info for sending the data to the channel&lt;/span&gt;
+          &lt;span class=&quot;n&quot;&gt;time&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;sleep&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;mf&quot;&gt;0.5&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+          &lt;span class=&quot;k&quot;&gt;return&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;msg&lt;/span&gt;
+
+
+    &lt;span class=&quot;n&quot;&gt;asyncio&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;get_event_loop&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;()&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;run_until_complete&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;hello&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;())&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;asyncio&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;get_event_loop&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;()&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;run_forever&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;()&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;This is a piece of asynchronous code written in python, in which it joins the phoenix channel and waits until data comes form another function and sends it to the phoenix server.&lt;/p&gt;
+
+&lt;p&gt;Now if we run this script, we can see the data updated in the webpage from time to time with random values.&lt;/p&gt;
+
+&lt;p&gt;Now, there was a outward message from the channel too through the &lt;code&gt;control&lt;/code&gt; event. We can keep track of that too (The button click events of blog post 2) just by comparing the &lt;code&gt;event&lt;/code&gt; key of the json string &lt;code&gt;control&lt;/code&gt;. If the event name is &lt;code&gt;control&lt;/code&gt;, we can make use of that too.&lt;/p&gt;
+&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-python&quot; data-lang=&quot;python&quot;&gt;    &lt;span class=&quot;kn&quot;&gt;import&lt;/span&gt; &lt;span class=&quot;nn&quot;&gt;asyncio&lt;/span&gt;
+    &lt;span class=&quot;kn&quot;&gt;import&lt;/span&gt; &lt;span class=&quot;nn&quot;&gt;websockets&lt;/span&gt;
+    &lt;span class=&quot;kn&quot;&gt;import&lt;/span&gt; &lt;span class=&quot;nn&quot;&gt;json&lt;/span&gt;
+    &lt;span class=&quot;kn&quot;&gt;import&lt;/span&gt; &lt;span class=&quot;nn&quot;&gt;time&lt;/span&gt;
+    &lt;span class=&quot;kn&quot;&gt;from&lt;/span&gt; &lt;span class=&quot;nn&quot;&gt;random&lt;/span&gt; &lt;span class=&quot;kn&quot;&gt;import&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;randint&lt;/span&gt;
+
+    &lt;span class=&quot;n&quot;&gt;async&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;def&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;hello&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;():&lt;/span&gt;
+        &lt;span class=&quot;n&quot;&gt;async&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;with&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;websockets&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;connect&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&#39;ws://127.0.0.1:4000/socket/websocket&#39;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;as&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;websocket&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt;
+            &lt;span class=&quot;n&quot;&gt;data&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;nb&quot;&gt;dict&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;topic&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;users:your_user_token&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;event&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;phx_join&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;payload&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;{},&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;ref&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;1&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+
+            &lt;span class=&quot;c&quot;&gt;#data is a dictionary containing necessary info for a join request to the topic.&lt;/span&gt;
+
+            &lt;span class=&quot;n&quot;&gt;await&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;websocket&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;send&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;json&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;dumps&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;data&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;))&lt;/span&gt;
+            &lt;span class=&quot;k&quot;&gt;print&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;joined&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+
+            &lt;span class=&quot;k&quot;&gt;print&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;Joined&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;c&quot;&gt;#joined the topic user:user_token&lt;/span&gt;
+            &lt;span class=&quot;k&quot;&gt;while&lt;/span&gt; &lt;span class=&quot;bp&quot;&gt;True&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt;
+                &lt;span class=&quot;n&quot;&gt;msg&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;await&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;retrieve&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;()&lt;/span&gt; &lt;span class=&quot;c&quot;&gt;#waiting for retrieve function to return a value&lt;/span&gt;
+
+                &lt;span class=&quot;n&quot;&gt;await&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;websocket&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;send&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;json&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;dumps&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;msg&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;))&lt;/span&gt;
+                &lt;span class=&quot;k&quot;&gt;print&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;sent {}&quot;&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;format&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;msg&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;))&lt;/span&gt;
+                &lt;span class=&quot;c&quot;&gt;#sending the message to the phoenix channel&lt;/span&gt;
+
+                &lt;span class=&quot;n&quot;&gt;call&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;await&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;websocket&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;recv&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;()&lt;/span&gt; &lt;span class=&quot;c&quot;&gt;#constantly receiving data from the channel&lt;/span&gt;
+                &lt;span class=&quot;n&quot;&gt;control&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;json&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;loads&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;call&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;c&quot;&gt;#converting to json&lt;/span&gt;
+
+                &lt;span class=&quot;k&quot;&gt;if&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;control&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;[&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&#39;event&#39;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;]&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;==&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&#39;control&#39;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;):&lt;/span&gt;
+                    &lt;span class=&quot;k&quot;&gt;print&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;control&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;[&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&#39;payload&#39;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;][&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&#39;value&#39;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;])&lt;/span&gt;
+
+                &lt;span class=&quot;n&quot;&gt;time&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;sleep&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;mf&quot;&gt;0.5&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;c&quot;&gt;#0.5 second delay&lt;/span&gt;
+
+    &lt;span class=&quot;n&quot;&gt;async&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;def&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;retrieve&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;():&lt;/span&gt;
+
+        &lt;span class=&quot;n&quot;&gt;msg&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;nb&quot;&gt;dict&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;topic&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;users:your_user_token&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;event&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;sensor_output&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;payload&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;load&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;1000&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&quot;pf&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt;&lt;span class=&quot;nb&quot;&gt;str&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;randint&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;0&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;100&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)),&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&quot;thd&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;120&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&quot;reading&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;1800&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;},&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;ref&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;bp&quot;&gt;None&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+
+        &lt;span class=&quot;c&quot;&gt;#message dictionary containing necessary info for sending the data to the channel&lt;/span&gt;
+        &lt;span class=&quot;n&quot;&gt;time&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;sleep&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;mf&quot;&gt;0.5&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+        &lt;span class=&quot;k&quot;&gt;return&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;msg&lt;/span&gt;
+
+
+    &lt;span class=&quot;n&quot;&gt;asyncio&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;get_event_loop&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;()&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;run_until_complete&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;hello&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;())&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;asyncio&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;get_event_loop&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;()&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;run_forever&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;()&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;This script prints the &lt;code&gt;payload&lt;/code&gt; value if the event name is &lt;code&gt;control&lt;/code&gt;. That is when there is a button click event, it will print &lt;code&gt;on&lt;/code&gt; or &lt;code&gt;off&lt;/code&gt; depending on the buttons.&lt;/p&gt;
+
+&lt;p&gt;Now, let’s write some code where we can get data from the serialport. All you need is the &lt;code&gt;pyserial&lt;/code&gt; library and receiving some data from there like the following.&lt;/p&gt;
+&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-python&quot; data-lang=&quot;python&quot;&gt;    &lt;span class=&quot;kn&quot;&gt;import&lt;/span&gt; &lt;span class=&quot;nn&quot;&gt;serial&lt;/span&gt;
+
+    &lt;span class=&quot;n&quot;&gt;ser&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;c&quot;&gt;#ser =serial.Serial(&quot;/dev/ttyAMA0&quot;, 9600, timeout=1)&lt;/span&gt;
+
+    &lt;span class=&quot;c&quot;&gt;#rest of the code&lt;/span&gt;
+
+    &lt;span class=&quot;n&quot;&gt;async&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;def&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;retrieve&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;()&lt;/span&gt;
+
+        &lt;span class=&quot;n&quot;&gt;data&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;ser&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;readline&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;()&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;decode&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;()&lt;/span&gt;
+        &lt;span class=&quot;n&quot;&gt;msg&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;nb&quot;&gt;dict&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;topic&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;users:your_user_token&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;event&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;sensor_output&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;payload&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;load&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;1000&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&quot;pf&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt;&lt;span class=&quot;nb&quot;&gt;str&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;randint&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;0&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;100&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)),&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&quot;thd&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;data&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&quot;reading&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;1800&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;},&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;ref&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;bp&quot;&gt;None&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+
+        &lt;span class=&quot;k&quot;&gt;return&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;msg&lt;/span&gt;
+        &lt;span class=&quot;c&quot;&gt;#rest of the code&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;Here the data will be received from the serialport and will be updated at &lt;code&gt;thd&lt;/code&gt; on the webpage.&lt;/p&gt;
+
+&lt;p&gt;There are several other examples I have written, by using those in raspberry pi, we can send and receive data from the websocket phoenix server. Examples include some &lt;code&gt;arduino firmata&lt;/code&gt; codes too.&lt;/p&gt;
+
+&lt;p&gt;Python clients are here.&lt;/p&gt;
+
+&lt;p&gt;P.S. I have moved to another city for my first ever job. This is my first blog post from Bangalore city. Happy Hacking ! :D :)&lt;/p&gt;
+</description>
+        <pubDate>Fri, 02 Sep 2016 09:58:35 +0200</pubDate>
+        <link>http://tworitdash.in/2016/09/02/iot-with-phoenix-part-3.html</link>
+        <guid isPermaLink="true">http://tworitdash.in/2016/09/02/iot-with-phoenix-part-3.html</guid>
+        
+        
+      </item>
+    
+      <item>
+        <title>iot with phoenix part 2</title>
+        <description>&lt;p&gt;In part 1, I have demonstrated how to create MVC based user authentication and a plug for the same with Phoenix. Now, in this tutorial we will see how to display some data using websockets. Websocket connections are consistent. So, for displaying the real time data from the machine, we need to use the channel feature of phoenix, where we can update the data on the page in real time. &lt;/p&gt;
+
+&lt;ol&gt;
+&lt;li&gt;&lt;p&gt;The channel should be user specific. Users can view their own sensor outputs of the machines that they have privately. &lt;/p&gt;&lt;/li&gt;
+&lt;li&gt;&lt;p&gt;There should be a reverse communication from users to machines. With this, users can be able to switch on or off the machine along with some other things like controlling speed, displaying something on a LCD screen and so on. &lt;/p&gt;&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;p&gt;So, let&amp;#39;s create a channel for the users. We will make use of something that will let us make the users&amp;#39; communication private with their machines. &lt;/p&gt;
+&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-&quot; data-lang=&quot;&quot;&gt;$mix phoenix.gen.channel User
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;It will create a file called &lt;code&gt;user_channel.ex&lt;/code&gt; in &lt;code&gt;web/channles/&lt;/code&gt; directory. It contains the following, &lt;/p&gt;
+&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-ruby&quot; data-lang=&quot;ruby&quot;&gt;    &lt;span class=&quot;n&quot;&gt;defmodule&lt;/span&gt; &lt;span class=&quot;no&quot;&gt;Iot&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;no&quot;&gt;UserChannel&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;do&lt;/span&gt;
+      &lt;span class=&quot;n&quot;&gt;use&lt;/span&gt; &lt;span class=&quot;no&quot;&gt;Iot&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;no&quot;&gt;Web&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;ss&quot;&gt;:channel&lt;/span&gt;
+
+      &lt;span class=&quot;k&quot;&gt;def&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;join&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&quot;user:lobby&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;payload&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;socket&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;do&lt;/span&gt;
+        &lt;span class=&quot;k&quot;&gt;if&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;authorized?&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;payload&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;do&lt;/span&gt;
+          &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;&lt;span class=&quot;ss&quot;&gt;:ok&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;socket&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+        &lt;span class=&quot;k&quot;&gt;else&lt;/span&gt;
+          &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;&lt;span class=&quot;ss&quot;&gt;:error&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;sx&quot;&gt;%{reason: &quot;unauthorized&quot;}&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+        &lt;span class=&quot;k&quot;&gt;end&lt;/span&gt;
+      &lt;span class=&quot;k&quot;&gt;end&lt;/span&gt;
+
+      &lt;span class=&quot;c1&quot;&gt;# Channels can be used in a request/response fashion&lt;/span&gt;
+      &lt;span class=&quot;c1&quot;&gt;# by sending replies to requests from the client&lt;/span&gt;
+      &lt;span class=&quot;k&quot;&gt;def&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;handle_in&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&quot;ping&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;payload&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;socket&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;do&lt;/span&gt;
+        &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;&lt;span class=&quot;ss&quot;&gt;:reply&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;&lt;span class=&quot;ss&quot;&gt;:ok&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;payload&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;},&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;socket&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+      &lt;span class=&quot;k&quot;&gt;end&lt;/span&gt;
+
+      &lt;span class=&quot;c1&quot;&gt;# It is also common to receive messages from the client and&lt;/span&gt;
+      &lt;span class=&quot;c1&quot;&gt;# broadcast to everyone in the current topic (user:lobby).&lt;/span&gt;
+      &lt;span class=&quot;k&quot;&gt;def&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;handle_in&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&quot;shout&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;payload&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;socket&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;do&lt;/span&gt;
+        &lt;span class=&quot;n&quot;&gt;broadcast&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;socket&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&quot;shout&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;payload&lt;/span&gt;
+        &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;&lt;span class=&quot;ss&quot;&gt;:noreply&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;socket&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+      &lt;span class=&quot;k&quot;&gt;end&lt;/span&gt;
+
+      &lt;span class=&quot;c1&quot;&gt;# Add authorization logic here as required.&lt;/span&gt;
+      &lt;span class=&quot;n&quot;&gt;defp&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;authorized?&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;_payload&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;do&lt;/span&gt;
+        &lt;span class=&quot;kp&quot;&gt;true&lt;/span&gt;
+      &lt;span class=&quot;k&quot;&gt;end&lt;/span&gt;
+    &lt;span class=&quot;k&quot;&gt;end&lt;/span&gt;
+
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;The join method has a argument &lt;code&gt;user:lobby&lt;/code&gt; by default. It is called the &lt;code&gt;topic:subtopic&lt;/code&gt; pair. The topic here is &lt;code&gt;user&lt;/code&gt; and the subtopic is &lt;code&gt;lobbby&lt;/code&gt;. The &lt;code&gt;handle_in&lt;/code&gt; method has the first argument as &lt;code&gt;ping&lt;/code&gt; or &lt;code&gt;shout&lt;/code&gt;. Those are called events. Once a user is joined to the subtopic, the  &lt;code&gt;handle_in&lt;/code&gt; methods can show what messages are coming to that subtopic through an event and that &lt;code&gt;handle_in&lt;/code&gt; method can also broadcast a message upon arrival through an event. Other subscribers (who have joined to that same subtopic) can get the message through that event.&lt;/p&gt;
+
+&lt;p&gt;Making an analogy with our required task, we need to make the subtopic unique for each user. Then we need to create 2 events. One for displaying stuff on a webpage through an event broadcast (broadcasting to a particular event), the other is to broadcast the reverse message from the user to control stuff at the machine. Let&amp;#39;s name those 2 events as &lt;code&gt;sensor_output&lt;/code&gt; and &lt;code&gt;control&lt;/code&gt;. So, our version of &lt;code&gt;user_channel.ex&lt;/code&gt; is given below.&lt;/p&gt;
+&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-ruby&quot; data-lang=&quot;ruby&quot;&gt;    &lt;span class=&quot;n&quot;&gt;defmodule&lt;/span&gt; &lt;span class=&quot;no&quot;&gt;Iot&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;no&quot;&gt;UserChannel&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;do&lt;/span&gt;
+      &lt;span class=&quot;n&quot;&gt;use&lt;/span&gt; &lt;span class=&quot;no&quot;&gt;Iot&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;no&quot;&gt;Web&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;ss&quot;&gt;:channel&lt;/span&gt;
+
+      &lt;span class=&quot;k&quot;&gt;def&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;join&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&quot;users:&quot;&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;&amp;lt;&amp;gt;&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;user_token&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;payload&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;socket&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;do&lt;/span&gt;
+        &lt;span class=&quot;k&quot;&gt;if&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;authorized?&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;payload&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;do&lt;/span&gt;
+          &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;&lt;span class=&quot;ss&quot;&gt;:ok&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&quot;Joined To User:&lt;/span&gt;&lt;span class=&quot;si&quot;&gt;#{&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;user_token&lt;/span&gt;&lt;span class=&quot;si&quot;&gt;}&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;socket&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+        &lt;span class=&quot;k&quot;&gt;else&lt;/span&gt;
+          &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;&lt;span class=&quot;ss&quot;&gt;:error&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;sx&quot;&gt;%{reason: &quot;unauthorized&quot;}&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+        &lt;span class=&quot;k&quot;&gt;end&lt;/span&gt;
+      &lt;span class=&quot;k&quot;&gt;end&lt;/span&gt;
+
+      &lt;span class=&quot;c1&quot;&gt;# Channels can be used in a request/response fashion&lt;/span&gt;
+      &lt;span class=&quot;c1&quot;&gt;# by sending replies to requests from the client&lt;/span&gt;
+
+
+      &lt;span class=&quot;k&quot;&gt;def&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;handle_in&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&quot;control&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;payload&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;socket&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;do&lt;/span&gt;
+        &lt;span class=&quot;n&quot;&gt;broadcast&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;socket&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&quot;control&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;payload&lt;/span&gt;
+        &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;&lt;span class=&quot;ss&quot;&gt;:noreply&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;socket&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+      &lt;span class=&quot;k&quot;&gt;end&lt;/span&gt;
+
+      &lt;span class=&quot;k&quot;&gt;def&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;handle_in&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&quot;sensor_output&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;payload&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;socket&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;do&lt;/span&gt;
+        &lt;span class=&quot;n&quot;&gt;broadcast&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;socket&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&quot;sensor_output&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;payload&lt;/span&gt;
+        &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;&lt;span class=&quot;ss&quot;&gt;:noreply&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;socket&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+      &lt;span class=&quot;k&quot;&gt;end&lt;/span&gt;
+
+      &lt;span class=&quot;c1&quot;&gt;# Add authorization logic here as required.&lt;/span&gt;
+      &lt;span class=&quot;n&quot;&gt;defp&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;authorized?&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;_payload&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;do&lt;/span&gt;
+        &lt;span class=&quot;kp&quot;&gt;true&lt;/span&gt;
+      &lt;span class=&quot;k&quot;&gt;end&lt;/span&gt;
+    &lt;span class=&quot;k&quot;&gt;end&lt;/span&gt;
+
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;Now, from the above &lt;code&gt;user_channel&lt;/code&gt;, it&amp;#39;s clear what the two &lt;code&gt;handle_in&lt;/code&gt; methods do on arrival of a new message. They just broadcast it to the respective events. But the join event has the subtopic to be added to the topic &lt;code&gt;users&lt;/code&gt;. The subtopic we are using is the &lt;code&gt;user_token&lt;/code&gt; that is saved as a string in the &lt;code&gt;Users&lt;/code&gt; table whenever a user registers in the application. It has been written in the &lt;code&gt;Password&lt;/code&gt; library, refer to the previous blog post. Now, we have to tell our &lt;code&gt;socket&lt;/code&gt; file to enable the &lt;code&gt;users&lt;/code&gt; topic with a wild card subtopic. Add the following line.&lt;/p&gt;
+&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-ruby&quot; data-lang=&quot;ruby&quot;&gt;    &lt;span class=&quot;c1&quot;&gt;#web/channes/user_socket.ex&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;channel&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&quot;users:*&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;no&quot;&gt;Iot&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;no&quot;&gt;UserChannel&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;All set with the background process handlers. Now, let&amp;#39;s move to the front-end. We need a webpage to show all the messages that comes through &lt;code&gt;sensor_output&lt;/code&gt; event. Before that, the webpage has to be joined with the &lt;code&gt;users:user_token&lt;/code&gt; topic:subtopic. The front-end we will automate with some JS code. Before that, the JS code should have the knowledge of the &lt;code&gt;user_token&lt;/code&gt;, otherwise it can&amp;#39;t be able to join the topic. A plain JS code can&amp;#39;t invoke the &lt;code&gt;user_token&lt;/code&gt; from the database directly. So, we need to take that &lt;code&gt;user_token&lt;/code&gt; from that very template where we want to show the content. The question is, where shall the template render the &lt;code&gt;user_token&lt;/code&gt; from ? The answer is pretty simple. From the controller it has been associated with. Voila ! now we have figured out what to do. So, let&amp;#39;s make a model called &lt;code&gt;energy_meter&lt;/code&gt;. The model wil be used later. For now, we will use a template only. We are not doing anything with the model now. It&amp;#39;s just for a future use. &lt;/p&gt;
+&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-&quot; data-lang=&quot;&quot;&gt;$mix phoenix.gen.model EnergyMeter energy_meters name:string pf:integer reading:integer thd:integer load:integer
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;Then let&amp;#39;s change the template under the folder &lt;code&gt;energy_meter&lt;/code&gt; inside the templates folder. The controller is given below.&lt;/p&gt;
+&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-ruby&quot; data-lang=&quot;ruby&quot;&gt;    &lt;span class=&quot;c1&quot;&gt;#web/controller/energy_meter_controller.ex&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;defmodule&lt;/span&gt; &lt;span class=&quot;no&quot;&gt;Iot&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;no&quot;&gt;EnergyMeterController&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;do&lt;/span&gt;
+      &lt;span class=&quot;n&quot;&gt;use&lt;/span&gt; &lt;span class=&quot;no&quot;&gt;Iot&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;no&quot;&gt;Web&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;ss&quot;&gt;:controller&lt;/span&gt;
+
+      &lt;span class=&quot;n&quot;&gt;plug&lt;/span&gt; &lt;span class=&quot;no&quot;&gt;Iot&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;no&quot;&gt;Plug&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;no&quot;&gt;Authenticate&lt;/span&gt;
+
+      &lt;span class=&quot;k&quot;&gt;def&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;index&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;conn&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;_params&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;do&lt;/span&gt;
+        &lt;span class=&quot;n&quot;&gt;current_user&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;get_session&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;conn&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;ss&quot;&gt;:current_user&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+        &lt;span class=&quot;n&quot;&gt;render&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;conn&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&quot;index.html&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;ss&quot;&gt;current_user: &lt;/span&gt;&lt;span class=&quot;n&quot;&gt;current_user&lt;/span&gt;
+      &lt;span class=&quot;k&quot;&gt;end&lt;/span&gt;
+    &lt;span class=&quot;k&quot;&gt;end&lt;/span&gt; 
+
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;The template is given below&lt;/p&gt;
+&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-html&quot; data-lang=&quot;html&quot;&gt;    #web/templates/energy_meter/index.html.eex
+    &lt;span class=&quot;nt&quot;&gt;&amp;lt;ul&lt;/span&gt; &lt;span class=&quot;na&quot;&gt;id=&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;em&quot;&lt;/span&gt; &lt;span class=&quot;na&quot;&gt;data-id=&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&amp;lt;%=&lt;/span&gt; &lt;span class=&quot;err&quot;&gt;@&lt;/span&gt;&lt;span class=&quot;na&quot;&gt;current_user&lt;/span&gt;&lt;span class=&quot;err&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;na&quot;&gt;token&lt;/span&gt; &lt;span class=&quot;err&quot;&gt;%&lt;/span&gt;&lt;span class=&quot;nt&quot;&gt;&amp;gt;&lt;/span&gt;&amp;gt;
+
+    &lt;span class=&quot;nt&quot;&gt;&amp;lt;/ul&amp;gt;&lt;/span&gt;
+    &lt;span class=&quot;nt&quot;&gt;&amp;lt;div&lt;/span&gt; &lt;span class=&quot;na&quot;&gt;class =&lt;/span&gt;&lt;span class=&quot;err&quot;&gt; &lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;container&quot;&lt;/span&gt;&lt;span class=&quot;nt&quot;&gt;&amp;gt;&lt;/span&gt;
+      &lt;span class=&quot;nt&quot;&gt;&amp;lt;div&lt;/span&gt; &lt;span class=&quot;na&quot;&gt;class =&lt;/span&gt;&lt;span class=&quot;err&quot;&gt; &lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;row&quot;&lt;/span&gt;&lt;span class=&quot;nt&quot;&gt;&amp;gt;&lt;/span&gt;
+
+        &lt;span class=&quot;nt&quot;&gt;&amp;lt;div&lt;/span&gt; &lt;span class=&quot;na&quot;&gt;class =&lt;/span&gt;&lt;span class=&quot;err&quot;&gt; &lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;span4&quot;&lt;/span&gt;&lt;span class=&quot;nt&quot;&gt;&amp;gt;&lt;/span&gt;
+          &lt;span class=&quot;nt&quot;&gt;&amp;lt;h4&amp;gt;&lt;/span&gt;Load&lt;span class=&quot;nt&quot;&gt;&amp;lt;/h4&amp;gt;&lt;/span&gt;
+          &lt;span class=&quot;nt&quot;&gt;&amp;lt;div&lt;/span&gt; &lt;span class=&quot;na&quot;&gt;id =&lt;/span&gt;&lt;span class=&quot;err&quot;&gt; &lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;load&quot;&lt;/span&gt;&lt;span class=&quot;nt&quot;&gt;&amp;gt;&lt;/span&gt;
+          &lt;span class=&quot;nt&quot;&gt;&amp;lt;/div&amp;gt;&lt;/span&gt;
+        &lt;span class=&quot;nt&quot;&gt;&amp;lt;/div&amp;gt;&lt;/span&gt;
+
+
+
+        &lt;span class=&quot;nt&quot;&gt;&amp;lt;div&lt;/span&gt; &lt;span class=&quot;na&quot;&gt;class =&lt;/span&gt;&lt;span class=&quot;err&quot;&gt; &lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;span4&quot;&lt;/span&gt;&lt;span class=&quot;nt&quot;&gt;&amp;gt;&lt;/span&gt;
+          &lt;span class=&quot;nt&quot;&gt;&amp;lt;h4&amp;gt;&lt;/span&gt;Power Factor&lt;span class=&quot;nt&quot;&gt;&amp;lt;/h4&amp;gt;&lt;/span&gt;
+          &lt;span class=&quot;nt&quot;&gt;&amp;lt;div&lt;/span&gt; &lt;span class=&quot;na&quot;&gt;id =&lt;/span&gt;&lt;span class=&quot;err&quot;&gt; &lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;pf&quot;&lt;/span&gt;&lt;span class=&quot;nt&quot;&gt;&amp;gt;&lt;/span&gt;
+          &lt;span class=&quot;nt&quot;&gt;&amp;lt;/div&amp;gt;&lt;/span&gt;
+        &lt;span class=&quot;nt&quot;&gt;&amp;lt;/div&amp;gt;&lt;/span&gt;
+
+
+
+        &lt;span class=&quot;nt&quot;&gt;&amp;lt;div&lt;/span&gt; &lt;span class=&quot;na&quot;&gt;class =&lt;/span&gt;&lt;span class=&quot;err&quot;&gt; &lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;span4&quot;&lt;/span&gt;&lt;span class=&quot;nt&quot;&gt;&amp;gt;&lt;/span&gt;
+          &lt;span class=&quot;nt&quot;&gt;&amp;lt;h4&amp;gt;&lt;/span&gt;THD&lt;span class=&quot;nt&quot;&gt;&amp;lt;/h4&amp;gt;&lt;/span&gt;
+          &lt;span class=&quot;nt&quot;&gt;&amp;lt;div&lt;/span&gt; &lt;span class=&quot;na&quot;&gt;id =&lt;/span&gt;&lt;span class=&quot;err&quot;&gt; &lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;thd&quot;&lt;/span&gt;&lt;span class=&quot;nt&quot;&gt;&amp;gt;&lt;/span&gt;
+          &lt;span class=&quot;nt&quot;&gt;&amp;lt;/div&amp;gt;&lt;/span&gt;
+        &lt;span class=&quot;nt&quot;&gt;&amp;lt;/div&amp;gt;&lt;/span&gt;
+
+
+
+        &lt;span class=&quot;nt&quot;&gt;&amp;lt;div&lt;/span&gt; &lt;span class=&quot;na&quot;&gt;class =&lt;/span&gt;&lt;span class=&quot;err&quot;&gt; &lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;span4&quot;&lt;/span&gt;&lt;span class=&quot;nt&quot;&gt;&amp;gt;&lt;/span&gt;
+          &lt;span class=&quot;nt&quot;&gt;&amp;lt;h4&amp;gt;&lt;/span&gt;Reading&lt;span class=&quot;nt&quot;&gt;&amp;lt;/h4&amp;gt;&lt;/span&gt;
+          &lt;span class=&quot;nt&quot;&gt;&amp;lt;div&lt;/span&gt; &lt;span class=&quot;na&quot;&gt;id =&lt;/span&gt;&lt;span class=&quot;err&quot;&gt; &lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;reading&quot;&lt;/span&gt;&lt;span class=&quot;nt&quot;&gt;&amp;gt;&lt;/span&gt;
+          &lt;span class=&quot;nt&quot;&gt;&amp;lt;/div&amp;gt;&lt;/span&gt;
+        &lt;span class=&quot;nt&quot;&gt;&amp;lt;/div&amp;gt;&lt;/span&gt;
+
+
+    &lt;span class=&quot;nt&quot;&gt;&amp;lt;/div&amp;gt;&lt;/span&gt;
+
+
+
+
+      &lt;span class=&quot;nt&quot;&gt;&amp;lt;div&lt;/span&gt; &lt;span class=&quot;na&quot;&gt;class =&lt;/span&gt;&lt;span class=&quot;err&quot;&gt; &lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;btn btn-primary&quot;&lt;/span&gt; &lt;span class=&quot;na&quot;&gt;id=&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;on&quot;&lt;/span&gt;&lt;span class=&quot;nt&quot;&gt;&amp;gt;&lt;/span&gt;ON&lt;span class=&quot;nt&quot;&gt;&amp;lt;/div&amp;gt;&lt;/span&gt;
+      &lt;span class=&quot;nt&quot;&gt;&amp;lt;div&lt;/span&gt; &lt;span class=&quot;na&quot;&gt;class =&lt;/span&gt;&lt;span class=&quot;err&quot;&gt; &lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;btn btn-primary&quot;&lt;/span&gt; &lt;span class=&quot;na&quot;&gt;id=&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;off&quot;&lt;/span&gt;&lt;span class=&quot;nt&quot;&gt;&amp;gt;&lt;/span&gt;OFF&lt;span class=&quot;nt&quot;&gt;&amp;lt;/div&amp;gt;&lt;/span&gt;
+      &lt;span class=&quot;err&quot;&gt;&amp;lt;&lt;/span&gt;%= link(&quot;Logout&quot;, to: session_path(@conn, :delete), class: &quot;btn btn-success pull-right&quot;) %&amp;gt;
+    &lt;span class=&quot;nt&quot;&gt;&amp;lt;/div&amp;gt;&lt;/span&gt;
+
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;In this way the &lt;code&gt;user_token&lt;/code&gt; has been retrieved on to the template. Form the &lt;code&gt;data-id&lt;/code&gt; of that division, we can take away that value to our JS files.&lt;/p&gt;
+
+&lt;p&gt;Now, the html part is done. Let&amp;#39;s write the JS parts to automate the process. Using jQuery is a better option here as far as ease of writing code is concerned. In the parent directory of the project a bower install will install jQuery libs for us.&lt;/p&gt;
+&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-&quot; data-lang=&quot;&quot;&gt;$bower install
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;Now, let&amp;#39;s create a &lt;code&gt;user.js&lt;/code&gt; file in &lt;code&gt;web/static/js&lt;/code&gt; folder. Before writing something, let&amp;#39;s comment  the default code for joining a &lt;code&gt;topic:subtopic&lt;/code&gt;in &lt;code&gt;socket.js&lt;/code&gt;&lt;/p&gt;
+&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-javascript&quot; data-lang=&quot;javascript&quot;&gt;    &lt;span class=&quot;c1&quot;&gt;//let channel = socket.channel(&quot;topic:subtopic&quot;, {})&lt;/span&gt;
+    &lt;span class=&quot;c1&quot;&gt;//channel.join()&lt;/span&gt;
+      &lt;span class=&quot;c1&quot;&gt;//.receive(&quot;ok&quot;, resp =&amp;gt; { console.log(&quot;Joined successfully&quot;, resp) })&lt;/span&gt;
+      &lt;span class=&quot;c1&quot;&gt;//.receive(&quot;error&quot;, resp =&amp;gt; { console.log(&quot;Unable to join&quot;, resp) })&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;Now, the content to write in the &lt;code&gt;user.js&lt;/code&gt; file is below. &lt;/p&gt;
+&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-javascript&quot; data-lang=&quot;javascript&quot;&gt;
+    &lt;span class=&quot;kr&quot;&gt;import&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;socket&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;from&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&quot;./socket&quot;&lt;/span&gt;
+
+    &lt;span class=&quot;nx&quot;&gt;$&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;kd&quot;&gt;function&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;()&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+      &lt;span class=&quot;kd&quot;&gt;let&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;ul&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;$&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&quot;ul#em&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+    &lt;span class=&quot;c1&quot;&gt;//let message = $(&quot;div#message&quot;) &lt;/span&gt;
+      &lt;span class=&quot;k&quot;&gt;if&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;ul&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;length&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+        &lt;span class=&quot;kd&quot;&gt;var&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;token&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;ul&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;data&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&quot;id&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+        &lt;span class=&quot;kd&quot;&gt;var&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;topic&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&quot;users:&quot;&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;+&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;token&lt;/span&gt;
+
+        &lt;span class=&quot;c1&quot;&gt;// Join the topic&lt;/span&gt;
+        &lt;span class=&quot;kd&quot;&gt;let&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;channel&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;socket&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;channel&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;topic&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{})&lt;/span&gt;
+        &lt;span class=&quot;nx&quot;&gt;channel&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;join&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;()&lt;/span&gt;
+          &lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;receive&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&quot;ok&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;data&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&amp;gt;&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+            &lt;span class=&quot;nx&quot;&gt;console&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;log&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&quot;Joined topic&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;topic&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+          &lt;span class=&quot;p&quot;&gt;})&lt;/span&gt;
+          &lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;receive&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&quot;error&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;resp&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&amp;gt;&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+            &lt;span class=&quot;nx&quot;&gt;console&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;log&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&quot;Unable to join topic&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;topic&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+          &lt;span class=&quot;p&quot;&gt;})&lt;/span&gt;
+
+
+                &lt;span class=&quot;nx&quot;&gt;$&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&quot;#on&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;).&lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;click&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;kd&quot;&gt;function&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(){&lt;/span&gt;
+                        &lt;span class=&quot;nx&quot;&gt;channel&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;push&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&quot;control&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;&lt;span class=&quot;na&quot;&gt;val&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&quot;on&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;});&lt;/span&gt;
+                &lt;span class=&quot;p&quot;&gt;})&lt;/span&gt;
+                &lt;span class=&quot;nx&quot;&gt;$&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&quot;#off&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;).&lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;click&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;kd&quot;&gt;function&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(){&lt;/span&gt;
+                        &lt;span class=&quot;nx&quot;&gt;channel&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;push&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&quot;control&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;&lt;span class=&quot;na&quot;&gt;val&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&quot;off&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;})&lt;/span&gt;
+                &lt;span class=&quot;p&quot;&gt;})&lt;/span&gt;
+
+                &lt;span class=&quot;nx&quot;&gt;channel&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;on&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&quot;control&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;data&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&amp;gt;&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+                        &lt;span class=&quot;nx&quot;&gt;console&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;log&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&quot;Recieved: &quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;data&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;val&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+                &lt;span class=&quot;p&quot;&gt;})&lt;/span&gt;
+                &lt;span class=&quot;nx&quot;&gt;channel&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;on&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&quot;sensor_output&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;data&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&amp;gt;&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+                    &lt;span class=&quot;nx&quot;&gt;$&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&quot;#load&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;).&lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;html&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;data&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;[&lt;/span&gt;&lt;span class=&quot;s1&quot;&gt;&#39;load&#39;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;]);&lt;/span&gt;
+                    &lt;span class=&quot;nx&quot;&gt;$&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&quot;#pf&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;).&lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;html&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;data&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;[&lt;/span&gt;&lt;span class=&quot;s1&quot;&gt;&#39;pf&#39;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;]);&lt;/span&gt;
+                    &lt;span class=&quot;nx&quot;&gt;$&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&quot;#thd&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;).&lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;html&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;data&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;[&lt;/span&gt;&lt;span class=&quot;s1&quot;&gt;&#39;thd&#39;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;]);&lt;/span&gt;
+                    &lt;span class=&quot;nx&quot;&gt;$&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&quot;#reading&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;).&lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;html&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;data&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;[&lt;/span&gt;&lt;span class=&quot;s1&quot;&gt;&#39;reading&#39;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;]);&lt;/span&gt;
+                &lt;span class=&quot;p&quot;&gt;})&lt;/span&gt;
+
+      &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;});&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;This code fetches the value of token from &lt;code&gt;u.data(&amp;quot;id&amp;quot;)&lt;/code&gt; from that html template. The topic variable is the concatenation of &lt;code&gt;users&lt;/code&gt; and the &lt;code&gt;token&lt;/code&gt;. Then the JS client joins the topic. On join, the &lt;code&gt;topic:subtopic&lt;/code&gt; is printed on to the console of that web page. Then, there are some event based automation is written. When the button with id &lt;code&gt;on&lt;/code&gt; is pressed there at the webpage, the data &lt;code&gt;val: &amp;quot;on&amp;quot;&lt;/code&gt; is sent via the &lt;code&gt;control&lt;/code&gt; event. And similarly for the &lt;code&gt;off&lt;/code&gt; button, the data is sent via &lt;code&gt;control&lt;/code&gt; event. Again here, the message is handled and printed on to the console with the following. &lt;/p&gt;
+&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-javascript&quot; data-lang=&quot;javascript&quot;&gt;    &lt;span class=&quot;nx&quot;&gt;channel&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;on&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&quot;control&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;data&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&amp;gt;&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+        &lt;span class=&quot;nx&quot;&gt;console&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;log&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&quot;Recieved: &quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;data&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;val&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;})&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;So, we can view on the console what the value has been sent from the &lt;code&gt;on&lt;/code&gt; and &lt;code&gt;off&lt;/code&gt; buttons. Then the next method in the file displays the &lt;code&gt;sensor_output&lt;/code&gt; data on to the page. Now, let&amp;#39;s add this file to the app JS file so that it can be added to all the templates.&lt;/p&gt;
+&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-javascript&quot; data-lang=&quot;javascript&quot;&gt;   &lt;span class=&quot;c1&quot;&gt;// web/static/js/app.js&lt;/span&gt;
+   &lt;span class=&quot;kr&quot;&gt;import&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;user&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;from&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&quot;./user&quot;&lt;/span&gt;
+
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;Now, the button press evens can be tested. Remember, that console messages  &lt;code&gt;on&lt;/code&gt; and &lt;code&gt;off&lt;/code&gt; can only be seen for a user if he/she is logged in. &lt;/p&gt;
+
+&lt;p&gt;For the &lt;code&gt;sensor_output&lt;/code&gt; event, let&amp;#39;s broadcast something over that event from the interpreter.&lt;/p&gt;
+&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-&quot; data-lang=&quot;&quot;&gt;$iex -S mix phoenix.server
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;Then using the &lt;code&gt;Endpoint.broadcast&lt;/code&gt; method we can broadcast a message over a event within a topic. &lt;/p&gt;
+&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-&quot; data-lang=&quot;&quot;&gt;iex(2)&amp;gt; Iot.Endpoint.broadcast(&quot;users:anVhbkBnbWFpbC5jb21qdWxpYTEyMw==&quot;, &quot;sensor_output&quot;, %{&quot;power_factor&quot; =&amp;gt; 23, &quot;load&quot; =&amp;gt; 1000, &quot;thd&quot; =&amp;gt; 4, &quot;reading&quot; =&amp;gt; 1800})
+:ok
+iex(3)&amp;gt; Iot.Endpoint.broadcast(&quot;users:anVhbkBnbWFpbC5jb21qdWxpYTEyMw==&quot;, &quot;sensor_output&quot;, %{&quot;power_factor&quot; =&amp;gt; 04, &quot;load&quot; =&amp;gt; 900, &quot;thd&quot; =&amp;gt; 2, &quot;reading&quot; =&amp;gt; 1900})
+:ok
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;As soon as you run, you can see the values updating automatically on the webpage. Similarly, for the &lt;code&gt;control&lt;/code&gt; event, just clicking the &lt;code&gt;on&lt;/code&gt; and &lt;code&gt;off&lt;/code&gt; buttons will do what we want. It will print the message on to the console. A demo screen recording of that is given below. My project name was tworit so I used &lt;code&gt;Tworit.Endpoint&lt;/code&gt;. Likewise, here, &lt;code&gt;Iot.Endpoint&lt;/code&gt; can be used.&lt;/p&gt;
+
+&lt;iframe src=&quot;https://player.vimeo.com/video/177943594&quot; width=&quot;640&quot; height=&quot;400&quot; frameborder=&quot;0&quot; webkitallowfullscreen mozallowfullscreen allowfullscreen&gt;&lt;/iframe&gt;
+
+&lt;p&gt;&lt;a href=&quot;https://vimeo.com/177943594&quot;&gt;phoenix_channels&lt;/a&gt; from &lt;a href=&quot;https://vimeo.com/user29276136&quot;&gt;Tworit&lt;/a&gt; on &lt;a href=&quot;https://vimeo.com&quot;&gt;Vimeo&lt;/a&gt;.&lt;/p&gt;
+
+&lt;p&gt;In the next part, we will do some python 3.5 asyncio. With the help of that, we can send data from a raspberry pi to the &lt;code&gt;sensor_output&lt;/code&gt; event. In addition to that, we can receive the &lt;code&gt;on&lt;/code&gt; and &lt;code&gt;off&lt;/code&gt; signals from the server to turn on and off our machine. &lt;/p&gt;
+</description>
+        <pubDate>Sun, 07 Aug 2016 17:53:42 +0200</pubDate>
+        <link>http://tworitdash.in/2016/08/07/iot-with-phoenix-part-2.html</link>
+        <guid isPermaLink="true">http://tworitdash.in/2016/08/07/iot-with-phoenix-part-2.html</guid>
+        
+        
+      </item>
+    
+      <item>
+        <title>IoT with Phoenix Part 1</title>
+        <description>&lt;p&gt;This is the first blog post that I am writing to share my experience with the Phoenix framework in building an Iot application. I have written a blog post about Elixir and Phoenix &lt;a href=&quot;https://blog.zairza.in/generators-make-the-whole-thing-look-sexy-2434154a8e0e#.riq5apurj&quot;&gt;here&lt;/a&gt;. The objectives that we are going to achieve in here are&lt;/p&gt;
+
+&lt;ol&gt;
+&lt;li&gt;&lt;p&gt;A &amp;#39;Model View Controller&amp;#39; scheme for the users. So that the users can register themselves in the application and have a login access to monitor as well as control their machines. &lt;/p&gt;&lt;/li&gt;
+&lt;li&gt;&lt;p&gt;A messaging interface between the machine and the user so that the application can be pretty much asynchronous and fast. This will accomplish the goal of an user specific Iot architecture, where a user can control and monitor only his/her machines, not others. There is no need of refreshing the pages to know the current state of the machines as we will be using websocket connections to make it a real time application, where the connection to the server never goes away. &lt;/p&gt;&lt;/li&gt;
+&lt;li&gt;&lt;p&gt;Writing machine clients. The clients which will help the machine send sensor outputs to the server.&lt;/p&gt;&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;p&gt;Phoenix is a framework written in Elixir programming language which runs on Erlang VM. The installation instructions for the framework is given &lt;a href=&quot;http://www.phoenixframework.org/docs/installation&quot;&gt;here&lt;/a&gt;. After successful installation, let&amp;#39;s start building the application. &lt;/p&gt;
+
+&lt;p&gt;To create our Iot project run the following in the terminal.&lt;/p&gt;
+&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-&quot; data-lang=&quot;&quot;&gt;$mix phoenix.new iot
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;Now, enter into the application. 
+Note: you must have postgres installed in your system for the database requirements. &lt;/p&gt;
+&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-&quot; data-lang=&quot;&quot;&gt;$cd iot
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;Now run the server or you can run the server within an interpreter too.&lt;/p&gt;
+&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-&quot; data-lang=&quot;&quot;&gt;$mix phoenix.server 
+
+or
+
+$iex -S mix phoenix.server 
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;Now we can view the application at http://localhost:4000/. Now let&amp;#39;s change the contents of some files to have the default page as the login page for users. To achieve that, we should have an users table in the database with the details of the users as attributes. For that, we have to generate a users model using the mix model generator. &lt;/p&gt;
+&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-&quot; data-lang=&quot;&quot;&gt;$mix phoenix.gen.model User user username:string encrypted_password:string email:string token:string 
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;It will create a file called &lt;code&gt;user.ex&lt;/code&gt; in the &lt;code&gt;web/models/&lt;/code&gt; directory. Now the users table has 4 attributes called the &lt;code&gt;username&lt;/code&gt;, &lt;code&gt;encrypted_password&lt;/code&gt;, &lt;code&gt;email&lt;/code&gt; and a &lt;code&gt;token&lt;/code&gt;. But, to register a user with a password for login purposes, we should have two virtual fields, the &lt;code&gt;password&lt;/code&gt; field and a &lt;code&gt;password_confirmation&lt;/code&gt; field. These are virtual attributes and they are never stored as attributes of the users table. The password after entered in the registration form is converted into a encrypted form and saved in the database as encrypted password. When the user logs in later, again that entered password is encrypted and matched with the encrypted password already saved in the database for that user. This process helps in a secured access by not storing the password anywhere during the login or register process. The user only knows his password, no one else knows, not even the admins of the application. :D &lt;/p&gt;
+
+&lt;p&gt;Now, let&amp;#39;s add those virtual fields and have some validations for the attributes in &lt;code&gt;user.ex&lt;/code&gt; file. &lt;/p&gt;
+&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-ruby&quot; data-lang=&quot;ruby&quot;&gt;    &lt;span class=&quot;n&quot;&gt;defmodule&lt;/span&gt; &lt;span class=&quot;no&quot;&gt;Iot&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;no&quot;&gt;User&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;do&lt;/span&gt;
+      &lt;span class=&quot;n&quot;&gt;use&lt;/span&gt; &lt;span class=&quot;no&quot;&gt;Iot&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;no&quot;&gt;Web&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;ss&quot;&gt;:model&lt;/span&gt;
+      &lt;span class=&quot;k&quot;&gt;alias&lt;/span&gt; &lt;span class=&quot;no&quot;&gt;Iot&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;no&quot;&gt;Repo&lt;/span&gt;
+
+      &lt;span class=&quot;n&quot;&gt;schema&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&quot;users&quot;&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;do&lt;/span&gt;
+        &lt;span class=&quot;n&quot;&gt;field&lt;/span&gt; &lt;span class=&quot;ss&quot;&gt;:username&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;ss&quot;&gt;:string&lt;/span&gt;
+        &lt;span class=&quot;n&quot;&gt;field&lt;/span&gt; &lt;span class=&quot;ss&quot;&gt;:email&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;ss&quot;&gt;:string&lt;/span&gt;
+        &lt;span class=&quot;n&quot;&gt;field&lt;/span&gt; &lt;span class=&quot;ss&quot;&gt;:encrypted_password&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;ss&quot;&gt;:string&lt;/span&gt;
+        &lt;span class=&quot;n&quot;&gt;field&lt;/span&gt; &lt;span class=&quot;ss&quot;&gt;:password&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;ss&quot;&gt;:string&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;ss&quot;&gt;virtual: &lt;/span&gt;&lt;span class=&quot;kp&quot;&gt;true&lt;/span&gt;
+        &lt;span class=&quot;n&quot;&gt;field&lt;/span&gt; &lt;span class=&quot;ss&quot;&gt;:password_confirmation&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;ss&quot;&gt;:string&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;ss&quot;&gt;virtual: &lt;/span&gt;&lt;span class=&quot;kp&quot;&gt;true&lt;/span&gt;
+        &lt;span class=&quot;n&quot;&gt;field&lt;/span&gt; &lt;span class=&quot;ss&quot;&gt;:token&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;ss&quot;&gt;:string&lt;/span&gt;
+        &lt;span class=&quot;n&quot;&gt;timestamps&lt;/span&gt;
+      &lt;span class=&quot;k&quot;&gt;end&lt;/span&gt;
+
+
+      &lt;span class=&quot;vi&quot;&gt;@required_fields&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;~&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;w&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;username&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;email&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;password&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;password_confirmation&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+      &lt;span class=&quot;vi&quot;&gt;@optional_fields&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;~&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;w&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;()&lt;/span&gt;
+
+      &lt;span class=&quot;vi&quot;&gt;@doc&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&quot;&quot;&quot;
+      Creates a changeset based on the `model` and `params`.
+
+      If no params are provided, an invalid changeset is returned
+      with no validation performed.
+      &quot;&quot;&quot;&lt;/span&gt;
+      &lt;span class=&quot;k&quot;&gt;def&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;changeset&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;model&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;params&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;\\&lt;/span&gt; &lt;span class=&quot;ss&quot;&gt;:empty&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;do&lt;/span&gt;
+        &lt;span class=&quot;n&quot;&gt;model&lt;/span&gt;
+        &lt;span class=&quot;o&quot;&gt;|&amp;gt;&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;cast&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;params&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;vi&quot;&gt;@required_fields&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;vi&quot;&gt;@optional_fields&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+        &lt;span class=&quot;o&quot;&gt;|&amp;gt;&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;unique_constraint&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;ss&quot;&gt;:username&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;ss&quot;&gt;on: &lt;/span&gt;&lt;span class=&quot;no&quot;&gt;Repo&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;ss&quot;&gt;downcase: &lt;/span&gt;&lt;span class=&quot;kp&quot;&gt;true&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+        &lt;span class=&quot;o&quot;&gt;|&amp;gt;&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;validate_length&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;ss&quot;&gt;:password&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;ss&quot;&gt;min: &lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;8&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+        &lt;span class=&quot;o&quot;&gt;|&amp;gt;&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;validate_length&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;ss&quot;&gt;:password_confirmation&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;ss&quot;&gt;min: &lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;8&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+        &lt;span class=&quot;o&quot;&gt;|&amp;gt;&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;validate_confirmation&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;ss&quot;&gt;:password&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+      &lt;span class=&quot;k&quot;&gt;end&lt;/span&gt;
+    &lt;span class=&quot;k&quot;&gt;end&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;Here, the required fields doesn&amp;#39;t include the &lt;code&gt;encrypted_password&lt;/code&gt;field and the reason is obvious. The &lt;code&gt;encrypted_password&lt;/code&gt; we are going to generate later. Now, to register the users, we should have a registration controller, a registration template of course with a form to be filled by the users, and a url like http://localhost:4000/registraion. So, let&amp;#39;s modify the &lt;code&gt;web/router.ex&lt;/code&gt; file. &lt;/p&gt;
+&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-ruby&quot; data-lang=&quot;ruby&quot;&gt;    &lt;span class=&quot;n&quot;&gt;defmodule&lt;/span&gt; &lt;span class=&quot;no&quot;&gt;Iot&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;no&quot;&gt;Router&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;do&lt;/span&gt;
+      &lt;span class=&quot;n&quot;&gt;use&lt;/span&gt; &lt;span class=&quot;no&quot;&gt;Iot&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;no&quot;&gt;Web&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;ss&quot;&gt;:router&lt;/span&gt;
+
+
+      &lt;span class=&quot;n&quot;&gt;pipeline&lt;/span&gt; &lt;span class=&quot;ss&quot;&gt;:browser&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;do&lt;/span&gt;
+        &lt;span class=&quot;n&quot;&gt;plug&lt;/span&gt; &lt;span class=&quot;ss&quot;&gt;:accepts&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;[&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&quot;html&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;]&lt;/span&gt;
+        &lt;span class=&quot;n&quot;&gt;plug&lt;/span&gt; &lt;span class=&quot;ss&quot;&gt;:fetch_session&lt;/span&gt;
+        &lt;span class=&quot;n&quot;&gt;plug&lt;/span&gt; &lt;span class=&quot;ss&quot;&gt;:fetch_flash&lt;/span&gt;
+        &lt;span class=&quot;n&quot;&gt;plug&lt;/span&gt; &lt;span class=&quot;ss&quot;&gt;:protect_from_forgery&lt;/span&gt;
+        &lt;span class=&quot;n&quot;&gt;plug&lt;/span&gt; &lt;span class=&quot;ss&quot;&gt;:put_secure_browser_headers&lt;/span&gt;
+      &lt;span class=&quot;k&quot;&gt;end&lt;/span&gt;
+
+      &lt;span class=&quot;n&quot;&gt;pipeline&lt;/span&gt; &lt;span class=&quot;ss&quot;&gt;:api&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;do&lt;/span&gt;
+        &lt;span class=&quot;n&quot;&gt;plug&lt;/span&gt; &lt;span class=&quot;ss&quot;&gt;:accepts&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;[&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&quot;json&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;]&lt;/span&gt;
+      &lt;span class=&quot;k&quot;&gt;end&lt;/span&gt;
+
+      &lt;span class=&quot;n&quot;&gt;scope&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&quot;/&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;no&quot;&gt;Iot&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;do&lt;/span&gt;
+        &lt;span class=&quot;n&quot;&gt;pipe_through&lt;/span&gt; &lt;span class=&quot;ss&quot;&gt;:browser&lt;/span&gt; &lt;span class=&quot;c1&quot;&gt;# Use the default browser stack&lt;/span&gt;
+        &lt;span class=&quot;n&quot;&gt;get&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&quot;/registration&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;no&quot;&gt;RegistrationController&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;ss&quot;&gt;:new&lt;/span&gt;
+        &lt;span class=&quot;n&quot;&gt;post&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&quot;/registration&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;no&quot;&gt;RegistrationController&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;ss&quot;&gt;:create&lt;/span&gt;
+        &lt;span class=&quot;n&quot;&gt;get&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&quot;/&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;no&quot;&gt;PageController&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;ss&quot;&gt;:index&lt;/span&gt;
+
+      &lt;span class=&quot;k&quot;&gt;end&lt;/span&gt;
+
+    &lt;span class=&quot;k&quot;&gt;end&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;Now we have added 2 routes, one to get the content (The user registration form) and the other is a post request for the same. Now we need to have a &lt;code&gt;registration_controller.ex&lt;/code&gt; file in the &lt;code&gt;web/controller&lt;/code&gt; directory, where we are going to write the &lt;code&gt;new&lt;/code&gt; and &lt;code&gt;create&lt;/code&gt; methods. &lt;/p&gt;
+&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-ruby&quot; data-lang=&quot;ruby&quot;&gt;    &lt;span class=&quot;n&quot;&gt;defmodule&lt;/span&gt; &lt;span class=&quot;no&quot;&gt;Iot&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;no&quot;&gt;RegistrationController&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;do&lt;/span&gt;
+      &lt;span class=&quot;n&quot;&gt;use&lt;/span&gt; &lt;span class=&quot;no&quot;&gt;Iot&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;no&quot;&gt;Web&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;ss&quot;&gt;:controller&lt;/span&gt;
+
+      &lt;span class=&quot;k&quot;&gt;alias&lt;/span&gt; &lt;span class=&quot;no&quot;&gt;Iot&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;no&quot;&gt;Password&lt;/span&gt;
+
+      &lt;span class=&quot;k&quot;&gt;def&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;new&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;conn&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;_params&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;do&lt;/span&gt;
+        &lt;span class=&quot;n&quot;&gt;changeset&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;no&quot;&gt;User&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;changeset&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;%&lt;/span&gt;&lt;span class=&quot;no&quot;&gt;User&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;{})&lt;/span&gt;
+        &lt;span class=&quot;n&quot;&gt;render&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;conn&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;ss&quot;&gt;changeset: &lt;/span&gt;&lt;span class=&quot;n&quot;&gt;changeset&lt;/span&gt;
+      &lt;span class=&quot;k&quot;&gt;end&lt;/span&gt;
+
+      &lt;span class=&quot;k&quot;&gt;def&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;create&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;conn&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;sx&quot;&gt;%{&quot;user&quot; =&amp;gt; user_params}&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;do&lt;/span&gt;
+        &lt;span class=&quot;n&quot;&gt;changeset&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;no&quot;&gt;User&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;changeset&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;%&lt;/span&gt;&lt;span class=&quot;no&quot;&gt;User&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;{},&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;user_params&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+        &lt;span class=&quot;k&quot;&gt;if&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;changeset&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;valid?&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;do&lt;/span&gt;
+          &lt;span class=&quot;n&quot;&gt;new_user&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;no&quot;&gt;Password&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;generate_password_and_store_user&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;changeset&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+          &lt;span class=&quot;n&quot;&gt;conn&lt;/span&gt;
+            &lt;span class=&quot;o&quot;&gt;|&amp;gt;&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;put_flash&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;ss&quot;&gt;:info&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&quot;You are Sucessfully Registered :P &quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+            &lt;span class=&quot;o&quot;&gt;|&amp;gt;&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;redirect&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;ss&quot;&gt;to: &lt;/span&gt;&lt;span class=&quot;n&quot;&gt;page_path&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;conn&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;ss&quot;&gt;:index&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;))&lt;/span&gt;
+        &lt;span class=&quot;k&quot;&gt;else&lt;/span&gt;
+          &lt;span class=&quot;n&quot;&gt;render&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;conn&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&quot;new.html&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;ss&quot;&gt;changeset: &lt;/span&gt;&lt;span class=&quot;n&quot;&gt;changeset&lt;/span&gt; 
+        &lt;span class=&quot;k&quot;&gt;end&lt;/span&gt;
+      &lt;span class=&quot;k&quot;&gt;end&lt;/span&gt;
+    &lt;span class=&quot;k&quot;&gt;end&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;Here in the new method, we are accepting the attributes of the user in the variable &lt;code&gt;changeset&lt;/code&gt;. The create method checks if those required fields fulfill the validations present in &lt;code&gt;web/models/user.ex&lt;/code&gt; by &lt;code&gt;changeset.valid?&lt;/code&gt; method and stores the user in the database and renders the page_index page. (The default page at http://localhost:4000/ ). If the &lt;code&gt;changeset.valid?&lt;/code&gt; is not fulfilled again the new registration page will open up. &lt;/p&gt;
+
+&lt;p&gt;The saving of the user in the database by creating the &lt;code&gt;encrypted_password&lt;/code&gt; is done here by the &lt;code&gt;Password&lt;/code&gt; library. Let&amp;#39;s write the password library with the &lt;code&gt;generate_password_and_store_user&lt;/code&gt; that we have just used in the registration controller and other methods. &lt;/p&gt;
+&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-ruby&quot; data-lang=&quot;ruby&quot;&gt;&lt;span class=&quot;c1&quot;&gt;#lib/Iot/password.ex&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;defmodule&lt;/span&gt; &lt;span class=&quot;no&quot;&gt;Iot&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;no&quot;&gt;Password&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;do&lt;/span&gt;
+        &lt;span class=&quot;k&quot;&gt;alias&lt;/span&gt; &lt;span class=&quot;no&quot;&gt;Iot&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;no&quot;&gt;Repo&lt;/span&gt;
+      &lt;span class=&quot;n&quot;&gt;import&lt;/span&gt; &lt;span class=&quot;no&quot;&gt;Ecto&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;no&quot;&gt;Changeset&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;ss&quot;&gt;only: &lt;/span&gt;&lt;span class=&quot;p&quot;&gt;[&lt;/span&gt;&lt;span class=&quot;ss&quot;&gt;put_change: &lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;3&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;]&lt;/span&gt;
+      &lt;span class=&quot;n&quot;&gt;import&lt;/span&gt; &lt;span class=&quot;no&quot;&gt;Comeonin&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;no&quot;&gt;Bcrypt&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;ss&quot;&gt;only: &lt;/span&gt;&lt;span class=&quot;p&quot;&gt;[&lt;/span&gt;&lt;span class=&quot;ss&quot;&gt;hashpwsalt: &lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;1&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;]&lt;/span&gt;
+
+
+      &lt;span class=&quot;k&quot;&gt;def&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;generate_password_and_token&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;changeset&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;do&lt;/span&gt;
+        &lt;span class=&quot;n&quot;&gt;to_be_encoded_string&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;no&quot;&gt;Enum&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;join&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;([&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;changeset&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;params&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;[&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&quot;email&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;],&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;changeset&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;params&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;[&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&quot;password&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;]])&lt;/span&gt;
+
+        &lt;span class=&quot;n&quot;&gt;token&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;no&quot;&gt;Base&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;encode64&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;to_be_encoded_string&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+        &lt;span class=&quot;n&quot;&gt;changeset&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;put_change&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;changeset&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;ss&quot;&gt;:token&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;token&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+
+        &lt;span class=&quot;n&quot;&gt;put_change&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;changeset&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;ss&quot;&gt;:encrypted_password&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;hashpwsalt&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;changeset&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;params&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;[&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&quot;password&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;]))&lt;/span&gt;
+      &lt;span class=&quot;k&quot;&gt;end&lt;/span&gt;
+
+
+      &lt;span class=&quot;k&quot;&gt;def&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;generate_password_and_store_user&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;changeset&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;do&lt;/span&gt;
+        &lt;span class=&quot;n&quot;&gt;changeset&lt;/span&gt;
+          &lt;span class=&quot;o&quot;&gt;|&amp;gt;&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;generate_password_and_token&lt;/span&gt;
+          &lt;span class=&quot;o&quot;&gt;|&amp;gt;&lt;/span&gt; &lt;span class=&quot;no&quot;&gt;Repo&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;insert&lt;/span&gt;
+      &lt;span class=&quot;k&quot;&gt;end&lt;/span&gt;
+    &lt;span class=&quot;k&quot;&gt;end&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;Here I have used &lt;code&gt;comeonin&lt;/code&gt; package to encrypt the password. You can get it by adding it to the dependencies in the mix.exs file as &lt;/p&gt;
+&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-ruby&quot; data-lang=&quot;ruby&quot;&gt;    &lt;span class=&quot;n&quot;&gt;defp&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;deps&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;do&lt;/span&gt;
+        &lt;span class=&quot;p&quot;&gt;[{&lt;/span&gt;&lt;span class=&quot;ss&quot;&gt;:phoenix&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&quot;~&amp;gt; 1.1.4&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;},&lt;/span&gt;
+         &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;&lt;span class=&quot;ss&quot;&gt;:postgrex&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&quot;&amp;gt;= 0.0.0&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;},&lt;/span&gt;
+         &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;&lt;span class=&quot;ss&quot;&gt;:phoenix_ecto&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&quot;~&amp;gt; 2.0&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;},&lt;/span&gt;
+         &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;&lt;span class=&quot;ss&quot;&gt;:phoenix_html&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&quot;~&amp;gt; 2.4&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;},&lt;/span&gt;
+         &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;&lt;span class=&quot;ss&quot;&gt;:phoenix_live_reload&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&quot;~&amp;gt; 1.0&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;ss&quot;&gt;only: :dev&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;},&lt;/span&gt;
+         &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;&lt;span class=&quot;ss&quot;&gt;:gettext&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&quot;~&amp;gt; 0.9&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;},&lt;/span&gt;
+         &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;&lt;span class=&quot;ss&quot;&gt;:cowboy&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&quot;~&amp;gt; 1.0&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;},&lt;/span&gt;
+        &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;&lt;span class=&quot;ss&quot;&gt;:comeonin&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&quot;~&amp;gt; 2.5&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;}]&lt;/span&gt;
+      &lt;span class=&quot;k&quot;&gt;end&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;Then install it through &lt;/p&gt;
+&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-&quot; data-lang=&quot;&quot;&gt;$mix deps.get 
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;The &lt;code&gt;generate_password_and_token&lt;/code&gt; method generates the encrypted password and a token(to be used later) for the user. The &lt;code&gt;generate_password_and_store_user&lt;/code&gt; method stores the user in the database. Now, it&amp;#39;s time to add a template for the new registration page. Create a directory named registration in the templates folder and add a new.html.eex file in it. Fill it with the content below.&lt;/p&gt;
+&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-html&quot; data-lang=&quot;html&quot;&gt;    &lt;span class=&quot;nt&quot;&gt;&amp;lt;h3&amp;gt;&lt;/span&gt;Registration&lt;span class=&quot;nt&quot;&gt;&amp;lt;/h3&amp;gt;&lt;/span&gt;
+    &lt;span class=&quot;err&quot;&gt;&amp;lt;&lt;/span&gt;%= form_for @changeset, registration_path(@conn, :create), fn f -&amp;gt; %&amp;gt;
+      &lt;span class=&quot;err&quot;&gt;&amp;lt;&lt;/span&gt;%= if f.errors != [] do %&amp;gt;
+        &lt;span class=&quot;nt&quot;&gt;&amp;lt;div&lt;/span&gt; &lt;span class=&quot;na&quot;&gt;class=&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;alert alert-danger&quot;&lt;/span&gt;&lt;span class=&quot;nt&quot;&gt;&amp;gt;&lt;/span&gt;
+          &lt;span class=&quot;nt&quot;&gt;&amp;lt;p&amp;gt;&lt;/span&gt;Oops, something went wrong! Please check the errors below:&lt;span class=&quot;nt&quot;&gt;&amp;lt;/p&amp;gt;&lt;/span&gt;
+          &lt;span class=&quot;nt&quot;&gt;&amp;lt;ul&amp;gt;&lt;/span&gt;
+            &lt;span class=&quot;err&quot;&gt;&amp;lt;&lt;/span&gt;%= for {attr, message} &lt;span class=&quot;nt&quot;&gt;&amp;lt;-&lt;/span&gt; &lt;span class=&quot;na&quot;&gt;f&lt;/span&gt;&lt;span class=&quot;err&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;na&quot;&gt;errors&lt;/span&gt; &lt;span class=&quot;na&quot;&gt;do&lt;/span&gt; &lt;span class=&quot;err&quot;&gt;%&lt;/span&gt;&lt;span class=&quot;nt&quot;&gt;&amp;gt;&lt;/span&gt;
+              &lt;span class=&quot;nt&quot;&gt;&amp;lt;li&amp;gt;&lt;/span&gt;&lt;span class=&quot;err&quot;&gt;&amp;lt;&lt;/span&gt;%= humanize(attr) %&amp;gt; &lt;span class=&quot;err&quot;&gt;&amp;lt;&lt;/span&gt;%= translate_error(message) %&amp;gt;&lt;span class=&quot;nt&quot;&gt;&amp;lt;/li&amp;gt;&lt;/span&gt;
+            &lt;span class=&quot;err&quot;&gt;&amp;lt;&lt;/span&gt;% end %&amp;gt;
+          &lt;span class=&quot;nt&quot;&gt;&amp;lt;/ul&amp;gt;&lt;/span&gt;
+        &lt;span class=&quot;nt&quot;&gt;&amp;lt;/div&amp;gt;&lt;/span&gt;
+      &lt;span class=&quot;err&quot;&gt;&amp;lt;&lt;/span&gt;% end %&amp;gt;
+
+      &lt;span class=&quot;nt&quot;&gt;&amp;lt;div&lt;/span&gt; &lt;span class=&quot;na&quot;&gt;class=&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;form-group&quot;&lt;/span&gt;&lt;span class=&quot;nt&quot;&gt;&amp;gt;&lt;/span&gt;
+        &lt;span class=&quot;nt&quot;&gt;&amp;lt;label&amp;gt;&lt;/span&gt;Username&lt;span class=&quot;nt&quot;&gt;&amp;lt;/label&amp;gt;&lt;/span&gt;
+        &lt;span class=&quot;err&quot;&gt;&amp;lt;&lt;/span&gt;%= text_input f, :username, class: &quot;form-control&quot; %&amp;gt;
+      &lt;span class=&quot;nt&quot;&gt;&amp;lt;/div&amp;gt;&lt;/span&gt;
+
+      &lt;span class=&quot;nt&quot;&gt;&amp;lt;div&lt;/span&gt; &lt;span class=&quot;na&quot;&gt;class=&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;form-group&quot;&lt;/span&gt;&lt;span class=&quot;nt&quot;&gt;&amp;gt;&lt;/span&gt;
+        &lt;span class=&quot;nt&quot;&gt;&amp;lt;label&amp;gt;&lt;/span&gt;Email&lt;span class=&quot;nt&quot;&gt;&amp;lt;/label&amp;gt;&lt;/span&gt;
+        &lt;span class=&quot;err&quot;&gt;&amp;lt;&lt;/span&gt;%= text_input f, :email, class: &quot;form-control&quot; %&amp;gt;
+      &lt;span class=&quot;nt&quot;&gt;&amp;lt;/div&amp;gt;&lt;/span&gt;
+
+
+      &lt;span class=&quot;nt&quot;&gt;&amp;lt;div&lt;/span&gt; &lt;span class=&quot;na&quot;&gt;class=&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;form-group&quot;&lt;/span&gt;&lt;span class=&quot;nt&quot;&gt;&amp;gt;&lt;/span&gt;
+        &lt;span class=&quot;nt&quot;&gt;&amp;lt;label&amp;gt;&lt;/span&gt;Password&lt;span class=&quot;nt&quot;&gt;&amp;lt;/label&amp;gt;&lt;/span&gt;
+        &lt;span class=&quot;err&quot;&gt;&amp;lt;&lt;/span&gt;%= password_input f, :password, class: &quot;form-control&quot; %&amp;gt;
+      &lt;span class=&quot;nt&quot;&gt;&amp;lt;/div&amp;gt;&lt;/span&gt;
+
+      &lt;span class=&quot;nt&quot;&gt;&amp;lt;div&lt;/span&gt; &lt;span class=&quot;na&quot;&gt;class=&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;form-group&quot;&lt;/span&gt;&lt;span class=&quot;nt&quot;&gt;&amp;gt;&lt;/span&gt;
+        &lt;span class=&quot;nt&quot;&gt;&amp;lt;label&amp;gt;&lt;/span&gt;Password Confirmation&lt;span class=&quot;nt&quot;&gt;&amp;lt;/label&amp;gt;&lt;/span&gt;
+        &lt;span class=&quot;err&quot;&gt;&amp;lt;&lt;/span&gt;%= password_input f, :password_confirmation, class: &quot;form-control&quot; %&amp;gt;
+      &lt;span class=&quot;nt&quot;&gt;&amp;lt;/div&amp;gt;&lt;/span&gt;
+
+      &lt;span class=&quot;nt&quot;&gt;&amp;lt;div&lt;/span&gt; &lt;span class=&quot;na&quot;&gt;class=&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;form-group&quot;&lt;/span&gt;&lt;span class=&quot;nt&quot;&gt;&amp;gt;&lt;/span&gt;
+        &lt;span class=&quot;err&quot;&gt;&amp;lt;&lt;/span&gt;%= submit &quot;Register&quot;, class: &quot;btn btn-primary&quot; %&amp;gt;
+        &lt;span class=&quot;err&quot;&gt;&amp;lt;&lt;/span&gt;%= #link(&quot;Login&quot;, to: session_path(@conn, :new), class: &quot;btn btn-success pull-right&quot;) %&amp;gt;
+      &lt;span class=&quot;nt&quot;&gt;&amp;lt;/div&amp;gt;&lt;/span&gt;
+    &lt;span class=&quot;err&quot;&gt;&amp;lt;&lt;/span&gt;% end %&amp;gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;The session_login  button is now commented because we haven&amp;#39;t added the sessions controller yet. &lt;/p&gt;
+
+&lt;p&gt;Let&amp;#39;s try it all out. First we have to create the database for the application using ecto.&lt;/p&gt;
+&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-&quot; data-lang=&quot;&quot;&gt;$mix ecto.create
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;Then, we have to migrate the changes that we have in the users model. &lt;/p&gt;
+&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-&quot; data-lang=&quot;&quot;&gt;$mix ecto.migrate
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;Now we have to restart the server as we have added a new lib file called &lt;code&gt;password.ex&lt;/code&gt;. Then, check if that registration form at http://localhost:4000/registration/ is working. If it renders the default phoenix page with a &amp;quot;You are Sucessfully Registered :P&amp;quot;, it&amp;#39;s working. &lt;/p&gt;
+
+&lt;p&gt;Now let&amp;#39;s replace the default phoenix page with a login page for the users. Let&amp;#39;s understand what a session is. Sessions are the users&amp;#39; active time spans after login. A sessions controller matches the username and password of the user and renders the pages. A session controller stores the users data (you can customize the data to be stored) for the session. It is recommended to store minimum required data like only the username or the email in the session. With a logout request, we free the session variables. So, now we have to add a &lt;code&gt;login&lt;/code&gt; and a &lt;code&gt;logout&lt;/code&gt; route in the &lt;code&gt;router.ex&lt;/code&gt; along with a &lt;code&gt;new&lt;/code&gt; route for the session. The page route will be replaced by the &lt;code&gt;new&lt;/code&gt; method of the session. &lt;/p&gt;
+&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-ruby&quot; data-lang=&quot;ruby&quot;&gt;    &lt;span class=&quot;n&quot;&gt;scope&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&quot;/&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;no&quot;&gt;Iot&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;do&lt;/span&gt;
+        &lt;span class=&quot;n&quot;&gt;pipe_through&lt;/span&gt; &lt;span class=&quot;ss&quot;&gt;:browser&lt;/span&gt; &lt;span class=&quot;c1&quot;&gt;# Use the default browser stack&lt;/span&gt;
+        &lt;span class=&quot;n&quot;&gt;get&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&quot;/registration&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;no&quot;&gt;RegistrationController&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;ss&quot;&gt;:new&lt;/span&gt;
+        &lt;span class=&quot;n&quot;&gt;post&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&quot;/registration&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;no&quot;&gt;RegistrationController&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;ss&quot;&gt;:create&lt;/span&gt;
+        &lt;span class=&quot;n&quot;&gt;get&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&quot;/&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;no&quot;&gt;SessionController&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;ss&quot;&gt;:new&lt;/span&gt;
+        &lt;span class=&quot;n&quot;&gt;post&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&quot;/login&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;no&quot;&gt;SessionController&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;ss&quot;&gt;:create&lt;/span&gt;
+        &lt;span class=&quot;n&quot;&gt;get&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&quot;/logout&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;no&quot;&gt;SessionController&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;ss&quot;&gt;:delete&lt;/span&gt;
+    &lt;span class=&quot;k&quot;&gt;end&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;Clearly from the routes, we now know that we have to write a &lt;code&gt;session_controller.ex&lt;/code&gt; in the &lt;code&gt;web/controllers&lt;/code&gt; directory with new, create and delete methods in it.&lt;/p&gt;
+&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-ruby&quot; data-lang=&quot;ruby&quot;&gt;    &lt;span class=&quot;c1&quot;&gt;#web/controllers/session_controller.ex&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;defmodule&lt;/span&gt; &lt;span class=&quot;no&quot;&gt;Iot&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;no&quot;&gt;SessionController&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;do&lt;/span&gt;
+      &lt;span class=&quot;n&quot;&gt;use&lt;/span&gt; &lt;span class=&quot;no&quot;&gt;Iot&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;no&quot;&gt;Web&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;ss&quot;&gt;:controller&lt;/span&gt;
+
+      &lt;span class=&quot;n&quot;&gt;plug&lt;/span&gt; &lt;span class=&quot;ss&quot;&gt;:scrub_params&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&quot;user&quot;&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;when&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;action&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;in&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;[&lt;/span&gt;&lt;span class=&quot;ss&quot;&gt;:create&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;]&lt;/span&gt;
+      &lt;span class=&quot;n&quot;&gt;plug&lt;/span&gt; &lt;span class=&quot;ss&quot;&gt;:action&lt;/span&gt;
+
+      &lt;span class=&quot;k&quot;&gt;def&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;new&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;conn&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;_params&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;do&lt;/span&gt;
+        &lt;span class=&quot;n&quot;&gt;render&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;conn&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;ss&quot;&gt;changeset: &lt;/span&gt;&lt;span class=&quot;no&quot;&gt;User&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;changeset&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;%&lt;/span&gt;&lt;span class=&quot;no&quot;&gt;User&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;{})&lt;/span&gt;
+      &lt;span class=&quot;k&quot;&gt;end&lt;/span&gt;
+
+      &lt;span class=&quot;k&quot;&gt;def&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;create&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;conn&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;sx&quot;&gt;%{&quot;user&quot; =&amp;gt; user_params}&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;do&lt;/span&gt;
+        &lt;span class=&quot;n&quot;&gt;user&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;if&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;is_nil&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;user_params&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;[&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&quot;username&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;])&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;do&lt;/span&gt;
+          &lt;span class=&quot;kp&quot;&gt;nil&lt;/span&gt;
+        &lt;span class=&quot;k&quot;&gt;else&lt;/span&gt;
+          &lt;span class=&quot;no&quot;&gt;Repo&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;get_by&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;no&quot;&gt;User&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;ss&quot;&gt;username: &lt;/span&gt;&lt;span class=&quot;n&quot;&gt;user_params&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;[&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&quot;username&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;])&lt;/span&gt;
+        &lt;span class=&quot;k&quot;&gt;end&lt;/span&gt;
+
+        &lt;span class=&quot;n&quot;&gt;user&lt;/span&gt;
+          &lt;span class=&quot;o&quot;&gt;|&amp;gt;&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;sign_in&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;user_params&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;[&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&quot;password&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;],&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;conn&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+      &lt;span class=&quot;k&quot;&gt;end&lt;/span&gt;
+
+      &lt;span class=&quot;k&quot;&gt;def&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;delete&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;conn&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;_&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;do&lt;/span&gt;
+        &lt;span class=&quot;n&quot;&gt;delete_session&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;conn&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;ss&quot;&gt;:current_user&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+          &lt;span class=&quot;o&quot;&gt;|&amp;gt;&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;put_flash&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;ss&quot;&gt;:info&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;s1&quot;&gt;&#39;You have been logged out&#39;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+          &lt;span class=&quot;o&quot;&gt;|&amp;gt;&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;redirect&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;ss&quot;&gt;to: &lt;/span&gt;&lt;span class=&quot;n&quot;&gt;session_path&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;conn&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;ss&quot;&gt;:new&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;))&lt;/span&gt;
+      &lt;span class=&quot;k&quot;&gt;end&lt;/span&gt;
+
+      &lt;span class=&quot;n&quot;&gt;defp&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;sign_in&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;user&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;password&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;conn&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;when&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;is_nil&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;user&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;do&lt;/span&gt;
+        &lt;span class=&quot;n&quot;&gt;conn&lt;/span&gt;
+          &lt;span class=&quot;o&quot;&gt;|&amp;gt;&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;put_flash&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;ss&quot;&gt;:error&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;s1&quot;&gt;&#39;Could not find a user with that username.&#39;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+          &lt;span class=&quot;o&quot;&gt;|&amp;gt;&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;render&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&quot;new.html&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;ss&quot;&gt;changeset: &lt;/span&gt;&lt;span class=&quot;no&quot;&gt;User&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;changeset&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;%&lt;/span&gt;&lt;span class=&quot;no&quot;&gt;User&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;{})&lt;/span&gt;
+      &lt;span class=&quot;k&quot;&gt;end&lt;/span&gt;
+
+      &lt;span class=&quot;n&quot;&gt;defp&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;sign_in&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;user&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;password&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;conn&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;when&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;is_map&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;user&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;do&lt;/span&gt;
+        &lt;span class=&quot;n&quot;&gt;cond&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;do&lt;/span&gt;
+          &lt;span class=&quot;no&quot;&gt;Comeonin&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;no&quot;&gt;Bcrypt&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;checkpw&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;password&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;user&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;encrypted_password&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;-&amp;gt;&lt;/span&gt;
+            &lt;span class=&quot;n&quot;&gt;conn&lt;/span&gt;
+              &lt;span class=&quot;o&quot;&gt;|&amp;gt;&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;put_session&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;ss&quot;&gt;:current_user&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;user&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+              &lt;span class=&quot;o&quot;&gt;|&amp;gt;&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;put_flash&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;ss&quot;&gt;:info&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;s1&quot;&gt;&#39;You are now signed in.&#39;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+              &lt;span class=&quot;o&quot;&gt;|&amp;gt;&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;redirect&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;ss&quot;&gt;to: &lt;/span&gt;&lt;span class=&quot;n&quot;&gt;energy_meter_path&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;conn&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;ss&quot;&gt;:index&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;))&lt;/span&gt;
+          &lt;span class=&quot;kp&quot;&gt;true&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;-&amp;gt;&lt;/span&gt;
+            &lt;span class=&quot;n&quot;&gt;conn&lt;/span&gt;
+              &lt;span class=&quot;o&quot;&gt;|&amp;gt;&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;put_flash&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;ss&quot;&gt;:error&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;s1&quot;&gt;&#39;Username or password are incorrect.&#39;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+              &lt;span class=&quot;o&quot;&gt;|&amp;gt;&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;render&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&quot;new.html&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;ss&quot;&gt;changeset: &lt;/span&gt;&lt;span class=&quot;no&quot;&gt;User&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;changeset&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;%&lt;/span&gt;&lt;span class=&quot;no&quot;&gt;User&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;{})&lt;/span&gt;
+        &lt;span class=&quot;k&quot;&gt;end&lt;/span&gt;
+      &lt;span class=&quot;k&quot;&gt;end&lt;/span&gt;
+    &lt;span class=&quot;k&quot;&gt;end&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;The code above is self explanatory. The &lt;code&gt;sign_in&lt;/code&gt; method lets the user log into the pages. The &lt;code&gt;put_session&lt;/code&gt; method stores temporary session data. In this case the user is saved in the session as &lt;code&gt;:current_user&lt;/code&gt;. Now, we will write the new template for the login form. Create a folder called session in the &lt;code&gt;web/templates/&lt;/code&gt; folder and a file called new.html.eex in it. &lt;/p&gt;
+&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-html&quot; data-lang=&quot;html&quot;&gt;    &lt;span class=&quot;nt&quot;&gt;&amp;lt;h3&amp;gt;&lt;/span&gt;Login&lt;span class=&quot;nt&quot;&gt;&amp;lt;/h3&amp;gt;&lt;/span&gt;
+    &lt;span class=&quot;err&quot;&gt;&amp;lt;&lt;/span&gt;%= form_for @changeset, session_path(@conn, :create), fn f -&amp;gt; %&amp;gt;
+      &lt;span class=&quot;err&quot;&gt;&amp;lt;&lt;/span&gt;%= if f.errors != [] do %&amp;gt;
+        &lt;span class=&quot;nt&quot;&gt;&amp;lt;div&lt;/span&gt; &lt;span class=&quot;na&quot;&gt;class=&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;alert alert-danger&quot;&lt;/span&gt;&lt;span class=&quot;nt&quot;&gt;&amp;gt;&lt;/span&gt;
+          &lt;span class=&quot;nt&quot;&gt;&amp;lt;p&amp;gt;&lt;/span&gt;Oops, something went wrong! Please check the errors below:&lt;span class=&quot;nt&quot;&gt;&amp;lt;/p&amp;gt;&lt;/span&gt;
+          &lt;span class=&quot;nt&quot;&gt;&amp;lt;ul&amp;gt;&lt;/span&gt;
+            &lt;span class=&quot;err&quot;&gt;&amp;lt;&lt;/span&gt;%= for {attr, message} &lt;span class=&quot;nt&quot;&gt;&amp;lt;-&lt;/span&gt; &lt;span class=&quot;na&quot;&gt;f&lt;/span&gt;&lt;span class=&quot;err&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;na&quot;&gt;errors&lt;/span&gt; &lt;span class=&quot;na&quot;&gt;do&lt;/span&gt; &lt;span class=&quot;err&quot;&gt;%&lt;/span&gt;&lt;span class=&quot;nt&quot;&gt;&amp;gt;&lt;/span&gt;
+              &lt;span class=&quot;nt&quot;&gt;&amp;lt;li&amp;gt;&lt;/span&gt;&lt;span class=&quot;err&quot;&gt;&amp;lt;&lt;/span&gt;%= humanize(attr) %&amp;gt; &lt;span class=&quot;err&quot;&gt;&amp;lt;&lt;/span&gt;%= translate_error(message) %&amp;gt;&lt;span class=&quot;nt&quot;&gt;&amp;lt;/li&amp;gt;&lt;/span&gt;
+            &lt;span class=&quot;err&quot;&gt;&amp;lt;&lt;/span&gt;% end %&amp;gt;
+          &lt;span class=&quot;nt&quot;&gt;&amp;lt;/ul&amp;gt;&lt;/span&gt;
+        &lt;span class=&quot;nt&quot;&gt;&amp;lt;/div&amp;gt;&lt;/span&gt;
+      &lt;span class=&quot;err&quot;&gt;&amp;lt;&lt;/span&gt;% end %&amp;gt;
+
+      &lt;span class=&quot;nt&quot;&gt;&amp;lt;div&lt;/span&gt; &lt;span class=&quot;na&quot;&gt;class=&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;form-group&quot;&lt;/span&gt;&lt;span class=&quot;nt&quot;&gt;&amp;gt;&lt;/span&gt;
+        &lt;span class=&quot;nt&quot;&gt;&amp;lt;label&amp;gt;&lt;/span&gt;Username&lt;span class=&quot;nt&quot;&gt;&amp;lt;/label&amp;gt;&lt;/span&gt;
+        &lt;span class=&quot;err&quot;&gt;&amp;lt;&lt;/span&gt;%= text_input f, :username, class: &quot;form-control&quot; %&amp;gt;
+      &lt;span class=&quot;nt&quot;&gt;&amp;lt;/div&amp;gt;&lt;/span&gt;
+
+      &lt;span class=&quot;nt&quot;&gt;&amp;lt;div&lt;/span&gt; &lt;span class=&quot;na&quot;&gt;class=&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;form-group&quot;&lt;/span&gt;&lt;span class=&quot;nt&quot;&gt;&amp;gt;&lt;/span&gt;
+        &lt;span class=&quot;nt&quot;&gt;&amp;lt;label&amp;gt;&lt;/span&gt;Password&lt;span class=&quot;nt&quot;&gt;&amp;lt;/label&amp;gt;&lt;/span&gt;
+        &lt;span class=&quot;err&quot;&gt;&amp;lt;&lt;/span&gt;%= password_input f, :password, class: &quot;form-control&quot; %&amp;gt;
+      &lt;span class=&quot;nt&quot;&gt;&amp;lt;/div&amp;gt;&lt;/span&gt;
+
+      &lt;span class=&quot;nt&quot;&gt;&amp;lt;div&lt;/span&gt; &lt;span class=&quot;na&quot;&gt;class=&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;form-group&quot;&lt;/span&gt;&lt;span class=&quot;nt&quot;&gt;&amp;gt;&lt;/span&gt;
+        &lt;span class=&quot;err&quot;&gt;&amp;lt;&lt;/span&gt;%= submit &quot;Login&quot;, class: &quot;btn btn-primary&quot; %&amp;gt;
+        &lt;span class=&quot;err&quot;&gt;&amp;lt;&lt;/span&gt;%= link(&quot;Sign Up&quot;, to: registration_path(@conn, :new), class: &quot;btn btn-success pull-right&quot;) %&amp;gt;
+      &lt;span class=&quot;nt&quot;&gt;&amp;lt;/div&amp;gt;&lt;/span&gt;
+    &lt;span class=&quot;err&quot;&gt;&amp;lt;&lt;/span&gt;% end %&amp;gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;Now, we can uncomment the line in &lt;code&gt;web/templates/registration/new.html.eex&lt;/code&gt; for the session login path. And we change the &lt;code&gt;create&lt;/code&gt; method of the registration controller to render the login page rather than the default phoenix page.&lt;/p&gt;
+&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-ruby&quot; data-lang=&quot;ruby&quot;&gt;    &lt;span class=&quot;k&quot;&gt;def&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;create&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;conn&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;sx&quot;&gt;%{&quot;user&quot; =&amp;gt; user_params}&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;do&lt;/span&gt;
+        &lt;span class=&quot;n&quot;&gt;changeset&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;no&quot;&gt;User&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;changeset&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;%&lt;/span&gt;&lt;span class=&quot;no&quot;&gt;User&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;{},&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;user_params&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+        &lt;span class=&quot;k&quot;&gt;if&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;changeset&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;valid?&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;do&lt;/span&gt;
+          &lt;span class=&quot;n&quot;&gt;new_user&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;no&quot;&gt;Password&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;generate_password_and_store_user&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;changeset&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+          &lt;span class=&quot;n&quot;&gt;conn&lt;/span&gt;
+            &lt;span class=&quot;o&quot;&gt;|&amp;gt;&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;put_flash&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;ss&quot;&gt;:info&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&quot;You are Sucessfully Registered :P &quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+            &lt;span class=&quot;o&quot;&gt;|&amp;gt;&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;redirect&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;ss&quot;&gt;to: &lt;/span&gt;&lt;span class=&quot;n&quot;&gt;session_path&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;conn&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;ss&quot;&gt;:new&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;))&lt;/span&gt;
+        &lt;span class=&quot;k&quot;&gt;else&lt;/span&gt;
+          &lt;span class=&quot;n&quot;&gt;render&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;conn&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&quot;new.html&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;ss&quot;&gt;changeset: &lt;/span&gt;&lt;span class=&quot;n&quot;&gt;changeset&lt;/span&gt; 
+        &lt;span class=&quot;k&quot;&gt;end&lt;/span&gt;
+    &lt;span class=&quot;k&quot;&gt;end&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;Now, where will it go after login? We must have some place where it should move to after login and we must have a control over that page so that that page can not be opened unless the user is logged in. That is why the line &lt;code&gt;redirect(to: energy_meter_path(conn, :index))&lt;/code&gt; is added in the &lt;code&gt;sign_in&lt;/code&gt; method (EnergyMeter is our Iot device). We will create a energy_meter template with only the username of the user in it. At first, let&amp;#39;s edit the router.ex file.&lt;/p&gt;
+&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-ruby&quot; data-lang=&quot;ruby&quot;&gt;    &lt;span class=&quot;n&quot;&gt;scope&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&quot;/&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;no&quot;&gt;Iot&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;do&lt;/span&gt;
+        &lt;span class=&quot;n&quot;&gt;pipe_through&lt;/span&gt; &lt;span class=&quot;ss&quot;&gt;:browser&lt;/span&gt; &lt;span class=&quot;c1&quot;&gt;# Use the default browser stack&lt;/span&gt;
+        &lt;span class=&quot;n&quot;&gt;get&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&quot;/registration&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;no&quot;&gt;RegistrationController&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;ss&quot;&gt;:new&lt;/span&gt;
+        &lt;span class=&quot;n&quot;&gt;post&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&quot;/registration&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;no&quot;&gt;RegistrationController&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;ss&quot;&gt;:create&lt;/span&gt;
+        &lt;span class=&quot;n&quot;&gt;get&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&quot;/&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;no&quot;&gt;SessionController&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;ss&quot;&gt;:new&lt;/span&gt;
+        &lt;span class=&quot;n&quot;&gt;post&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&quot;/login&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;no&quot;&gt;SessionController&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;ss&quot;&gt;:create&lt;/span&gt;
+        &lt;span class=&quot;n&quot;&gt;get&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&quot;/logout&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;no&quot;&gt;SessionController&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;ss&quot;&gt;:delete&lt;/span&gt;
+        &lt;span class=&quot;n&quot;&gt;get&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&quot;/em&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;no&quot;&gt;EnergyMeterController&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;ss&quot;&gt;:index&lt;/span&gt;
+    &lt;span class=&quot;k&quot;&gt;end&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;Now let&amp;#39;s create a &lt;code&gt;energy_meter_controller.ex&lt;/code&gt;. &lt;/p&gt;
+&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-ruby&quot; data-lang=&quot;ruby&quot;&gt;    &lt;span class=&quot;n&quot;&gt;defmodule&lt;/span&gt; &lt;span class=&quot;no&quot;&gt;Iot&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;no&quot;&gt;EnergyMeterController&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;do&lt;/span&gt;
+      &lt;span class=&quot;n&quot;&gt;use&lt;/span&gt; &lt;span class=&quot;no&quot;&gt;Iot&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;no&quot;&gt;Web&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;ss&quot;&gt;:controller&lt;/span&gt;
+
+      &lt;span class=&quot;n&quot;&gt;plug&lt;/span&gt; &lt;span class=&quot;no&quot;&gt;Iot&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;no&quot;&gt;Plug&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;no&quot;&gt;Authenticate&lt;/span&gt;
+
+      &lt;span class=&quot;k&quot;&gt;def&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;index&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;conn&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;_params&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;do&lt;/span&gt;
+        &lt;span class=&quot;n&quot;&gt;current_user&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;get_session&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;conn&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;ss&quot;&gt;:current_user&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+        &lt;span class=&quot;n&quot;&gt;render&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;conn&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&quot;index.html&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;ss&quot;&gt;current_user: &lt;/span&gt;&lt;span class=&quot;n&quot;&gt;current_user&lt;/span&gt;
+      &lt;span class=&quot;k&quot;&gt;end&lt;/span&gt;
+    &lt;span class=&quot;k&quot;&gt;end&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;Now let&amp;#39;s write the template for this. &lt;/p&gt;
+&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-html&quot; data-lang=&quot;html&quot;&gt;    #web/templates/energy_meter/index.html.eex
+    &lt;span class=&quot;nt&quot;&gt;&amp;lt;div&amp;gt;&lt;/span&gt;Hi &lt;span class=&quot;err&quot;&gt;&amp;lt;&lt;/span&gt;%= @current_user.username %&amp;gt;&lt;span class=&quot;nt&quot;&gt;&amp;lt;/div&amp;gt;&lt;/span&gt;
+    &lt;span class=&quot;err&quot;&gt;&amp;lt;&lt;/span&gt;%= link(&quot;Logout&quot;, to: session_path(@conn, :delete), class: &quot;btn btn-success pull-right&quot;) %&amp;gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;This has the username of that user and a logout button. The controller has a Authenticate Plug, which ensures the authenticity of the current user. If the user is not logged in, this Plug helps not to show any page in the EnergyMeter controller. Let&amp;#39;s write that Plug. We have to create a directory called &lt;code&gt;authentication&lt;/code&gt; in the &lt;code&gt;web&lt;/code&gt; directory and add &lt;code&gt;authenticate.ex&lt;/code&gt; file in it. &lt;/p&gt;
+&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-ruby&quot; data-lang=&quot;ruby&quot;&gt;    &lt;span class=&quot;n&quot;&gt;defmodule&lt;/span&gt; &lt;span class=&quot;no&quot;&gt;Iot&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;no&quot;&gt;Plug&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;no&quot;&gt;Authenticate&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;do&lt;/span&gt;
+      &lt;span class=&quot;n&quot;&gt;import&lt;/span&gt; &lt;span class=&quot;no&quot;&gt;Plug&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;no&quot;&gt;Conn&lt;/span&gt;
+      &lt;span class=&quot;n&quot;&gt;import&lt;/span&gt; &lt;span class=&quot;no&quot;&gt;Iot&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;no&quot;&gt;Router&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;no&quot;&gt;Helpers&lt;/span&gt; 
+      &lt;span class=&quot;n&quot;&gt;import&lt;/span&gt; &lt;span class=&quot;no&quot;&gt;Phoenix&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;no&quot;&gt;Controller&lt;/span&gt;
+
+      &lt;span class=&quot;k&quot;&gt;def&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;init&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;default&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;),&lt;/span&gt; &lt;span class=&quot;ss&quot;&gt;do: &lt;/span&gt;&lt;span class=&quot;n&quot;&gt;default&lt;/span&gt;
+
+      &lt;span class=&quot;k&quot;&gt;def&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;call&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;conn&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;default&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;do&lt;/span&gt;
+        &lt;span class=&quot;n&quot;&gt;current_user&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;get_session&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;conn&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;ss&quot;&gt;:current_user&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+        &lt;span class=&quot;k&quot;&gt;if&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;current_user&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;do&lt;/span&gt;
+          &lt;span class=&quot;n&quot;&gt;assign&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;conn&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;ss&quot;&gt;:current_user&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;current_user&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+        &lt;span class=&quot;k&quot;&gt;else&lt;/span&gt;
+          &lt;span class=&quot;n&quot;&gt;conn&lt;/span&gt;
+            &lt;span class=&quot;o&quot;&gt;|&amp;gt;&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;put_flash&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;ss&quot;&gt;:error&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;s1&quot;&gt;&#39;You Need to be signed in to view this page !&#39;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+            &lt;span class=&quot;o&quot;&gt;|&amp;gt;&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;redirect&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;ss&quot;&gt;to: &lt;/span&gt;&lt;span class=&quot;n&quot;&gt;session_path&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;conn&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;ss&quot;&gt;:new&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;))&lt;/span&gt;
+        &lt;span class=&quot;k&quot;&gt;end&lt;/span&gt;
+      &lt;span class=&quot;k&quot;&gt;end&lt;/span&gt;
+    &lt;span class=&quot;k&quot;&gt;end&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;The code is self explanatory. If a user is trying to get the energy_meter index page without logging in, it will throw the error as &amp;quot;You Need to be signed in to view this page !&amp;quot;. Now try that all out by going to http://localhost:4000/. &lt;/p&gt;
+
+&lt;p&gt;Note: a view must be added with all the controllers. Otherwise, it will throw an error. A demo view in the views folder is given below.&lt;/p&gt;
+&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-ruby&quot; data-lang=&quot;ruby&quot;&gt;    &lt;span class=&quot;c1&quot;&gt;#web/views/session_view.ex&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;defmodule&lt;/span&gt; &lt;span class=&quot;no&quot;&gt;Iot&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;no&quot;&gt;SessionView&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;do&lt;/span&gt;
+        &lt;span class=&quot;n&quot;&gt;use&lt;/span&gt; &lt;span class=&quot;no&quot;&gt;Iot&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;no&quot;&gt;Web&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;ss&quot;&gt;:view&lt;/span&gt;
+    &lt;span class=&quot;k&quot;&gt;end&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;Now, the authentication part is done. In the next part, we will code the messaging application that is needed for users to listen and control their machines. &lt;/p&gt;
+
+&lt;p&gt;Happy Hacking ! &lt;/p&gt;
+
+&lt;p&gt;Reference - http://meatherly.github.io/2015/05/11/phoenixauthentication/ &lt;/p&gt;
+</description>
+        <pubDate>Sun, 24 Jul 2016 16:54:01 +0200</pubDate>
+        <link>http://tworitdash.in/2016/07/24/iot-with-phoenix-part-1.html</link>
+        <guid isPermaLink="true">http://tworitdash.in/2016/07/24/iot-with-phoenix-part-1.html</guid>
+        
+        
+      </item>
+    
+      <item>
+        <title>SerialPort and Sleep Mruby Gems To Instruct Texas LaunchPad TM4C123G with ARM Cortex M4</title>
+        <description>&lt;p&gt;I always wanted to build something with mruby. After building mruby on my Raspberry Pi, I wanted to use the serialport mrbgem to instruct my Texas TM4C123G with ARM Cortex M4. I used to program the controller using Keil IDE on windows. After getting a mac, I have been writing program into it using &lt;a href=&quot;http://energia.nu/&quot;&gt;energia&lt;/a&gt;. It is as simple as programming an arduino. The pin diagram with numbers are in the figure for the use in energia.&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;/images/tm4c.jpg&quot;&gt;&lt;/p&gt;
+
+&lt;p&gt;It has a built in led connected to the pins 1, 2, 3 and 4 of Port F (PF1, PF2, PF3, PF4). Each one contributes a single unique color to the led. So, when we give power to more than one of these pins, we get different colors. It&amp;#39;s fun working with these colors. So I have been using a serial communication program in the board so that it glows different leds with different combinations of PF1, PF2, PF3 and PF4. &lt;/p&gt;
+
+&lt;p&gt;The code is here. &lt;/p&gt;
+&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-&quot; data-lang=&quot;&quot;&gt;void setup()
+{
+  // put your setup code here, to run once:
+  Serial.begin(9600);
+
+
+  pinMode(30, OUTPUT);
+  pinMode(40, OUTPUT);
+  pinMode(39, OUTPUT);
+  pinMode(31, OUTPUT);
+  digitalWrite(40, HIGH);
+}
+
+void got_char(char x) {
+
+  //if we get l over Serial and so on 
+  if(x == &#39;l&#39;) {
+    //... blink the LED
+    digitalWrite(31,LOW);
+    digitalWrite(40,HIGH);
+    digitalWrite(39,LOW);
+    digitalWrite(30,HIGH);
+  }
+  if(x == &#39;r&#39;){
+    digitalWrite(31,HIGH);
+    digitalWrite(40,LOW);
+    digitalWrite(39,HIGH);
+    digitalWrite(30,LOW);
+
+  }
+  if(x == &#39;b&#39;){
+   digitalWrite(31,LOW);
+    digitalWrite(40,HIGH);
+    digitalWrite(39,HIGH);
+    digitalWrite(30,LOW);
+  }
+  if(x == &#39;f&#39;){
+    digitalWrite(31,HIGH);
+    digitalWrite(40,LOW);
+    digitalWrite(39,LOW);
+    digitalWrite(30,HIGH);
+  }
+  if(x == &#39;s&#39;){
+    digitalWrite(31,LOW);
+    digitalWrite(40,LOW);
+    digitalWrite(39,LOW);
+    digitalWrite(30,LOW);
+  }
+}
+void loop()
+{
+  if(Serial.available() &amp;gt; 0) {
+    //if there is, we read it
+    byte byte_read = Serial.read();
+
+    //and call &quot;got_char&quot;
+    got_char((char)byte_read);
+  }
+
+}
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;After this, I went for mruby to play with the serialport mrbgem to instruct the controller. For this we have to install mruby first by following commands.&lt;/p&gt;
+&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-&quot; data-lang=&quot;&quot;&gt;git clone http://github.com/mruby/mruby.git
+cd mruby
+make 
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;Then we have to add the path variable to .bash&lt;em&gt;profile file in the home of Raspberry Pi. Just add the line at the end of .bash&lt;/em&gt;profile file.&lt;/p&gt;
+&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-&quot; data-lang=&quot;&quot;&gt;export PATH=$PATH:/home/pi/mruby/bin/
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;Then after restarting the terminal, we can have all the necessary command line tools for mruby as mirb, mruby, mrbc. Let&amp;#39;s install the serialport and sleep mrbgems. First of all we need to install mgem (command line utility for mrbgems).&lt;/p&gt;
+&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-&quot; data-lang=&quot;&quot;&gt;gem install mgem
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;Now, we need to add mruby-serialport and mruby-sleep to the known mrbgems. &lt;/p&gt;
+&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-&quot; data-lang=&quot;&quot;&gt;mgem add mruby-serialport
+mgem add mruby-sleep
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;Then we need to generate our content of build_config.rb in the root folder. &lt;/p&gt;
+&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-&quot; data-lang=&quot;&quot;&gt;mgem config
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;Right after this command, we need to give inputs to the required field and after that it will generate the content of build&lt;em&gt;config.rb. Then just create a file called build&lt;/em&gt;config.rb and paste the content generated into it. Like my build_config.rb looks like this.&lt;/p&gt;
+&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-&quot; data-lang=&quot;&quot;&gt;############################
+# Start of your build_config
+
+MRuby::Build.new do |conf|
+  toolchain :gcc
+
+  conf.bins = %w(mrbc)
+
+  # mruby&#39;s Core GEMs
+  conf.gem &#39;mrbgems/mruby-bin-mirb&#39;
+  conf.gem &#39;mrbgems/mruby-bin-mruby&#39;
+  conf.gem &#39;mrbgems/mruby-array-ext&#39;
+  conf.gem &#39;mrbgems/mruby-enum-ext&#39;
+  conf.gem &#39;mrbgems/mruby-eval&#39;
+  conf.gem &#39;mrbgems/mruby-exit&#39;
+  conf.gem &#39;mrbgems/mruby-fiber&#39;
+  conf.gem &#39;mrbgems/mruby-hash-ext&#39;
+  conf.gem &#39;mrbgems/mruby-math&#39;
+  conf.gem &#39;mrbgems/mruby-numeric-ext&#39;
+  conf.gem &#39;mrbgems/mruby-object-ext&#39;
+  conf.gem &#39;mrbgems/mruby-objectspace&#39;
+  conf.gem &#39;mrbgems/mruby-print&#39;
+  conf.gem &#39;mrbgems/mruby-proc-ext&#39;
+  conf.gem &#39;mrbgems/mruby-random&#39;
+  conf.gem &#39;mrbgems/mruby-range-ext&#39;
+  conf.gem &#39;mrbgems/mruby-sprintf&#39;
+  conf.gem &#39;mrbgems/mruby-string-ext&#39;
+#  conf.gem &#39;mrbgems/mruby-string-utf8&#39;
+  conf.gem &#39;mrbgems/mruby-struct&#39;
+  conf.gem &#39;mrbgems/mruby-symbol-ext&#39;
+  conf.gem &#39;mrbgems/mruby-time&#39;
+  conf.gem &#39;mrbgems/mruby-toplevel-ext&#39;
+
+  # user-defined GEMs
+  conf.gem :git =&amp;gt; &#39;https://github.com/monami-ya-mrb/mruby-serialport.git&#39;
+  conf.gem :git =&amp;gt; &#39;https://github.com/matsumoto-r/mruby-sleep.git&#39;
+end
+
+# End of your build_config
+############################
+
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;I have commented the mruby-string-utf8 as it created some problems while installing. Then to build this in the directory, just hit rake.&lt;/p&gt;
+&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-&quot; data-lang=&quot;&quot;&gt;rake
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;Then it will download the mebgems from git and will build it in the build directory. Before building, there are a few changes to be made in the mrbgems files. I found answers to my queries from the github repo of mruby-serialport. Just have a look &lt;a href=&quot;https://github.com/monami-ya-mrb/mruby-serialport/issues/1&quot;&gt;here&lt;/a&gt; and set everything accordingly. After that use rake to build everyhting.&lt;/p&gt;
+
+&lt;p&gt;If it gets successful, we can write program (serialport.rb) to instruct our controller. &lt;/p&gt;
+
+&lt;h3&gt;From a Ruby File&lt;/h3&gt;
+&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-&quot; data-lang=&quot;&quot;&gt; sp = SerialPort.new(&quot;/dev/ttyUSB0&quot;, 9600, 8, 1, 0)
+ sp.read_timeout=1000
+
+
+list = [&#39;f&#39;, &#39;b&#39;, &#39;r&#39;, &#39;l&#39;, &#39;s&#39;]
+loop do 
+   list.each do |l|
+     sp.write(l)
+     Sleep::sleep(2)
+   end
+end
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;Provided you own the serialport file ttyUSB0 for the controller. Otherwise, do this.&lt;/p&gt;
+&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-&quot; data-lang=&quot;&quot;&gt;sudo chown pi /dev/ttyUSB0
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;I am sending the characters from the list because I have programmed my board to receive these characters to glow certain leds. The Sleep::sleep(2) adds a delay of 2 seconds between consecutive writes of characters. To run this use the following.&lt;/p&gt;
+&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-&quot; data-lang=&quot;&quot;&gt;mruby serialport.rb
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;And enjoy different colors glowing on the same led with a halt of 2 seconds. &lt;/p&gt;
+
+&lt;h3&gt;From an Executable made using a C file&lt;/h3&gt;
+
+&lt;p&gt;Then I wanted to run it with an executable built using the tool mrbc.&lt;/p&gt;
+&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-&quot; data-lang=&quot;&quot;&gt;mrbc -Bserialport serialport.rb
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;It will create a file called serialport.c with an array called serialport[]. Just add the following at the end o f the serialport.c file. &lt;/p&gt;
+&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-&quot; data-lang=&quot;&quot;&gt;#include &quot;mruby.h&quot;
+#include &quot;mruby/irep.h&quot;
+#include &quot;mruby/proc.h&quot;
+
+
+int main(void) {
+
+    mrb_state *mrb;
+    mrb = mrb_open();
+
+    mrb_load_irep(mrb, serialport);
+
+    mrb_close(mrb);
+
+    return 0;
+}
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;After this run the following commands to make an executable.&lt;/p&gt;
+&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-&quot; data-lang=&quot;&quot;&gt;gcc -I/home/pi/mruby/src -I/home/pi/mruby/include -c serialport.c -o serialport.o
+gcc -o serialport serialport.o -lm /home/pi/mruby/build/host/lib/libmruby.a
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;The above command creates an executable serialport. Just run it and it will do the same that the ruby code was doing before.&lt;/p&gt;
+
+&lt;p&gt;Happy Hacking. :) &lt;/p&gt;
+
+&lt;p&gt;P.S. - make sure the baud_rate from both the sides are same. :P &lt;/p&gt;
+</description>
+        <pubDate>Fri, 20 Nov 2015 09:59:52 +0100</pubDate>
+        <link>http://tworitdash.in/2015/11/20/serialport-and-sleep-mruby-gems-to-instruct-texas-launchpad-tm4c123g-with-arm-cortex-m4.html</link>
+        <guid isPermaLink="true">http://tworitdash.in/2015/11/20/serialport-and-sleep-mruby-gems-to-instruct-texas-launchpad-tm4c123g-with-arm-cortex-m4.html</guid>
+        
+        
+      </item>
+    
+      <item>
+        <title>Best Practices to Recover Ruby Gems and Developer Tools in Mac OSX El Capitan</title>
+        <description>&lt;p&gt;El Capitan has Darwin-15 (different from the last kernel). The first step that I found is to disable SIP (System Integrity Protection) by the following the steps below.&lt;/p&gt;
+&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-&quot; data-lang=&quot;&quot;&gt;1. Rebooting in recovery mode by long pressing command + R on reboot
+2. Accessing the terminal by going to utilities 
+3. run the following in the terminal 
+
+csrutil disable
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;Homebrew requires access to the path /usr/local. So we need to have access to this path by using the following commands.&lt;/p&gt;
+&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-&quot; data-lang=&quot;&quot;&gt;sudo chflags norestricted /usr/local &amp;amp;&amp;amp; sudo chown $(whoami):admin /usr/local &amp;amp;&amp;amp; sudo chown -R $(whoami):admin /usr/local
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;After all these, it&amp;#39;s the best practice to update xcode to version 7.1 and install the command line tools as well. There are a lot of ways to do this.&lt;/p&gt;
+
+&lt;p&gt;Run the following in the terminal &lt;/p&gt;
+&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-&quot; data-lang=&quot;&quot;&gt;xcode-select --install
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;If the above way fails, just click on xcode application and go to xcode -&amp;gt; Open Developer Tool -&amp;gt; More Developer Tools. It will take to you to the apple developer site. Just login there and according to the OS and Xcode version you have, download the command line tools file with the .dmg extension and install it.&lt;/p&gt;
+
+&lt;p&gt;Or else, the best way is to click on the mac app store and check for updates. There must be an update to install the command line tools and after that it&amp;#39;s done.&lt;/p&gt;
+
+&lt;h3&gt;Fixing Gem native extension&lt;/h3&gt;
+
+&lt;p&gt;I have a blog configured with Octopress and after updating the system to 10.11, bundle install always failed. With the command line tools installed and with proper permissions set to /usr/local/, I got the error while running &lt;/p&gt;
+&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-&quot; data-lang=&quot;&quot;&gt;bundle exec rake preview
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;Error was &lt;/p&gt;
+&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-&quot; data-lang=&quot;&quot;&gt;Starting to watch source with Jekyll and Compass. Starting Rack on port 4000
+rake aborted!
+Errno::ENOENT: No such file or directory - compass
+/Users/user/git/octopress/Rakefile:85:in spawn
+/Users/user/git/octopress/Rakefile:85:in block in &amp;lt;top (required)&amp;gt;
+Tasks: TOP =&amp;gt; preview
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;To have this removed, I prefered installing ruby from rbenv. Before that I have been using the system ruby. With rbenv, we can have the flexibity of having different versions of ruby installed for different projects. With the above fixes, homebrew must be working as usual. &lt;/p&gt;
+&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-&quot; data-lang=&quot;&quot;&gt;brew update
+brew install rbenv ruby-build
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;Ruby-build is an additional dependency for rbenv. After that we need to set the path so that we can have the command line utility of rbenv. &lt;/p&gt;
+&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-&quot; data-lang=&quot;&quot;&gt;echo &#39;if which rbenv &amp;gt; /dev/null; then eval &quot;$(rbenv init -)&quot;; fi&#39; &amp;gt;&amp;gt; ~/.bash_profile
+source ~/.bash_profile
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;The above instruction adds a PATH variable to the .bash_profile to have the utility. &lt;/p&gt;
+
+&lt;p&gt;Then we need to install ruby from rbenv and to have a version of our choice globally. I preferred 2.2.3.&lt;/p&gt;
+&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-&quot; data-lang=&quot;&quot;&gt;rbenv install 2.2.3
+rbenv global 2.2.3
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;Now if we check &lt;/p&gt;
+&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-&quot; data-lang=&quot;&quot;&gt;ruby -v 
+ruby 2.2.3p173 (2015-08-18 revision 51636) [x86_64-darwin15]
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;Now I wanted to have this version installed locally in my octopress blog. I just entered into it and ran the following.&lt;/p&gt;
+&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-&quot; data-lang=&quot;&quot;&gt;rbenv rehash
+rbenv local 2.2.3
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;Then I installed all the necessary gems by &lt;/p&gt;
+&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-&quot; data-lang=&quot;&quot;&gt;bundle install 
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;But I eneded up with some errors that uses some versions specific issues. My Gemfile looked like this before. &lt;/p&gt;
+&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-&quot; data-lang=&quot;&quot;&gt;cat Gemfile
+source &quot;https://rubygems.org&quot;
+
+group :development do
+  gem &#39;rake&#39;, &#39;~&amp;gt; 10.0&#39;
+  gem &#39;jekyll&#39;, &#39;~&amp;gt; 2.0&#39;
+  gem &#39;octopress-hooks&#39;, &#39;~&amp;gt; 2.2&#39;
+  gem &#39;octopress-date-format&#39;, &#39;~&amp;gt; 2.0&#39;
+  gem &#39;jekyll-sitemap&#39;
+  gem &#39;rdiscount&#39;, &#39;~&amp;gt; 2.0&#39;
+  gem &#39;RedCloth&#39;, &#39;~&amp;gt; 4.2.9&#39;
+  gem &#39;haml&#39;, &#39;~&amp;gt; 4.0&#39;
+  gem &#39;compass&#39;, &#39;~&amp;gt; 1.0.1&#39;
+  gem &#39;sass-globbing&#39;, &#39;~&amp;gt; 1.0.0&#39;
+  gem &#39;rb-fsevent&#39;, &#39;~&amp;gt; 0.9&#39;
+  gem &#39;stringex&#39;, &#39;~&amp;gt; 1.4.0&#39;
+  gem &#39;therubyracer&#39;
+end
+
+gem &#39;sinatra&#39;, &#39;~&amp;gt; 1.4.2&#39;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;Then I just removed the versions from the right side of each gem.&lt;/p&gt;
+&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-&quot; data-lang=&quot;&quot;&gt;cat Gemfile 
+source &quot;https://rubygems.org&quot;
+
+group :development do
+  gem &#39;rake&#39;
+  gem &#39;jekyll&#39;
+  gem &#39;rdiscount&#39;
+  gem &#39;therubyracer&#39;
+  gem &#39;pygments.rb&#39;
+  gem &#39;RedCloth&#39;
+  gem &#39;haml&#39;
+  gem &#39;compass&#39;
+  gem &#39;sass&#39;
+  gem &#39;sass-globbing&#39;
+  gem &#39;rubypants&#39;
+  gem &#39;rb-fsevent&#39;
+  gem &#39;stringex&#39;
+  gem &#39;liquid&#39;
+  gem &#39;directory_watcher&#39;
+  gem &#39;json&#39;
+end
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;Then I removed Gemfile.lock file to install gems locally from scratch again.&lt;/p&gt;
+&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-&quot; data-lang=&quot;&quot;&gt;rm Gemfile.lock
+gem pristine --all 
+bundle install
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;Now :&lt;/p&gt;
+&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-&quot; data-lang=&quot;&quot;&gt;bundle exec rake preview
+Starting to watch source with Jekyll and Compass. Starting Rack on port 4000
+/Users/tworit/.rbenv/versions/2.2.3/lib/ruby/gems/2.2.0/gems/liquid-2.3.0/lib/liquid/htmltags.rb:44: warning: duplicated key at line 47 ignored: &quot;index0&quot;
+[2015-11-20 13:45:50] INFO  WEBrick 1.3.1
+[2015-11-20 13:45:50] INFO  ruby 2.2.3 (2015-08-18) [x86_64-darwin15]
+[2015-11-20 13:45:50] INFO  WEBrick::HTTPServer#start: pid=82642 port=4000
+Configuration from /Users/tworit/tworitdash.github.io/_config.yml
+Auto-regenerating enabled: source -&amp;gt; public
+[2015-11-20 13:45:50] regeneration: 150 files changed
+&amp;gt;&amp;gt;&amp;gt; Change detected at 13:45:51 to: screen.scss
+identical public/stylesheets/screen.css 
+&amp;gt;&amp;gt;&amp;gt; Compass is watching for changes. Press Ctrl-C to Stop.
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;Now, everything should work fine. :) Happy Hacking !&lt;/p&gt;
+</description>
+        <pubDate>Fri, 20 Nov 2015 07:06:22 +0100</pubDate>
+        <link>http://tworitdash.in/2015/11/20/best-practices-to-recover-ruby-gems-and-developer-tools-in-mac-osx-el-capitan.html</link>
+        <guid isPermaLink="true">http://tworitdash.in/2015/11/20/best-practices-to-recover-ruby-gems-and-developer-tools-in-mac-osx-el-capitan.html</guid>
+        
+        
+      </item>
+    
+      <item>
+        <title>Compiling Anything from the Portstree failed in FreeBSD 10.1 Raspberry Pi</title>
+        <description>&lt;p&gt;After getting portsnap extracted on my FreeBSD RPi Desktop, I wanted to compile a couple of things from the ports tree. But when I wanted to compile something, It first used to fetch &amp;quot;pkg&amp;quot; and the make failed. When I ran:&lt;/p&gt;
+&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-&quot; data-lang=&quot;&quot;&gt;# pkg updtae
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;It first used to ask to install the package manager. Then it used to terminate and instruct to install pkg from /usr/ports/ports-mgmt/pkg . But that procedure also failed with the same error messages that I had got while compiling nano nad links from ports tree. I found out a simple but effective solution to this.&lt;/p&gt;
+&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-&quot; data-lang=&quot;&quot;&gt;# whereis portmaster
+portmaster: /usr/ports/ports-mgmt/portmaster/
+# cd /usr/ports/ports-mgmt/portmaster &amp;amp;&amp;amp; make install clean
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;Compiling portmaster was very time taking but it solved the issue and the pkg was successfully installed. Unfortunately I found no packagesite repositiry for &amp;quot;pkg update&amp;quot; online for FreeBSD:10.1:armv6 Release for Raspberry Pi. So, I couldn&amp;#39;t use the pkg tool to install packages. And I tried to compile packages from the ports tree by hand. The processor and RAM of Raspberry Pi cause problem while compiling. It even takes one whole day or more than that to compile a package from the ports tree.&lt;/p&gt;
+</description>
+        <pubDate>Tue, 04 Aug 2015 10:09:38 +0200</pubDate>
+        <link>http://tworitdash.in/2015/08/04/compiling-anything-from-the-portstree-failed-in-freebsd-10-dot-1-raspberry-pi.html</link>
+        <guid isPermaLink="true">http://tworitdash.in/2015/08/04/compiling-anything-from-the-portstree-failed-in-freebsd-10-dot-1-raspberry-pi.html</guid>
+        
+        
+      </item>
+    
+      <item>
+        <title>Raspberry Pi FreeBSD portsnap fetch clockktime Error</title>
+        <description>&lt;p&gt;After setting up the network, let&amp;#39;s try to fetch and extract the portsnap. Hell !! It resulted in something irritating. &lt;/p&gt;
+&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-&quot; data-lang=&quot;&quot;&gt;# portsnap fetch
+Looking up portsnap.FreeBSD.org mirrors... 2 mirrors found.
+Fetching snapshot tag from portsnap1.FreeBSD.org... done.
+Snapshot appears to have been created more than one day into the future!
+(Is the system clock correct?)
+Cowardly refusing to proceed any further.
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;This can be solved by using the proper timezone.&lt;/p&gt;
+&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-&quot; data-lang=&quot;&quot;&gt;vi /etc/rc.conf 
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;And add the following:&lt;/p&gt;
+&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-&quot; data-lang=&quot;&quot;&gt;ntpdate_enable=&quot;YES&quot;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;Then set up your timezone by the following command:&lt;/p&gt;
+&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-&quot; data-lang=&quot;&quot;&gt;# tzsetup
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;Then after a reboot, the fetch will work. :)&lt;/p&gt;
+&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-&quot; data-lang=&quot;&quot;&gt;# portsnap fetch extract
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;</description>
+        <pubDate>Tue, 04 Aug 2015 09:59:54 +0200</pubDate>
+        <link>http://tworitdash.in/2015/08/04/raspberry-pi-freebsd-portsnap-fetch-clockktime-error.html</link>
+        <guid isPermaLink="true">http://tworitdash.in/2015/08/04/raspberry-pi-freebsd-portsnap-fetch-clockktime-error.html</guid>
+        
+        
+      </item>
+    
+      <item>
+        <title>Configuring WiFi Adapter in FreeBSD Raspberry Pi</title>
+        <description>&lt;p&gt;After banging my head a lot of times, finally I found out the solution for connecting my Raspberry Pi to my WiFi network using an adapter. The adapter is from NetGear (realtek RTL IEEE 802.11) and while my machine used to boot up, it was recognized as &amp;quot;urtwn0&amp;quot; WiFi card. At first, the adopter didn&amp;#39;t glow. Then I found out that is a problem adapter. So, I had to allow the license for realtek urtwn0 driver in /boot/loader.conf file. The file didn&amp;#39;t exist and I created one.&lt;/p&gt;
+&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-&quot; data-lang=&quot;&quot;&gt;vi /boot/loader.conf
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;Then write the following lines into it.&lt;/p&gt;
+&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-&quot; data-lang=&quot;&quot;&gt;legal.realtek.license_ack=1
+if_urtwn_load=&quot;YES&quot;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;I know editing the FreeBSD files using vi is a pain. You can use ee editor also. If you have connected the Pi before with some wired network and installed nano in it, you can also use the nano editor to edit. It is pretty smooth. Then, reboot your system.&lt;/p&gt;
+&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-&quot; data-lang=&quot;&quot;&gt;reboot
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;After a reboot we are ready to create a network interface using wlan0.&lt;/p&gt;
+&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-&quot; data-lang=&quot;&quot;&gt;ifconfig
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;It will show the listed cards with the IPs assigned to them. You can find no inet address for &amp;quot;urtwn0&amp;quot; driver. &lt;/p&gt;
+&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-&quot; data-lang=&quot;&quot;&gt;ifconfig wlan0 create wlandev urtwn0
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;It will create an interface wlan0 and the command will return the ethernet address. If you are getting the address without any error, you are ready to go. To permanently store the configuration, we have to add some line to /etc/rc.conf .&lt;/p&gt;
+&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-&quot; data-lang=&quot;&quot;&gt;vi /etc/rc.conf
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;The lines to be added are:&lt;/p&gt;
+&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-&quot; data-lang=&quot;&quot;&gt;wlans_urtwn0=&quot;wlan0&quot;
+ifconfig_wlan0=&quot;WPA DHCP&quot;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;If you are having some difficulties while deleting characters in vi, just use &lt;code&gt;ESC&lt;/code&gt; then &lt;code&gt;d&lt;/code&gt; then left arrow button. Accordingly you can get how to delete multiple characters. Then &lt;code&gt;ESC&lt;/code&gt; and &lt;code&gt;i&lt;/code&gt; can help you edit the file again. &lt;/p&gt;
+
+&lt;p&gt;Then to get to know about the list of WiFi networks:&lt;/p&gt;
+&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-&quot; data-lang=&quot;&quot;&gt;ifconfig wlan0 up scan
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;To connect to your network, you should edit the following file.&lt;/p&gt;
+&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-&quot; data-lang=&quot;&quot;&gt;vi /etc/wpa_supplicant.conf
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;And write the following lines as per your WiFi SSID and Password.&lt;/p&gt;
+&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-&quot; data-lang=&quot;&quot;&gt;network={
+    ssid=&quot;your_ssid&quot;
+    psk=&quot;your_password&quot;
+}
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;Then after a reboot, you can see the adapter glowing and you can check the IP by ifconfig.&lt;/p&gt;
+
+&lt;p&gt;Checking your network is also easy. Just look at the content of your resolv.conf file.&lt;/p&gt;
+&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-&quot; data-lang=&quot;&quot;&gt;cat /etc/resolv.conf
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;Then ping it. Like in my case:&lt;/p&gt;
+&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-&quot; data-lang=&quot;&quot;&gt;ping 192.168.43.1
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;And you will get 0% packet loss after terminating.&lt;/p&gt;
+
+&lt;p&gt;Happy Hacking ! :)&lt;/p&gt;
+</description>
+        <pubDate>Tue, 04 Aug 2015 09:14:40 +0200</pubDate>
+        <link>http://tworitdash.in/2015/08/04/configuring-wifi-adaptor-in-freebsd-raspberry-pi.html</link>
+        <guid isPermaLink="true">http://tworitdash.in/2015/08/04/configuring-wifi-adaptor-in-freebsd-raspberry-pi.html</guid>
+        
+        
+      </item>
+    
+      <item>
+        <title>Installing FreeBSD in Raspberry Pi with the help of a Mac</title>
+        <description>&lt;p&gt;I have a Raspberry Pi B+ model. After running FreeBSD for about a month in the VirtualBox application in my Macbook Pro, I wished to have it installed natively somewhere else. Then I thought not to use a huge system or computer. I just needed a few space to run a server in a jail. Then, I happened to notice that my Raspberry Pi had not been used for ages. I had further plans to have a RFID security system using FreeBSD jails to configure the server to use it as a IoT (Internet of Things) project. Then, I arranged a HDMI cable, a USB keyboard, a 16 GB SD card from Samsung and a USB WiFi module (Netgear Adaptor). &lt;/p&gt;
+
+&lt;p&gt;So, let&amp;#39;s get started.&lt;/p&gt;
+
+&lt;p&gt;First connect the SD card to mac. Then open up the terminal and type&lt;/p&gt;
+&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-&quot; data-lang=&quot;&quot;&gt;df -h
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;or&lt;/p&gt;
+&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-&quot; data-lang=&quot;&quot;&gt;diskutil list
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;From the above commands, you can see your SD card volume as /dev/diskn. Where n is 2, 3 or something of that sort. And from the first command u can see a partition of that same as /dev/diskns1 or something like that. Now, we need to unmount that partition to start loading the image. &lt;/p&gt;
+&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-&quot; data-lang=&quot;&quot;&gt;sudo diskutil umount /dev/diskns1
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;After getting the unmounted message, download the FreeBSD archive required for Raspberry Pi from the FreeBSD website. I downloaded it from &lt;a href=&quot;ftp://ftp.freebsd.org/pub/FreeBSD/releases/arm/armv6/ISO-IMAGES/10.1/&quot;&gt;here&lt;/a&gt; , from the ftp site. Then, double click on that archive to get the image file of the OS. Let it be in the Downloads folder. Then,&lt;/p&gt;
+&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-&quot; data-lang=&quot;&quot;&gt;cd ~/Downloads
+sudo dd if=your_image_file.img of=/dev/rdiskn bs=1m
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;It will take sometime to write the image on to the SD card. Before running this command, do know what it means. &amp;quot;if&amp;quot; stands for input file. &amp;quot;of&amp;quot; stands for output file. And make sure to write rdiskn instead of diskn. This will write the image in a raw disk format and the process will be faster. And, the other difference that I have marked is that, if one is using diskn in stead of rdiskn, after writing the disk space created will not be visible. If you insert it again, you will find a message of incompatibility. Then you will end up formatting your disk once again. And make sure that diskn is really your SD card. Otherwise, you will end up destroying your mac. &lt;/p&gt;
+
+&lt;p&gt;After writing the image, you can see the disk space in finder. Click on it to see inside. Then a few things need to be replaced in the disk. The bootcode.bin and the start.elf need to be replaced. Go &lt;a href=&quot;https://github.com/raspberrypi/firmware/tree/master/boot&quot;&gt;here&lt;/a&gt; to find the the above mentioned files and replace them in the disk.&lt;/p&gt;
+
+&lt;p&gt;Then eject the SD card and put in your Pi. Connect the HDMI cable to the Pi and to a monitor. Connect a USB keyboard as well. Then power up your Pi. &lt;/p&gt;
+
+&lt;p&gt;Voila !! It&amp;#39;s working.&lt;/p&gt;
+
+&lt;p&gt;P.S. - If it doesn&amp;#39;t work, go to the firmware github page once again and fetch all the &lt;strong&gt;fixup and start&lt;/strong&gt; files and replace them in the disk (SD card) and don&amp;#39;t destroy your mac. It&amp;#39;s pretty expensive. :P     &lt;/p&gt;
+</description>
+        <pubDate>Thu, 23 Jul 2015 07:08:13 +0200</pubDate>
+        <link>http://tworitdash.in/2015/07/23/installing-freebsd-in-raspberry-pi-with-the-help-of-a-mac.html</link>
+        <guid isPermaLink="true">http://tworitdash.in/2015/07/23/installing-freebsd-in-raspberry-pi-with-the-help-of-a-mac.html</guid>
+        
+        
+      </item>
+    
+      <item>
+        <title>Monngo DB in Fedora</title>
+        <description>&lt;p&gt;It is somewhat difficult to run mongo db by following the conventional steps for installing it in fedora. While starting mongo db, the normal problem that is usually encountered after authenticating is &lt;/p&gt;
+&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-&quot; data-lang=&quot;&quot;&gt;$ systemctl start mongod
+
+$ starting mongod (via systemctl):  Job failed. See system journal and &#39;systemctl status&#39; for details.  [FAILED]
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;And it is usualy found that the mongod.log is empty or rather absent. If one of the commands mongo or mongod is not working, then also the installation is incomplete becasue the mongo db server satrts with mongod and, if it is not working properly, it will be difficult to connect mongo clients to it even after providing correct authentication for the user.&lt;/p&gt;
+
+&lt;p&gt;It is also usually seen that the command /usr/bin/mongod or the archive /usr/share/man/man1/mongod.1.gz is not present.&lt;/p&gt;
+
+&lt;h2&gt;Installing Mongo DB in Fedora&lt;/h2&gt;
+
+&lt;p&gt;First we have to remove the installed versions (if there is any).&lt;/p&gt;
+&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-&quot; data-lang=&quot;&quot;&gt;$ sudo su
+# yum erase mongodb
+# yum erase mongo-10gen
+# yum --disablerepo= * --enablerepo=fedora,updates install mongodb mongodb-server
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;Running Mongo&lt;/p&gt;
+&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-&quot; data-lang=&quot;&quot;&gt;# systemctl start mongod.service
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;Verifying &lt;/p&gt;
+&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-&quot; data-lang=&quot;&quot;&gt;# systemctl status mongod.service
+# tail /var/log/mongodb/mongodb.log
+# nmap -p27017 localhost
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;Because the default port for mongo db is 27017.&lt;/p&gt;
+
+&lt;p&gt;Running mongo clinet&lt;/p&gt;
+&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-&quot; data-lang=&quot;&quot;&gt;#mongo
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;Starting mongo db each time you boot.&lt;/p&gt;
+&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-&quot; data-lang=&quot;&quot;&gt;#systemctl enable mongod.service
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;Happy Hacking. :)&lt;/p&gt;
+</description>
+        <pubDate>Fri, 17 Apr 2015 17:52:17 +0200</pubDate>
+        <link>http://tworitdash.in/2015/04/17/monngo-db-in-fedora.html</link>
+        <guid isPermaLink="true">http://tworitdash.in/2015/04/17/monngo-db-in-fedora.html</guid>
+        
+        
+      </item>
+    
+  </channel>
+</rss>

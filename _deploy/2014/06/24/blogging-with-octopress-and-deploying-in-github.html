@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html>
+
+  <head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+	<link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon.png">
+	<link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32.png">
+	<link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16.png">
+	<link rel="manifest" href="/images/site.webmanifest">
+	<link rel="mask-icon" href="/images/safari-pinned-tab.svg" color="#5bbad5">
+	<meta name="msapplication-TileColor" content="#da532c">
+	<meta name="theme-color" content="#ffffff">
+	
+	<style>
+		@import url('https://fonts.googleapis.com/css?family=Inconsolata');
+	</style>
+  <title>Blogging with Octopress and deploying in Github</title>
+  <meta name="description" content="After a long and tiring hot day, finally it&#39;s raining here at Bhubaneswar. So let&#39;s hack some codes to make an awesome blogging site.">
+
+  <link rel="stylesheet" href="/css/main.css">
+  <link rel="canonical" href="http://tworitdash.in/2014/06/24/blogging-with-octopress-and-deploying-in-github.html">
+  <link rel="alternate" type="application/rss+xml" title="Twor Bot" href="http://tworitdash.in/feed.xml" />
+</head>
+
+
+  <body>
+
+    <header class="site-header">
+
+  <div class="wrapper">
+
+    <a class="site-title" href="/">Twor Bot</a>
+
+    <nav class="site-nav">
+      <a href="#" class="menu-icon">
+        <svg viewBox="0 0 18 15">
+          <path fill="#424242" d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.031C17.335,0,18,0.665,18,1.484L18,1.484z"/>
+          <path fill="#424242" d="M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0c0-0.82,0.665-1.484,1.484-1.484 h15.031C17.335,6.031,18,6.696,18,7.516L18,7.516z"/>
+          <path fill="#424242" d="M18,13.516C18,14.335,17.335,15,16.516,15H1.484C0.665,15,0,14.335,0,13.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.031C17.335,12.031,18,12.696,18,13.516L18,13.516z"/>
+        </svg>
+      </a>
+
+      <div class="trigger">
+
+			 <a class="page-link" href="/blog">Blog</a>
+			 <a class="page-link" href="/blog/archives">Blog Archives</a>
+ 	
+        
+          
+          <a class="page-link" href="/about/">About</a>
+          
+		
+          
+		
+          
+		
+          
+		
+          
+		
+          
+		
+          
+		
+          
+		
+          
+		
+          
+			
+			 <a class="page-link" href="http://resume.tworitdash.in">Resume</a>
+			 <a class="page-link" href="http://conferences.tworitdash.in">Conferences</a>
+
+			 <a class="page-link" href="http://blog.tworitdash.in/">Alter Ego</a>
+ 	
+        
+      </div>
+    </nav>
+
+  </div>
+
+</header>
+
+
+    <div class="page-content">
+      <div class="wrapper">
+        <div class="post">
+
+  <header class="post-header">
+    <h1 class="post-title">Blogging with Octopress and deploying in Github</h1>
+    <p class="post-meta">Jun 24, 2014</p>
+  </header>
+
+  <article class="post-content">
+    <p>After a long and tiring hot day, finally it&#39;s raining here at Bhubaneswar. So let&#39;s hack some codes to make an awesome blogging site.</p>
+
+<p>Do you feel the same as I feel about wordpress? If yes, then just get rid of it and use one of the best static page or blogging page generators called Octopress.And github provides an awesome online page generating option so that the codes can be pushed or deployed in github to share it on the web. :)</p>
+
+<p>Steps:
+Install ruby in your system (as octopress is based on ruby)</p>
+
+<p><a href="http://www.tutorialspoint.com/ruby/ruby_installation_windows.htm">For windows</a></p>
+
+<p><a href="http://www.sdjournal.com/posts/ruby-with-rbenv-on-debian.html">For ubtntu/debian</a></p>
+
+<p>Using rbenv for ruby version and gem management is better in debian based operarting systems.</p>
+
+<p>For mac users, there is no need to install ruby perhaps as they have it pre-installed.</p>
+
+<p>Check by running either of the following.</p>
+<div class="highlight"><pre><code class="language-" data-lang="">1. ruby -v
+2. ruby --version
+</code></pre></div>
+<p>Now we are ready to go for the hack.Let&#39;s make a folder and clone the octopress github repo in that.You will need the <a href="http://git-scm.com/download/win">git command line or the git bash</a> for that in windows and for ubuntu or debian just <code>sudo apt-get install git</code> will do that same job.</p>
+<div class="highlight"><pre><code class="language-" data-lang="">1. mkdir your_repo
+2. cd your_repo
+3. git clone git://github.com/imathis/octopress.git octopress
+4. cd octopress
+</code></pre></div>
+<p>Now we are in the octopress directory and now we need to install all the ruby gems to perform our task. So we first need the bundler gem.</p>
+<div class="highlight"><pre><code class="language-" data-lang="">1. gem install bundler
+</code></pre></div>
+<p>Not <code>sudo gem install bundler</code> as we are using rbenv for ruby.</p>
+
+<p>Then while in that directory run</p>
+<div class="highlight"><pre><code class="language-" data-lang="">1. bundle install
+2. bundle exec rake install
+</code></pre></div>
+<p>The rake install command follows the rake task (install) and creates a group of files and folders in that octopress directory like <code>source</code> <code>public</code> etc and if you look into the source folder you can find the folder <code>_posts</code>(where all the blog markdown files are going to be saved).</p>
+
+<p>Then for the basic configurations, open up the _config.yml file and set the things in that like ;</p>
+<div class="highlight"><pre><code class="language-" data-lang="">1. url: http://yoursite.com
+2. title: My First Dummy Blog
+3. subtitle: 
+4. author: Me 
+5. simple_search: https://www.google.com/search
+6. description: whatever !
+</code></pre></div>
+<p>All set !!! :)</p>
+
+<p>Then let&#39;s create the first blog </p>
+<div class="highlight"><pre><code class="language-" data-lang="">1. bundle exec rake new_post["your blog title"]
+</code></pre></div>
+<p>This rake task will create a markdown file in the <code>_posts</code> folder with the current date (/blog/year-month-date-title) as we see in general blogging sites.Open that file and you can see the page layout is &quot;post&quot; and I will explain how to make our own custom ones in my following blogs. 
+    ---
+    1.  layout: post
+    2.  title: &quot;Blogging with Octopress and deploying in Github&quot;
+    3.  date: 2014-06-24 22:58:00 +0530
+    4.  comments: false
+    5.  categories:
+    ----</p>
+
+<p>Then insert your blog right below the - - - and save the file.</p>
+
+<p>After that we can see the changes by running </p>
+<div class="highlight"><pre><code class="language-" data-lang="">1. bundle exec rake generate
+2. bundle exec rake preview
+</code></pre></div>
+<p>The preview task will create the page at port 4000 and to have a overview we can see it at <code>localhost:4000</code> in any browser.</p>
+
+<p>Then stop that browser by running <code>ctrl+c</code> and we are done.</p>
+
+<p><h2> Deploying in Github </h2></p>
+
+<p>First we need to make a github account and make it verified through the email address(this has to be done to make github free pages live on the web).</p>
+
+<p>Then we have to create a repo named <code>[username.github.io]</code></p>
+
+<p>Then we have to run the following in CLI or Terminal.</p>
+<div class="highlight"><pre><code class="language-" data-lang="">1. bundle exec rake setup_github_pages
+</code></pre></div>
+<p>It will ask for the github repo link and we have to write the url for that github repo.</p>
+
+<p>Then just deploy the codes.</p>
+<div class="highlight"><pre><code class="language-" data-lang="">1. bundle exec rake deploy
+</code></pre></div>
+<p>In this task the static pages that are generated in the <code>rake generate </code> command will be copied from the <code>public</code> folder to the <code>_deploy</code> folder and at the same time the codes will be pushed to the master branch of that github repo. It will ask your github user and password and after that it will be all done. Then refresh that repo and all the codes will be there. \o/</p>
+
+<p>Then wait for 15 minutes and then open <code>username.github.io</code> and you will have your blog on the web.</p>
+
+<p>Still not satisfied ?? Want to get rid of the <code>github.io</code> from your url?? Do you have your custom domain ?? If the answers to all of the above questions are yes,yes and yes then follow the steps below.</p>
+
+<p><p><h2> Custom Domain </p></h2></p>
+
+<p>Adding a CNAME file in the source directory will do the job.
+. 
+    1. touch CNAME</p>
+
+<p>Then open that file in any editor and add the url of your site.</p>
+<div class="highlight"><pre><code class="language-" data-lang="">1. your_url.com
+</code></pre></div>
+<p>Then generate and deploy the codes and wait for 10 minutes. Then go to the github repo&#39;s right hand settings bar and scroll down a bit and you will be able to see in the github pages table the url of your site. [Your site is published at your_url.com] </p>
+
+<p>Then go to your service provider or domain provider link and create a new A record in the &quot;DNS manage&quot; and come back to your CLI or Terminal and run the following.</p>
+<div class="highlight"><pre><code class="language-" data-lang="">1. dig username.github.io +nostats +nocomments +nocmd
+</code></pre></div>
+<p>Then it will show up something like this.</p>
+<div class="highlight"><pre><code class="language-" data-lang="">1. github.map.fastly.net.   17  IN  A   your_address
+2. fastly.net.      *****   IN  NS  ns1.***.dynect.net.
+3. fastly.net.      *****   IN  NS  ns2.***.dynect.net.
+4. fastly.net.      *****   IN  NS  ns3.***.dynect.net.
+4. fastly.net.      *****   IN  NS  ns4.***.dynect.net.
+</code></pre></div>
+<p>After that copy that <code>your_address</code> to the A record in that domain provider.</p>
+
+<p>It&#39;s better if you create 2 records and name them as (your<em>url.com) and (www.your</em>url.com) and copy that address in both the records. </p>
+
+<p>Then wait for about 15 minutes and then all done. </p>
+
+<p>Your blog is now updated at your_url.com. \o/</p>
+
+<p>Next I will show how to make custom pages using Octopress.</p>
+
+<p>Sorry for the comment bar because I don&#39;t have that active now. Will fix that later on. :)</p>
+
+  </article>
+
+	<div id="disqus_thread"></div>
+  <script type="text/javascript">
+    var disqus_config = function () {
+				      // Here is an example,
+				      // this.page.url = "https://poanchen.github.io/blog/2017/07/27/how-to-add-disqus-to-your-jekyll-site";
+				      this.page.url = "/2014/06/24/blogging-with-octopress-and-deploying-in-github.html";
+							    this.page.identifier = "/2014/06/24/blogging-with-octopress-and-deploying-in-github.html";
+							};
+
+    // You should be able to get the following lines of code from your Disqus admin.
+    // https://disqus.com/admin/universalcode
+    (function() { // DON'T EDIT BELOW THIS LINE
+				      var d = document, s = d.createElement('script');
+							s.src = '//tworitdashin.disqus.com/embed.js';
+							s.setAttribute('data-timestamp', +new Date());
+							(d.head || d.body).appendChild(s);
+			})();
+  </script>
+	  <noscript>
+				    Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a>
+</noscript>
+
+
+</div>
+
+      </div>
+    </div>
+
+    <footer class="site-footer">
+
+  <div class="wrapper">
+
+    <h2 class="footer-heading">Twor Bot</h2>
+
+    <div class="footer-col-wrapper">
+      <div class="footer-col  footer-col-1">
+        <ul class="contact-list">
+          <li>Twor Bot</li>
+          <li><a href="mailto:tworitdash@gmail.com">tworitdash@gmail.com</a></li>
+        </ul>
+      </div>
+
+      <div class="footer-col  footer-col-2">
+        <ul class="social-media-list">
+          
+          <li>
+            <a href="https://github.com/tworitdash">
+              <span class="icon  icon--github">
+                <svg viewBox="0 0 16 16">
+                  <path fill="#828282" d="M7.999,0.431c-4.285,0-7.76,3.474-7.76,7.761 c0,3.428,2.223,6.337,5.307,7.363c0.388,0.071,0.53-0.168,0.53-0.374c0-0.184-0.007-0.672-0.01-1.32 c-2.159,0.469-2.614-1.04-2.614-1.04c-0.353-0.896-0.862-1.135-0.862-1.135c-0.705-0.481,0.053-0.472,0.053-0.472 c0.779,0.055,1.189,0.8,1.189,0.8c0.692,1.186,1.816,0.843,2.258,0.645c0.071-0.502,0.271-0.843,0.493-1.037 C4.86,11.425,3.049,10.76,3.049,7.786c0-0.847,0.302-1.54,0.799-2.082C3.768,5.507,3.501,4.718,3.924,3.65 c0,0,0.652-0.209,2.134,0.796C6.677,4.273,7.34,4.187,8,4.184c0.659,0.003,1.323,0.089,1.943,0.261 c1.482-1.004,2.132-0.796,2.132-0.796c0.423,1.068,0.157,1.857,0.077,2.054c0.497,0.542,0.798,1.235,0.798,2.082 c0,2.981-1.814,3.637-3.543,3.829c0.279,0.24,0.527,0.713,0.527,1.437c0,1.037-0.01,1.874-0.01,2.129 c0,0.208,0.14,0.449,0.534,0.373c3.081-1.028,5.302-3.935,5.302-7.362C15.76,3.906,12.285,0.431,7.999,0.431z"/>
+                </svg>
+              </span>
+
+              <span class="username">tworitdash</span>
+            </a>
+          </li>
+          
+
+          
+          <li>
+            <a href="https://twitter.com/tworitdash">
+              <span class="icon  icon--twitter">
+                <svg viewBox="0 0 16 16">
+                  <path fill="#828282" d="M15.969,3.058c-0.586,0.26-1.217,0.436-1.878,0.515c0.675-0.405,1.194-1.045,1.438-1.809
+                  c-0.632,0.375-1.332,0.647-2.076,0.793c-0.596-0.636-1.446-1.033-2.387-1.033c-1.806,0-3.27,1.464-3.27,3.27 c0,0.256,0.029,0.506,0.085,0.745C5.163,5.404,2.753,4.102,1.14,2.124C0.859,2.607,0.698,3.168,0.698,3.767 c0,1.134,0.577,2.135,1.455,2.722C1.616,6.472,1.112,6.325,0.671,6.08c0,0.014,0,0.027,0,0.041c0,1.584,1.127,2.906,2.623,3.206 C3.02,9.402,2.731,9.442,2.433,9.442c-0.211,0-0.416-0.021-0.615-0.059c0.416,1.299,1.624,2.245,3.055,2.271 c-1.119,0.877-2.529,1.4-4.061,1.4c-0.264,0-0.524-0.015-0.78-0.046c1.447,0.928,3.166,1.469,5.013,1.469 c6.015,0,9.304-4.983,9.304-9.304c0-0.142-0.003-0.283-0.009-0.423C14.976,4.29,15.531,3.714,15.969,3.058z"/>
+                </svg>
+              </span>
+
+              <span class="username">tworitdash</span>
+            </a>
+          </li>
+          
+        </ul>
+      </div>
+
+      <div class="footer-col  footer-col-3">
+        <p class="text">The more Persnickety, The more Hippy.
+</p>
+      </div>
+    </div>
+
+  </div>
+
+</footer>
+
+
+  </body>
+
+</html>
