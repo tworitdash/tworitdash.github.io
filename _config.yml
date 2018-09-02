@@ -9,7 +9,7 @@ url: "http://tworitdash.in" # the base hostname & protocol for your site
 twitter_username: tworitdash
 github_username:  tworitdash
 
-disqus_short_name: tworitdashin
+disqus_short_name: tworitdash-in-blog
 disqus_show_comment_count: true
 author:
     name: Tworit
