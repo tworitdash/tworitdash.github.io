@@ -1,0 +1,663 @@
+<!DOCTYPE html>
+<html>
+
+  <head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+	<link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon.png">
+	<link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32.png">
+	<link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16.png">
+	<link rel="manifest" href="/images/site.webmanifest">
+	<link rel="mask-icon" href="/images/safari-pinned-tab.svg" color="#5bbad5">
+	<meta name="msapplication-TileColor" content="#da532c">
+	<meta name="theme-color" content="#ffffff">
+	
+	<style>
+		@import url('https://fonts.googleapis.com/css?family=Inconsolata');
+	</style>
+  <title>IoT with Phoenix Part 1</title>
+  <meta name="description" content="This is the first blog post that I am writing to share my experience with the Phoenix framework in building an Iot application. I have written a blog post ab...">
+
+  <link rel="stylesheet" href="/css/main.css">
+  <link rel="canonical" href="http://tworitdash.in/2016/07/24/iot-with-phoenix-part-1.html">
+  <link rel="alternate" type="application/rss+xml" title="Twor Bot" href="http://tworitdash.in/feed.xml" />
+</head>
+
+
+  <body>
+
+    <header class="site-header">
+
+  <div class="wrapper">
+
+    <a class="site-title" href="/">Twor Bot</a>
+
+    <nav class="site-nav">
+      <a href="#" class="menu-icon">
+        <svg viewBox="0 0 18 15">
+          <path fill="#424242" d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.031C17.335,0,18,0.665,18,1.484L18,1.484z"/>
+          <path fill="#424242" d="M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0c0-0.82,0.665-1.484,1.484-1.484 h15.031C17.335,6.031,18,6.696,18,7.516L18,7.516z"/>
+          <path fill="#424242" d="M18,13.516C18,14.335,17.335,15,16.516,15H1.484C0.665,15,0,14.335,0,13.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.031C17.335,12.031,18,12.696,18,13.516L18,13.516z"/>
+        </svg>
+      </a>
+
+      <div class="trigger">
+
+			 <a class="page-link" href="/blog">Blog</a>
+			 <a class="page-link" href="/blog/archives">Blog Archives</a>
+ 	
+        
+          
+          <a class="page-link" href="/about/">About</a>
+          
+		
+          
+		
+          
+		
+          
+		
+          
+		
+          
+		
+          
+		
+          
+		
+          
+		
+          
+		
+          
+			
+			 <a class="page-link" href="http://resume.tworitdash.in">Resume</a>
+			 <a class="page-link" href="http://conferences.tworitdash.in">Conferences</a>
+
+			 <a class="page-link" href="http://blog.tworitdash.in/">Alter Ego</a>
+ 	
+        
+      </div>
+    </nav>
+
+  </div>
+
+</header>
+
+
+    <div class="page-content">
+      <div class="wrapper">
+        <div class="post">
+
+  <header class="post-header">
+    <h1 class="post-title">IoT with Phoenix Part 1</h1>
+    <p class="post-meta">Jul 24, 2016</p>
+  </header>
+
+  <article class="post-content">
+    <p>This is the first blog post that I am writing to share my experience with the Phoenix framework in building an Iot application. I have written a blog post about Elixir and Phoenix <a href="https://blog.zairza.in/generators-make-the-whole-thing-look-sexy-2434154a8e0e#.riq5apurj">here</a>. The objectives that we are going to achieve in here are</p>
+
+<ol>
+  <li>
+    <p>A ‘Model View Controller’ scheme for the users. So that the users can register themselves in the application and have a login access to monitor as well as control their machines.</p>
+  </li>
+  <li>
+    <p>A messaging interface between the machine and the user so that the application can be pretty much asynchronous and fast. This will accomplish the goal of an user specific Iot architecture, where a user can control and monitor only his/her machines, not others. There is no need of refreshing the pages to know the current state of the machines as we will be using websocket connections to make it a real time application, where the connection to the server never goes away.</p>
+  </li>
+  <li>
+    <p>Writing machine clients. The clients which will help the machine send sensor outputs to the server.</p>
+  </li>
+</ol>
+
+<p>Phoenix is a framework written in Elixir programming language which runs on Erlang VM. The installation instructions for the framework is given <a href="http://www.phoenixframework.org/docs/installation">here</a>. After successful installation, let’s start building the application.</p>
+
+<p>To create our Iot project run the following in the terminal.</p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>$mix phoenix.new iot
+</code></pre>
+</div>
+
+<p>Now, enter into the application. 
+Note: you must have postgres installed in your system for the database requirements.</p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>$cd iot
+</code></pre>
+</div>
+
+<p>Now run the server or you can run the server within an interpreter too.</p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>$mix phoenix.server 
+
+or
+
+$iex -S mix phoenix.server 
+</code></pre>
+</div>
+
+<p>Now we can view the application at http://localhost:4000/. Now let’s change the contents of some files to have the default page as the login page for users. To achieve that, we should have an users table in the database with the details of the users as attributes. For that, we have to generate a users model using the mix model generator.</p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>$mix phoenix.gen.model User user username:string encrypted_password:string email:string token:string 
+</code></pre>
+</div>
+
+<p>It will create a file called <code class="highlighter-rouge">user.ex</code> in the <code class="highlighter-rouge">web/models/</code> directory. Now the users table has 4 attributes called the <code class="highlighter-rouge">username</code>, <code class="highlighter-rouge">encrypted_password</code>, <code class="highlighter-rouge">email</code> and a <code class="highlighter-rouge">token</code>. But, to register a user with a password for login purposes, we should have two virtual fields, the <code class="highlighter-rouge">password</code> field and a <code class="highlighter-rouge">password_confirmation</code> field. These are virtual attributes and they are never stored as attributes of the users table. The password after entered in the registration form is converted into a encrypted form and saved in the database as encrypted password. When the user logs in later, again that entered password is encrypted and matched with the encrypted password already saved in the database for that user. This process helps in a secured access by not storing the password anywhere during the login or register process. The user only knows his password, no one else knows, not even the admins of the application. :D</p>
+
+<p>Now, let’s add those virtual fields and have some validations for the attributes in <code class="highlighter-rouge">user.ex</code> file.</p>
+
+<p>```ruby
+	defmodule Iot.User do
+	  use Iot.Web, :model
+	  alias Iot.Repo</p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>  schema "users" do
+    field :username, :string
+    field :email, :string
+    field :encrypted_password, :string
+    field :password, :string, virtual: true
+    field :password_confirmation, :string, virtual: true
+    field :token, :string
+    timestamps
+  end
+  
+
+  @required_fields ~w(username email password password_confirmation)
+  @optional_fields ~w()
+
+  @doc """
+  Creates a changeset based on the `model` and `params`.
+
+  If no params are provided, an invalid changeset is returned
+  with no validation performed.
+  """
+  def changeset(model, params \\ :empty) do
+    model
+    |&gt; cast(params, @required_fields, @optional_fields)
+    |&gt; unique_constraint(:username, on: Repo, downcase: true)
+    |&gt; validate_length(:password, min: 8)
+    |&gt; validate_length(:password_confirmation, min: 8)
+    |&gt; validate_confirmation(:password)
+  end
+end ```
+</code></pre>
+</div>
+
+<p>Here, the required fields doesn’t include the <code class="highlighter-rouge">encrypted_password </code>field and the reason is obvious. The <code class="highlighter-rouge">encrypted_password</code> we are going to generate later. Now, to register the users, we should have a registration controller, a registration template of course with a form to be filled by the users, and a url like http://localhost:4000/registraion. So, let’s modify the <code class="highlighter-rouge">web/router.ex</code> file.</p>
+
+<p>```ruby
+	defmodule Iot.Router do
+	  use Iot.Web, :router</p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>  pipeline :browser do
+    plug :accepts, ["html"]
+    plug :fetch_session
+    plug :fetch_flash
+    plug :protect_from_forgery
+    plug :put_secure_browser_headers
+  end
+
+  pipeline :api do
+    plug :accepts, ["json"]
+  end
+
+  scope "/", Iot do
+    pipe_through :browser # Use the default browser stack
+    get "/registration", RegistrationController, :new
+    post "/registration", RegistrationController, :create
+    get "/", PageController, :index
+    
+  end
+
+end ```
+</code></pre>
+</div>
+
+<p>Now we have added 2 routes, one to get the content (The user registration form) and the other is a post request for the same. Now we need to have a <code class="highlighter-rouge">registration_controller.ex</code> file in the <code class="highlighter-rouge">web/controller</code> directory, where we are going to write the <code class="highlighter-rouge">new</code> and <code class="highlighter-rouge">create</code> methods.</p>
+
+<p>```ruby
+	defmodule Iot.RegistrationController do
+	  use Iot.Web, :controller</p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>  alias Iot.Password
+
+  def new(conn, _params) do
+    changeset = User.changeset(%User{})
+    render conn, changeset: changeset
+  end
+
+  def create(conn, %{"user" =&gt; user_params}) do
+    changeset = User.changeset(%User{}, user_params)
+    if changeset.valid? do
+      new_user = Password.generate_password_and_store_user(changeset)
+      conn
+        |&gt; put_flash(:info, "You are Sucessfully Registered :P ")
+        |&gt; redirect(to: page_path(conn, :index))
+    else
+      render conn, "new.html", changeset: changeset 
+    end
+  end
+end ``` Here in the new method, we are accepting the attributes of the user in the variable `changeset`. The create method checks if those required fields fulfill the validations present in `web/models/user.ex` by `changeset.valid?` method and stores the user in the database and renders the page_index page. (The default page at http://localhost:4000/ ). If the `changeset.valid?` is not fulfilled again the new registration page will open up. 
+</code></pre>
+</div>
+
+<p>The saving of the user in the database by creating the <code class="highlighter-rouge">encrypted_password</code> is done here by the <code class="highlighter-rouge">Password</code> library. Let’s write the password library with the <code class="highlighter-rouge">generate_password_and_store_user</code> that we have just used in the registration controller and other methods.</p>
+
+<p>```ruby
+#lib/Iot/password.ex
+	defmodule Iot.Password do
+	  	alias Iot.Repo
+	  import Ecto.Changeset, only: [put_change: 3]
+	  import Comeonin.Bcrypt, only: [hashpwsalt: 1]</p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>  def generate_password_and_token(changeset) do
+    to_be_encoded_string = Enum.join([changeset.params["email"], changeset.params["password"]])
+
+    token = Base.encode64(to_be_encoded_string)
+    changeset = put_change(changeset, :token, token)
+
+    put_change(changeset, :encrypted_password, hashpwsalt(changeset.params["password"]))
+  end
+
+
+  def generate_password_and_store_user(changeset) do
+    changeset
+      |&gt; generate_password_and_token
+      |&gt; Repo.insert
+  end
+end ```
+</code></pre>
+</div>
+
+<p>Here I have used <code class="highlighter-rouge">comeonin</code> package to encrypt the password. You can get it by adding it to the dependencies in the mix.exs file as</p>
+
+<p><code class="highlighter-rouge">ruby
+	defp deps do
+	    [{:phoenix, "~&gt; 1.1.4"},
+	     {:postgrex, "&gt;= 0.0.0"},
+	     {:phoenix_ecto, "~&gt; 2.0"},
+	     {:phoenix_html, "~&gt; 2.4"},
+	     {:phoenix_live_reload, "~&gt; 1.0", only: :dev},
+	     {:gettext, "~&gt; 0.9"},
+	     {:cowboy, "~&gt; 1.0"},
+	    {:comeonin, "~&gt; 2.5"}]
+	  end
+</code>
+Then install it through</p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>$mix deps.get 
+</code></pre>
+</div>
+
+<p>The <code class="highlighter-rouge">generate_password_and_token</code> method generates the encrypted password and a token(to be used later) for the user. The <code class="highlighter-rouge">generate_password_and_store_user</code> method stores the user in the database. Now, it’s time to add a template for the new registration page. Create a directory named registration in the templates folder and add a new.html.eex file in it. Fill it with the content below.</p>
+
+<p>```html
+	&lt;h3&gt;Registration&lt;/h3&gt;
+	&lt;%= form_for @changeset, registration_path(@conn, :create), fn f -&gt; %&gt;
+	  &lt;%= if f.errors != [] do %&gt;
+	    &lt;div class="alert alert-danger"&gt;
+	      &lt;p&gt;Oops, something went wrong! Please check the errors below:&lt;/p&gt;
+	      &lt;ul&gt;
+	        &lt;%= for {attr, message} &lt;- f.errors do %&gt;
+	          &lt;li&gt;&lt;%= humanize(attr) %&gt; &lt;%= translate_error(message) %&gt;&lt;/li&gt;
+	        &lt;% end %&gt;
+	      &lt;/ul&gt;
+	    &lt;/div&gt;
+	  &lt;% end %&gt;</p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>  &lt;div class="form-group"&gt;
+    &lt;label&gt;Username&lt;/label&gt;
+    &lt;%= text_input f, :username, class: "form-control" %&gt;
+  &lt;/div&gt;
+
+  &lt;div class="form-group"&gt;
+    &lt;label&gt;Email&lt;/label&gt;
+    &lt;%= text_input f, :email, class: "form-control" %&gt;
+  &lt;/div&gt;
+
+
+  &lt;div class="form-group"&gt;
+    &lt;label&gt;Password&lt;/label&gt;
+    &lt;%= password_input f, :password, class: "form-control" %&gt;
+  &lt;/div&gt;
+
+  &lt;div class="form-group"&gt;
+    &lt;label&gt;Password Confirmation&lt;/label&gt;
+    &lt;%= password_input f, :password_confirmation, class: "form-control" %&gt;
+  &lt;/div&gt;
+
+  &lt;div class="form-group"&gt;
+    &lt;%= submit "Register", class: "btn btn-primary" %&gt;
+    &lt;%= #link("Login", to: session_path(@conn, :new), class: "btn btn-success pull-right") %&gt;
+  &lt;/div&gt;
+&lt;% end %&gt; ``` The session_login  button is now commented because we haven't added the sessions controller yet. 
+</code></pre>
+</div>
+
+<p>Let’s try it all out. First we have to create the database for the application using ecto.</p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>$mix ecto.create
+</code></pre>
+</div>
+
+<p>Then, we have to migrate the changes that we have in the users model.</p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>$mix ecto.migrate
+</code></pre>
+</div>
+
+<p>Now we have to restart the server as we have added a new lib file called <code class="highlighter-rouge">password.ex</code>. Then, check if that registration form at http://localhost:4000/registration/ is working. If it renders the default phoenix page with a “You are Sucessfully Registered :P”, it’s working.</p>
+
+<p>Now let’s replace the default phoenix page with a login page for the users. Let’s understand what a session is. Sessions are the users’ active time spans after login. A sessions controller matches the username and password of the user and renders the pages. A session controller stores the users data (you can customize the data to be stored) for the session. It is recommended to store minimum required data like only the username or the email in the session. With a logout request, we free the session variables. So, now we have to add a <code class="highlighter-rouge">login</code> and a <code class="highlighter-rouge">logout</code> route in the <code class="highlighter-rouge">router.ex</code> along with a <code class="highlighter-rouge">new</code> route for the session. The page route will be replaced by the <code class="highlighter-rouge">new</code> method of the session.</p>
+
+<p><code class="highlighter-rouge">ruby
+	scope "/", Iot do
+	    pipe_through :browser # Use the default browser stack
+	    get "/registration", RegistrationController, :new
+	    post "/registration", RegistrationController, :create
+	    get "/", SessionController, :new
+	    post "/login", SessionController, :create
+	    get "/logout", SessionController, :delete
+	end
+</code></p>
+
+<p>Clearly from the routes, we now know that we have to write a <code class="highlighter-rouge">session_controller.ex</code> in the <code class="highlighter-rouge">web/controllers</code> directory with new, create and delete methods in it.</p>
+
+<p>```ruby
+	#web/controllers/session_controller.ex
+	defmodule Iot.SessionController do
+	  use Iot.Web, :controller</p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>  plug :scrub_params, "user" when action in [:create]
+  plug :action
+
+  def new(conn, _params) do
+    render conn, changeset: User.changeset(%User{})
+  end
+
+  def create(conn, %{"user" =&gt; user_params}) do
+    user = if is_nil(user_params["username"]) do
+      nil
+    else
+      Repo.get_by(User, username: user_params["username"])
+    end
+
+    user
+      |&gt; sign_in(user_params["password"], conn)
+  end
+
+  def delete(conn, _) do
+    delete_session(conn, :current_user)
+      |&gt; put_flash(:info, 'You have been logged out')
+      |&gt; redirect(to: session_path(conn, :new))
+  end
+
+  defp sign_in(user, password, conn) when is_nil(user) do
+    conn
+      |&gt; put_flash(:error, 'Could not find a user with that username.')
+      |&gt; render "new.html", changeset: User.changeset(%User{})
+  end
+
+  defp sign_in(user, password, conn) when is_map(user) do
+    cond do
+      Comeonin.Bcrypt.checkpw(password, user.encrypted_password) -&gt;
+        conn
+          |&gt; put_session(:current_user, user)
+          |&gt; put_flash(:info, 'You are now signed in.')
+          |&gt; redirect(to: energy_meter_path(conn, :index))
+      true -&gt;
+        conn
+          |&gt; put_flash(:error, 'Username or password are incorrect.')
+          |&gt; render "new.html", changeset: User.changeset(%User{})
+    end
+  end
+end ``` The code above is self explanatory. The `sign_in` method lets the user log into the pages. The `put_session` method stores temporary session data. In this case the user is saved in the session as `:current_user`. Now, we will write the new template for the login form. Create a folder called session in the `web/templates/` folder and a file called new.html.eex in it. 
+</code></pre>
+</div>
+
+<p>```html
+	&lt;h3&gt;Login&lt;/h3&gt;
+	&lt;%= form_for @changeset, session_path(@conn, :create), fn f -&gt; %&gt;
+	  &lt;%= if f.errors != [] do %&gt;
+	    &lt;div class="alert alert-danger"&gt;
+	      &lt;p&gt;Oops, something went wrong! Please check the errors below:&lt;/p&gt;
+	      &lt;ul&gt;
+	        &lt;%= for {attr, message} &lt;- f.errors do %&gt;
+	          &lt;li&gt;&lt;%= humanize(attr) %&gt; &lt;%= translate_error(message) %&gt;&lt;/li&gt;
+	        &lt;% end %&gt;
+	      &lt;/ul&gt;
+	    &lt;/div&gt;
+	  &lt;% end %&gt;</p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>  &lt;div class="form-group"&gt;
+    &lt;label&gt;Username&lt;/label&gt;
+    &lt;%= text_input f, :username, class: "form-control" %&gt;
+  &lt;/div&gt;
+
+  &lt;div class="form-group"&gt;
+    &lt;label&gt;Password&lt;/label&gt;
+    &lt;%= password_input f, :password, class: "form-control" %&gt;
+  &lt;/div&gt;
+
+  &lt;div class="form-group"&gt;
+    &lt;%= submit "Login", class: "btn btn-primary" %&gt;
+    &lt;%= link("Sign Up", to: registration_path(@conn, :new), class: "btn btn-success pull-right") %&gt;
+  &lt;/div&gt;
+&lt;% end %&gt; ```
+</code></pre>
+</div>
+
+<p>Now, we can uncomment the line in <code class="highlighter-rouge">web/templates/registration/new.html.eex</code> for the session login path. And we change the <code class="highlighter-rouge">create</code> method of the registration controller to render the login page rather than the default phoenix page.</p>
+
+<p><code class="highlighter-rouge">ruby
+	def create(conn, %{"user" =&gt; user_params}) do
+	    changeset = User.changeset(%User{}, user_params)
+	    if changeset.valid? do
+	      new_user = Password.generate_password_and_store_user(changeset)
+	      conn
+	        |&gt; put_flash(:info, "You are Sucessfully Registered :P ")
+	        |&gt; redirect(to: session_path(conn, :new))
+	    else
+	      render conn, "new.html", changeset: changeset 
+	    end
+	end
+</code></p>
+
+<p>Now, where will it go after login? We must have some place where it should move to after login and we must have a control over that page so that that page can not be opened unless the user is logged in. That is why the line <code class="highlighter-rouge">redirect(to: energy_meter_path(conn, :index))</code> is added in the <code class="highlighter-rouge">sign_in</code> method (EnergyMeter is our Iot device). We will create a energy_meter template with only the username of the user in it. At first, let’s edit the router.ex file.</p>
+
+<p><code class="highlighter-rouge">ruby
+	scope "/", Iot do
+	    pipe_through :browser # Use the default browser stack
+	    get "/registration", RegistrationController, :new
+	    post "/registration", RegistrationController, :create
+	    get "/", SessionController, :new
+	    post "/login", SessionController, :create
+	    get "/logout", SessionController, :delete
+	    get "/em", EnergyMeterController, :index
+	end
+</code>
+Now let’s create a <code class="highlighter-rouge">energy_meter_controller.ex</code>.</p>
+
+<p>```ruby
+	defmodule Iot.EnergyMeterController do
+	  use Iot.Web, :controller</p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>  plug Iot.Plug.Authenticate
+
+  def index(conn, _params) do
+    current_user = get_session(conn, :current_user)
+    render conn, "index.html", current_user: current_user
+  end
+end ```
+</code></pre>
+</div>
+
+<p>Now let’s write the template for this.</p>
+
+<p><code class="highlighter-rouge">html
+	#web/templates/energy_meter/index.html.eex
+	&lt;div&gt;Hi &lt;%= @current_user.username %&gt;&lt;/div&gt;
+	&lt;%= link("Logout", to: session_path(@conn, :delete), class: "btn btn-success pull-right") %&gt;
+</code></p>
+
+<p>This has the username of that user and a logout button. The controller has a Authenticate Plug, which ensures the authenticity of the current user. If the user is not logged in, this Plug helps not to show any page in the EnergyMeter controller. Let’s write that Plug. We have to create a directory called <code class="highlighter-rouge">authentication</code> in the <code class="highlighter-rouge">web</code> directory and add <code class="highlighter-rouge">authenticate.ex</code> file in it.</p>
+
+<p>```ruby
+	defmodule Iot.Plug.Authenticate do
+	  import Plug.Conn
+	  import Iot.Router.Helpers 
+	  import Phoenix.Controller</p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>  def init(default), do: default
+
+  def call(conn, default) do
+    current_user = get_session(conn, :current_user)
+    if current_user do
+      assign(conn, :current_user, current_user)
+    else
+      conn
+        |&gt; put_flash(:error, 'You Need to be signed in to view this page !')
+        |&gt; redirect(to: session_path(conn, :new))
+    end
+  end
+end ```
+</code></pre>
+</div>
+
+<p>The code is self explanatory. If a user is trying to get the energy_meter index page without logging in, it will throw the error as “You Need to be signed in to view this page !”. Now try that all out by going to http://localhost:4000/.</p>
+
+<p>Note: a view must be added with all the controllers. Otherwise, it will throw an error. A demo view in the views folder is given below.</p>
+
+<p><code class="highlighter-rouge">ruby
+	#web/views/session_view.ex
+	defmodule Iot.SessionView do
+  		use Iot.Web, :view
+	end
+</code></p>
+
+<p>Now, the authentication part is done. In the next part, we will code the messaging application that is needed for users to listen and control their machines.</p>
+
+<p>Happy Hacking !</p>
+
+<p>Reference - http://meatherly.github.io/2015/05/11/phoenixauthentication/</p>
+
+
+  </article>
+
+	<div id="disqus_thread"></div>
+  <script type="text/javascript">
+    var disqus_config = function () {
+				      // Here is an example,
+				      // this.page.url = "https://poanchen.github.io/blog/2017/07/27/how-to-add-disqus-to-your-jekyll-site";
+		this.page.url = "http://tworitdash.in/2016/07/24/iot-with-phoenix-part-1.html";
+				this.page.identifier = "http://tworitdash.in/2016/07/24/iot-with-phoenix-part-1.html";
+		};
+
+    // You should be able to get the following lines of code from your Disqus admin.
+    // https://disqus.com/admin/universalcode
+    		(function() { // DON'T EDIT BELOW THIS LINE
+				      var d = document, s = d.createElement('script');
+						s.src = 'https://tworitdash-in-blog.disqus.com/embed.js';
+							s.setAttribute('data-timestamp', +new Date());
+							(d.head || d.body).appendChild(s);
+			})();
+  </script>
+	  <noscript>
+				    Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a>
+</noscript>
+
+
+</div>
+
+      </div>
+    </div>
+
+    <footer class="site-footer">
+
+  <div class="wrapper">
+
+    <h2 class="footer-heading">Twor Bot</h2>
+
+    <div class="footer-col-wrapper">
+      <div class="footer-col  footer-col-1">
+        <ul class="contact-list">
+          <li>Twor Bot</li>
+          <li><a href="mailto:tworitdash@gmail.com">tworitdash@gmail.com</a></li>
+        </ul>
+      </div>
+
+      <div class="footer-col  footer-col-2">
+        <ul class="social-media-list">
+          
+          <li>
+            <a href="https://github.com/tworitdash">
+              <span class="icon  icon--github">
+                <svg viewBox="0 0 16 16">
+                  <path fill="#828282" d="M7.999,0.431c-4.285,0-7.76,3.474-7.76,7.761 c0,3.428,2.223,6.337,5.307,7.363c0.388,0.071,0.53-0.168,0.53-0.374c0-0.184-0.007-0.672-0.01-1.32 c-2.159,0.469-2.614-1.04-2.614-1.04c-0.353-0.896-0.862-1.135-0.862-1.135c-0.705-0.481,0.053-0.472,0.053-0.472 c0.779,0.055,1.189,0.8,1.189,0.8c0.692,1.186,1.816,0.843,2.258,0.645c0.071-0.502,0.271-0.843,0.493-1.037 C4.86,11.425,3.049,10.76,3.049,7.786c0-0.847,0.302-1.54,0.799-2.082C3.768,5.507,3.501,4.718,3.924,3.65 c0,0,0.652-0.209,2.134,0.796C6.677,4.273,7.34,4.187,8,4.184c0.659,0.003,1.323,0.089,1.943,0.261 c1.482-1.004,2.132-0.796,2.132-0.796c0.423,1.068,0.157,1.857,0.077,2.054c0.497,0.542,0.798,1.235,0.798,2.082 c0,2.981-1.814,3.637-3.543,3.829c0.279,0.24,0.527,0.713,0.527,1.437c0,1.037-0.01,1.874-0.01,2.129 c0,0.208,0.14,0.449,0.534,0.373c3.081-1.028,5.302-3.935,5.302-7.362C15.76,3.906,12.285,0.431,7.999,0.431z"/>
+                </svg>
+              </span>
+
+              <span class="username">tworitdash</span>
+            </a>
+          </li>
+          
+
+          
+          <li>
+            <a href="https://twitter.com/tworitdash">
+              <span class="icon  icon--twitter">
+                <svg viewBox="0 0 16 16">
+                  <path fill="#828282" d="M15.969,3.058c-0.586,0.26-1.217,0.436-1.878,0.515c0.675-0.405,1.194-1.045,1.438-1.809
+                  c-0.632,0.375-1.332,0.647-2.076,0.793c-0.596-0.636-1.446-1.033-2.387-1.033c-1.806,0-3.27,1.464-3.27,3.27 c0,0.256,0.029,0.506,0.085,0.745C5.163,5.404,2.753,4.102,1.14,2.124C0.859,2.607,0.698,3.168,0.698,3.767 c0,1.134,0.577,2.135,1.455,2.722C1.616,6.472,1.112,6.325,0.671,6.08c0,0.014,0,0.027,0,0.041c0,1.584,1.127,2.906,2.623,3.206 C3.02,9.402,2.731,9.442,2.433,9.442c-0.211,0-0.416-0.021-0.615-0.059c0.416,1.299,1.624,2.245,3.055,2.271 c-1.119,0.877-2.529,1.4-4.061,1.4c-0.264,0-0.524-0.015-0.78-0.046c1.447,0.928,3.166,1.469,5.013,1.469 c6.015,0,9.304-4.983,9.304-9.304c0-0.142-0.003-0.283-0.009-0.423C14.976,4.29,15.531,3.714,15.969,3.058z"/>
+                </svg>
+              </span>
+
+              <span class="username">tworitdash</span>
+            </a>
+          </li>
+          
+        </ul>
+      </div>
+
+      <div class="footer-col  footer-col-3">
+        <p class="text">The more Persnickety, The more Hippy.
+</p>
+      </div>
+    </div>
+
+  </div>
+
+</footer>
+
+
+  </body>
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    tex2jax: {
+      inlineMath: [ ['$','$'], ["\\(","\\)"] ],
+      processEscapes: true
+    }
+  });
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      tex2jax: {
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+      }
+    });
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax(), i;
+        for(i=0; i < all.length; i += 1) {
+            all[i].SourceElement().parentNode.className += ' has-jax';
+        }
+    });
+</script>
+
+<script type="text/javascript"
+   src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+</script>
+
+</html>

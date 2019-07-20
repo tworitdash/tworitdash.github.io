@@ -1,0 +1,1523 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Twor Bot</title>
+    <description>The more Persnickety, The more Hippy.
+</description>
+    <link>http://tworitdash.in/</link>
+    <atom:link href="http://tworitdash.in/feed.xml" rel="self" type="application/rss+xml"/>
+    <pubDate>Sat, 20 Jul 2019 06:21:30 +0200</pubDate>
+    <lastBuildDate>Sat, 20 Jul 2019 06:21:30 +0200</lastBuildDate>
+    <generator>Jekyll v3.0.5</generator>
+    
+      <item>
+        <title>Image Compression with Singular Value Decomposition</title>
+        <description>&lt;p&gt;This blog-post is about compression of jpg files using SVD (Singular Value Decomposition). This is inspired from a project that I did with Ultra Wide-band Imaging. There, forming the observation matrix was very different where real life data from a linear array of synthetic aperture radar was given with a set of frequencies of operation (large bandwidth). There, forming the image was the real task with different bandwidths and different aperture sampling of the radar elements with some theoretical electromagnetic tools and SVD.&lt;/p&gt;
+
+&lt;p&gt;Damn! That was a lot and not certainly required here. So, don’t worry. Here, we will deal with only a static given image with a jpg format. The number of pixels are already defined. So, no change in that. Therefore, neither heavy electromagnetic equations nor huge matrix formations are required here.&lt;/p&gt;
+
+&lt;h3 id=&quot;singular-value-decomposition-svd&quot;&gt;Singular Value Decomposition (SVD)&lt;/h3&gt;
+
+&lt;p&gt;A singular value decomposition says a lot about the observation matrix. The image is nothing but a 2D matrix filled with some data. And, a matrix A which is not a square matrix can be decomposed like the following way.&lt;/p&gt;
+
+&lt;script type=&quot;math/tex; mode=display&quot;&gt;A = U S V^H&lt;/script&gt;
+
+&lt;p&gt;The dimensions are important here. If A is a $M \times N$ matrix, then U is a square matrix with dimensions $M \times M$, S is a Diagonal matrix with a dimension of $M \times N$ and V is a matrix with dimension of $N \times N$. Note: In my actual project with the data from the radar, U was called the data space because it had the dimension containing all the frequency samples for every antenna and V was called as the object space where it indicated the number of pixels. However, as this is a static image, the observation matrix A here is just the number of points in the row and column of the 2D matrix of that image.&lt;/p&gt;
+
+&lt;script type=&quot;math/tex; mode=display&quot;&gt;A \Bigg(M\Bigg[^N \quad \Bigg]\Bigg) = U \Bigg(M\Bigg[^M \quad \Bigg]\Bigg) S \Bigg(M \Bigg[^N \quad \quad \Bigg]\Bigg) V \Bigg(N \Bigg[^N \quad \Bigg]\Bigg)^H&lt;/script&gt;
+
+&lt;h3 id=&quot;singular-values&quot;&gt;Singular Values&lt;/h3&gt;
+
+&lt;p&gt;Singular values say a lot about the image. The matrix S that is shown above has all the singular values on its diagonal. One sample plot of the singular values is shown in figure below. This is normalized to the maximum value of the diagonal elements of S and plotted in a dB scale. Therefore, the maximum we see is 0 and the rest are negative values in dBs.&lt;/p&gt;
+
+&lt;script type=&quot;math/tex; mode=display&quot;&gt;20\log_{10}\Bigg(\frac{diag(S)}{max(diag(S))}\Bigg)&lt;/script&gt;
+
+&lt;p&gt;&lt;img src=&quot;/images/Singular_Values.png&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;It can be seen that there are actually only a few number of singular values which are dominant and after some point, the values are really small and tend to 0. Sometimes, when it is a inverse problem of A (Not here), these almost zero values can cause problems. Therefore, in that case removing before doing an inverse is a wise thing to do. In this case however, with a TSVD (Truncated SVD) approach, we can just ignore the zero values in S and just keep the dominant values to recreate the image. Therefore, the image matrix or the observation matrix A can be written as the following with a TVSD approach.&lt;/p&gt;
+
+&lt;script type=&quot;math/tex; mode=display&quot;&gt;A_{TVSD} = U(M \times T) S(T \times T) V(N \times T)^H&lt;/script&gt;
+
+&lt;p&gt;From the above equation we notice that the final dimension of A is not affected. Here T is less than the usual number of singular values present. That is the reason it is called a TVSD approach.&lt;/p&gt;
+
+&lt;p&gt;Then, if we rearrange this in a matrix, we can recreate the image. This time as less number of singular values are used, the file size is reduced. It can be seen from the singular value plots that already only 50 % of the data are dominant and rest are below -50 dB almost.&lt;/p&gt;
+
+&lt;h3 id=&quot;results&quot;&gt;Results:&lt;/h3&gt;
+
+&lt;p&gt;I tried with different number of singular values and the results are shown below.&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;/images/outfile_337.jpg&quot; /&gt;
+Image 1: The original image.&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;/images/outfile_5.jpg&quot; /&gt;
+Image 2: With 5 % values in S.&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;/images/outfile_10.jpg&quot; /&gt;
+Image 3: With 10 % values in S.&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;/images/outfile_30.jpg&quot; /&gt;
+Image 4: With 30 % values in S.&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;/images/outfile_50.jpg&quot; /&gt;
+Image 5: With 50 % values in S.&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;/images/outfile_70.jpg&quot; /&gt;
+Image 6: With 70 % values in S.&lt;/p&gt;
+
+&lt;p&gt;It can already be seen that with only 50 % of the singular values, we get a very similar quality image which is not bad at all. And by doing this, we can save half of the size. Though the actual image was not that heavy, I have tried with 1 MB images and this approach with 50 % of the singular values reduced almost 40 % of the image size.&lt;/p&gt;
+
+&lt;h3 id=&quot;the-python-package-that-i-made-for-this&quot;&gt;The Python Package that I made for this&lt;/h3&gt;
+
+&lt;p&gt;The actual project with the radars I did with MATLAB. This time I wanted to do this one for fun and I wanted to learn how to make a command line tool as well. Therefore, I used the clint package to make my own command line tool.&lt;/p&gt;
+
+&lt;h4 id=&quot;usage&quot;&gt;Usage:&lt;/h4&gt;
+
+&lt;p&gt;Install it via pip with the following command:&lt;/p&gt;
+
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;pip install compressjpg
+&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+
+&lt;p&gt;It installs the dependencies like &lt;code class=&quot;highlighter-rouge&quot;&gt;numpy&lt;/code&gt; and &lt;code class=&quot;highlighter-rouge&quot;&gt;scipy&lt;/code&gt;.&lt;/p&gt;
+
+&lt;p&gt;After the successful installation one can use it like the following directly from the terminal:&lt;/p&gt;
+
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;compress-jpg  -i input_file.jpg -o output_file.jpg -p &amp;lt;% Of truncation you want&amp;gt;
+&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+
+&lt;p&gt;Where the flag -i means input and &lt;code class=&quot;highlighter-rouge&quot;&gt;-o&lt;/code&gt; means output.&lt;/p&gt;
+
+&lt;p&gt;The option &lt;code class=&quot;highlighter-rouge&quot;&gt;-p&lt;/code&gt; is optional. If you don’t use it, it automatically does it with 50% truncation. I will try to do it with a better logic where it checks the dB values so that it can become immune to different images.&lt;/p&gt;
+
+&lt;p&gt;It was a nice and fun thing to do during the holidays. In the process I learnt how to activate latex formatting on my octopress ruby blog. :P Furthermore, I learnt how to make a python package which I revised after 1.5 years. Happy hacking and give it a go if you want. :D&lt;/p&gt;
+
+</description>
+        <pubDate>Fri, 19 Jul 2019 03:22:57 +0200</pubDate>
+        <link>http://tworitdash.in/2019/07/19/image-compression-using-singular-value-decomposition.html</link>
+        <guid isPermaLink="true">http://tworitdash.in/2019/07/19/image-compression-using-singular-value-decomposition.html</guid>
+        
+        
+      </item>
+    
+      <item>
+        <title>How sleeping 8 hours has a considerable impact</title>
+        <description>&lt;h3 id=&quot;my-schedule-before-2018-october&quot;&gt;My schedule before 2018 October:&lt;/h3&gt;
+
+&lt;p&gt;I don’t feel ashamed of admitting that I never used to sleep before half-past mid-night at least. You heard that right. Never! Even if I have a flight to catch at five in the morning, I wouldn’t sleep even until three and catch the flight with red eyes. The last year (2017) was pretty hard already because of my upside down work-life balance. There was literally no quotidian routine to follow. It was pretty much a mess. Though sometimes I had the aplomb to handle things wisely at work, the cerebral activities only had to offer some weird and pathetic ideas. I do multiple tasks, but I am not good at it. However, this lack of sleep had triggered a forceful desire to do multi-task. At this moment right now, I feel so happy writing this down, because of two reasons. First, it is a Saturday evening and I can reminisce about how hard life was for at least six months and write my heart out. Second, I feel the effect is still there because I just did multi-task before writing and was too cautious about configuring my vim editor to support spell check automatically and to do a live markdown check. Right now I am writing my text and viewing the result on a browser. Awesome; isn’t it? Okay, now getting back to work. :smiley: Furthermore, this habit was there from my school days. Back then also I used to sleep late (almost four in the morning) because I loved reading a lot of physics. (I still do!)&lt;/p&gt;
+
+&lt;p&gt;For some days, to be honest, I used to work for sixteen to seventeen hours a day! No kidding here. None to blame, because it was a bit wrong on my part to take too much. I had to get out of it wisely. Then, what did I do? I didn’t sleep. Wasn’t that too wise? Let me tell you how promising that was and how sometimes in life, you just have to do whatever it takes to take your mind off work. Pretty absurd it was, but it was true that I was already dreaming (Like real dream; the dream you see when you are in deep sleep) about work. I was working for a car company as a supplier. Not a “supplier” supplier, but a development supplier, where you have to understand the physics behind what you are doing and take ample measurements to make justice to your thinking and intuition.&lt;/p&gt;
+
+&lt;p&gt;So, what I used to dream? I used to dream of people having names same as that of the variables, like one for the air, one for the fuel, one for the cylinders. And sometimes, they used to ask me to make it capable of flying over Jupiter (Probably I was obsessed with Jupiter because it was the only star so bright and visible to naked eyes and I used to track it with Google’s night sky). If that was not convincing enough to make you believe that my dreams were horrible, let me introduce you to the series of sleep paralysis attacks I had. Starting from horrible looking creatures putting their stuff inside my mouth and holding my hands to people chasing me with arrows with weird looking feathers on top. The problem with sleep paralysis is that you can’t move your hands and legs during that time even after knowing that it is a dream. You can google about it.&lt;/p&gt;
+
+&lt;p&gt;Now, coming to what I used to do except sleep. I really had to do something to get rid of the dreams. I was dreaming such unusual stuff because I was working a lot and keeping my mind busy with work almost all the time. As simple as that. I didn’t realize it was the lack of sleep which was contributing to the occasional sleep paralysis events.&lt;/p&gt;
+
+&lt;p&gt;I started sketching, the hobby which I hadn’t paid attention to for almost 6 years. I don’t know why I was too serious about it and wanted to improve on it, but I just did it. I bought some charcoal bars, pencils and Strathmore sheets from Amazon. Almost every day after an evening shift, I used to come back to the hotel at around midnight or one o’ clock in the morning (Sometimes at half-past eleven, if I was so determined and finished the work in time or just something broke or burnt in the facility. Probability distribution shows that the second reason was the most likely one). Then, after a not so healthy but tasty dinner, I was busy with sketching. However, sketching needs time, which I didn’t have. So, I started sleeping at around five o’ clock in the morning. Then, repeated the whole story from the morning where an unusual and surprising phone call used to wake me up at around eight or nine o’ clock. Of course, it was always a call from work. I started getting good dreams. This was the trick, wasn’t it? However, to notice that I had gotten rid of the sleep paralysis thingy, I had to wait for one. And I was so depressed to get it with an even higher frequency than before. So, this wasn’t the correct trick. It was so wrong.&lt;/p&gt;
+
+&lt;p&gt;Me to myself: “Stop sketching?”… “Hell NO! I like it now. Didn’t you see Paul’s sketch? It was so darn close. Keep it going.”&lt;/p&gt;
+
+&lt;p&gt;The social media spree of showing off with my sketch work didn’t let me down at all. I was getting better at it. Then, suddenly I had to go for a test trip for work. I started realizing that I was losing hair more drastically. One of the major reasons was the Dengue attack I had had a couple of months before (I was unaware of this reason until I validated it with some online research). Now, it was all about my health. This was not all. After the entire project got over, I flew back to my base location for work. I had less load, yet experienced health issues. Now, as Newton said, Inertia is a bitch, even though I was not working my ass off, I was pretty much used to it. The inertia was affected and I experienced a migraine for a week. After a good eighteen days vacation and lesser workload, I was pretty much positive to work again. It was January 2018. Though I didn’t have much workload, the habit of sleeping late continued. I just didn’t feel like sleeping before three in the morning every day. It doesn’t mean that I was doing something productive; I was wasting my time. I almost had stopped sketching. This was my daily sleep cycle until this October.&lt;/p&gt;
+
+&lt;p&gt;My schedule from October 2018:
+It’s been only twelve days and I experience something so good. I hope I continue this for rest of my life. Now, that I left my job and studying my masters, there’s a motivation to wake up in the morning before seven o’ clock, because I have class every morning and I have to walk, travel by train and then cycle to the university. This time, all on a sudden my brain wants to sleep for at least eight hours, that motivated me to sleep before half-past eleven every day. Days, when I don’t have to go to the university was usually occupied with studies, cooking and an afternoon nap. This time, I avoided the afternoon naps and did something to keep my mind occupied instead. Before this October, days, when I had to be in the uni was occupied with classes and a bit of study. I used to come back home early to have the afternoon and early evening nap (Because I didn’t want to sleep early before the next morning and waste my time, as usual, remember?). However, this time, I stayed a bit longer at the university till six or half-past six in the evening to just self-supervise the aftereffects. Now, I felt better because my head was pretty much occupied with studies and I started liking it. I usually used to read an academic text twice or even more to get the content properly. Now I understand it on the first attempt. If I feel a bit tired, I come back home and take an evening shower followed by a stress alleviating session called “cooking”. The best part of my schedule is this everyday cooking session. Then, I watch some funny stuff on the internet and sleep exactly at quarter past eleven.&lt;/p&gt;
+
+&lt;p&gt;To sum up, I feel fresh these days with so much positivity. I have put my head in the game once again and this time it is pretty effective. Now my schedule contains almost four hours in the class, another four hours study session in the university, almost one hour spent in transportation (includes almost twenty minutes cycling with Bohemian Rhapsody), one or two hours cooking session followed by some entertainment and the last part in the schedule that is almost eight hours of sleep. I so badly wanted to write this, because the effects are so quick and my brain is so healthy. My hair looks cool as usual and I enjoy each and every hour without any anxiety. I talk to people fluently knowing exactly what’s there in my mind. I have started thinking positively and I don’t read text that’s in my books, not more than once to understand it (Unless it is referenced to Einstein and Relativity.. because it needs the patience of course!).&lt;/p&gt;
+</description>
+        <pubDate>Sat, 13 Oct 2018 12:46:01 +0200</pubDate>
+        <link>http://tworitdash.in/2018/10/13/how-sleeping-8-hours-has-a-considerable-impact-on-me.html</link>
+        <guid isPermaLink="true">http://tworitdash.in/2018/10/13/how-sleeping-8-hours-has-a-considerable-impact-on-me.html</guid>
+        
+        
+      </item>
+    
+      <item>
+        <title>Moved my blog to Octopress 3.0</title>
+        <description>&lt;p&gt;I just moved my entire tech blog from Octopress 2 to 3.0. It was quite tiresome because I had my base folder before at &lt;code class=&quot;highlighter-rouge&quot;&gt;/blog&lt;/code&gt; and somehow I had a landing page of my own on the root endpoint &lt;code class=&quot;highlighter-rouge&quot;&gt;/&lt;/code&gt;. However, I managed it somehow and due to the mis-match, I was allowed to dig deep into designing after almost 3 years. Did some &lt;code class=&quot;highlighter-rouge&quot;&gt;CSS&lt;/code&gt; and &lt;code class=&quot;highlighter-rouge&quot;&gt;HTML&lt;/code&gt; as well. Added &lt;code class=&quot;highlighter-rouge&quot;&gt;Github&lt;/code&gt; flavored markdown once again.&lt;/p&gt;
+
+&lt;p&gt;Changed one &lt;code class=&quot;highlighter-rouge&quot;&gt;Rakefile&lt;/code&gt; a bit that I was using before so that I don’t end up with a lot of manual handling for blogging. Still working on the &lt;code class=&quot;highlighter-rouge&quot;&gt;Rakefile&lt;/code&gt; to make my life easier in future. Now, the site and blog are pretty much alive with disqus comments(configured once again!). Octopress 3.0 is nothing but a very minimal version of Octopress 2. As I preferred having a home page separately, I had to dig more into designing and a bit of CMS.&lt;/p&gt;
+
+&lt;p&gt;Furthermore, I have added some of my other links(those are built with Jekyll) such as my resume cards and the details of the conferences that I have spoken before on the new nav bar. Blogging on my tech blog after almost 2 years feels nice because I had to tweak the code a bit once again with &lt;code class=&quot;highlighter-rouge&quot;&gt;jekyll ruby&lt;/code&gt; .&lt;/p&gt;
+
+&lt;p&gt;Landed in the Netherlands 2 weeks before for my higher studies at Deflt University of Technology. Feels nice to check my old stuff which were online once again to make a new start. :smiley: (That smiley is also from &lt;code class=&quot;highlighter-rouge&quot;&gt;Github&lt;/code&gt; flavored markdown). :wink:&lt;/p&gt;
+
+</description>
+        <pubDate>Sun, 02 Sep 2018 22:06:21 +0200</pubDate>
+        <link>http://tworitdash.in/2018/09/02/moved-my-blog-to-octopress-3-dot-0.html</link>
+        <guid isPermaLink="true">http://tworitdash.in/2018/09/02/moved-my-blog-to-octopress-3-dot-0.html</guid>
+        
+        
+      </item>
+    
+      <item>
+        <title>IoT with phoenix part 3</title>
+        <description>&lt;p&gt;This is the last part in the series.&lt;/p&gt;
+
+&lt;p&gt;In the previous blog post, the browser client was getting messages from the elixir interpreter inside the project directory using the &lt;code class=&quot;highlighter-rouge&quot;&gt;Endpoint.broadcast&lt;/code&gt; method. Now, for monitoring sensor outputs, we have to send and receive data from sensors, we need to remotely configure a client. I am using a raspberry pi with python GPIO module to interface the sensors. So, we are going to accomplish the following tasks in this part 3.&lt;/p&gt;
+
+&lt;ol&gt;
+  &lt;li&gt;Join the phoenix channel and send a random value form a python client using websockets.&lt;/li&gt;
+  &lt;li&gt;Sending data from the serialport. (Sensors)&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;p&gt;The Phoenix channel API is damn easy to understand. It has &lt;code class=&quot;highlighter-rouge&quot;&gt;phx_join&lt;/code&gt; event is for joining a channel, &lt;code class=&quot;highlighter-rouge&quot;&gt;phx_reply&lt;/code&gt; for a reply after join. Following the previous blog, we have a event called sensor_output with a topic &lt;code class=&quot;highlighter-rouge&quot;&gt;users:user_token&lt;/code&gt; (user_token is the token generated for a user). So, the following python code is capable of joining the channel topic and sending a sample random value.&lt;/p&gt;
+
+&lt;p&gt;```python
+    import asyncio
+    import websockets
+    import json
+    import time
+    from random import randint&lt;/p&gt;
+
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;async def hello():
+    async with websockets.connect(&#39;ws://127.0.0.1:4000/socket/websocket&#39;) as websocket:
+        data = dict(topic=&quot;users:your_user_token&quot;, event=&quot;phx_join&quot;, payload={}, ref=1)
+
+        #data is a dictionary containing necessary info for a join request to the topic.
+
+        await websocket.send(json.dumps(data))
+        print(&quot;joined&quot;)
+          
+        print(&quot;Joined&quot;) #joined the topic user:user_token
+        while True:
+            msg = await retrieve() #waiting for retrieve function to return a value
+
+            await websocket.send(json.dumps(msg))
+            #sending the message to the phoenix channel
+              
+            call = await websocket.recv() #constantly receiving data from the channel
+            control = json.loads(call) #converting to json
+            print(control)
+              
+            time.sleep(0.5) #0.5 second delay
+
+    async def retrieve():
+      
+      msg = dict(topic=&quot;users:your_user_token&quot;, event=&quot;sensor_output&quot;, payload={&quot;load&quot;:&quot;1000&quot;, &quot;pf&quot;:str(randint(0,100)), &quot;thd&quot;:&quot;120&quot;, &quot;reading&quot;:&quot;1800&quot;}, ref=None)
+
+      #message dictionary containing necessary info for sending the data to the channel
+      time.sleep(0.5)
+      return msg
+
+
+asyncio.get_event_loop().run_until_complete(hello())
+asyncio.get_event_loop().run_forever() ```` This is a piece of asynchronous code written in python, in which it joins the phoenix channel and waits until data comes form another function and sends it to the phoenix server.
+&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+
+&lt;p&gt;Now if we run this script, we can see the data updated in the webpage from time to time with random values.&lt;/p&gt;
+
+&lt;p&gt;Now, there was a outward message from the channel too through the &lt;code class=&quot;highlighter-rouge&quot;&gt;control&lt;/code&gt; event. We can keep track of that too (The button click events of blog post 2) just by comparing the &lt;code class=&quot;highlighter-rouge&quot;&gt;event&lt;/code&gt; key of the json string &lt;code class=&quot;highlighter-rouge&quot;&gt;control&lt;/code&gt;. If the event name is &lt;code class=&quot;highlighter-rouge&quot;&gt;control&lt;/code&gt;, we can make use of that too.&lt;/p&gt;
+
+&lt;p&gt;```python
+    import asyncio
+    import websockets
+    import json
+    import time
+    from random import randint&lt;/p&gt;
+
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;async def hello():
+    async with websockets.connect(&#39;ws://127.0.0.1:4000/socket/websocket&#39;) as websocket:
+        data = dict(topic=&quot;users:your_user_token&quot;, event=&quot;phx_join&quot;, payload={}, ref=1)
+
+        #data is a dictionary containing necessary info for a join request to the topic.
+
+        await websocket.send(json.dumps(data))
+        print(&quot;joined&quot;)
+        
+        print(&quot;Joined&quot;) #joined the topic user:user_token
+        while True:
+            msg = await retrieve() #waiting for retrieve function to return a value
+
+            await websocket.send(json.dumps(msg))
+            print(&quot;sent {}&quot;.format(msg))
+            #sending the message to the phoenix channel
+            
+            call = await websocket.recv() #constantly receiving data from the channel
+            control = json.loads(call) #converting to json
+
+            if(control[&#39;event&#39;] == &#39;control&#39;):
+                print(control[&#39;payload&#39;][&#39;value&#39;])
+            
+            time.sleep(0.5) #0.5 second delay
+
+async def retrieve():
+    
+    msg = dict(topic=&quot;users:your_user_token&quot;, event=&quot;sensor_output&quot;, payload={&quot;load&quot;:&quot;1000&quot;, &quot;pf&quot;:str(randint(0,100)), &quot;thd&quot;:&quot;120&quot;, &quot;reading&quot;:&quot;1800&quot;}, ref=None)
+
+    #message dictionary containing necessary info for sending the data to the channel
+    time.sleep(0.5)
+    return msg
+
+
+asyncio.get_event_loop().run_until_complete(hello())
+asyncio.get_event_loop().run_forever() ``` This script prints the `payload` value if the event name is `control`. That is when there is a button click event, it will print `on` or `off` depending on the buttons.
+&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+
+&lt;p&gt;Now, let’s write some code where we can get data from the serialport. All you need is the &lt;code class=&quot;highlighter-rouge&quot;&gt;pyserial&lt;/code&gt; library and receiving some data from there like the following.&lt;/p&gt;
+
+&lt;p&gt;```python
+	import serial&lt;/p&gt;
+
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;ser = #ser =serial.Serial(&quot;/dev/ttyAMA0&quot;, 9600, timeout=1)
+
+#rest of the code
+
+async def retrieve()
+
+	data = ser.readline().decode()
+	msg = dict(topic=&quot;users:your_user_token&quot;, event=&quot;sensor_output&quot;, payload={&quot;load&quot;:&quot;1000&quot;, &quot;pf&quot;:str(randint(0,100)), &quot;thd&quot;:data, &quot;reading&quot;:&quot;1800&quot;}, ref=None)
+
+	return msg
+	#rest of the code ``` Here the data will be received from the serialport and will be updated at `thd` on the webpage.
+&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+
+&lt;p&gt;There are several other examples I have written, by using those in raspberry pi, we can send and receive data from the websocket phoenix server. Examples include some &lt;code class=&quot;highlighter-rouge&quot;&gt;arduino firmata&lt;/code&gt; codes too.&lt;/p&gt;
+
+&lt;p&gt;Python clients are here.&lt;/p&gt;
+
+&lt;p&gt;P.S. I have moved to another city for my first ever job. This is my first blog post from Bangalore city. Happy Hacking ! :D :)&lt;/p&gt;
+</description>
+        <pubDate>Fri, 02 Sep 2016 09:58:35 +0200</pubDate>
+        <link>http://tworitdash.in/2016/09/02/iot-with-phoenix-part-3.html</link>
+        <guid isPermaLink="true">http://tworitdash.in/2016/09/02/iot-with-phoenix-part-3.html</guid>
+        
+        
+      </item>
+    
+      <item>
+        <title>iot with phoenix part 2</title>
+        <description>&lt;p&gt;In part 1, I have demonstrated how to create MVC based user authentication and a plug for the same with Phoenix. Now, in this tutorial we will see how to display some data using websockets. Websocket connections are consistent. So, for displaying the real time data from the machine, we need to use the channel feature of phoenix, where we can update the data on the page in real time.&lt;/p&gt;
+
+&lt;ol&gt;
+  &lt;li&gt;
+    &lt;p&gt;The channel should be user specific. Users can view their own sensor outputs of the machines that they have privately.&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;There should be a reverse communication from users to machines. With this, users can be able to switch on or off the machine along with some other things like controlling speed, displaying something on a LCD screen and so on.&lt;/p&gt;
+  &lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;p&gt;So, let’s create a channel for the users. We will make use of something that will let us make the users’ communication private with their machines.&lt;/p&gt;
+
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;$mix phoenix.gen.channel User
+&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+
+&lt;p&gt;It will create a file called &lt;code class=&quot;highlighter-rouge&quot;&gt;user_channel.ex&lt;/code&gt; in &lt;code class=&quot;highlighter-rouge&quot;&gt;web/channles/&lt;/code&gt; directory. It contains the following,&lt;/p&gt;
+
+&lt;p&gt;```ruby
+	defmodule Iot.UserChannel do
+	  use Iot.Web, :channel&lt;/p&gt;
+
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;  def join(&quot;user:lobby&quot;, payload, socket) do
+    if authorized?(payload) do
+      {:ok, socket}
+    else
+      {:error, %{reason: &quot;unauthorized&quot;}}
+    end
+  end
+
+  # Channels can be used in a request/response fashion
+  # by sending replies to requests from the client
+  def handle_in(&quot;ping&quot;, payload, socket) do
+    {:reply, {:ok, payload}, socket}
+  end
+
+  # It is also common to receive messages from the client and
+  # broadcast to everyone in the current topic (user:lobby).
+  def handle_in(&quot;shout&quot;, payload, socket) do
+    broadcast socket, &quot;shout&quot;, payload
+    {:noreply, socket}
+  end
+
+  # Add authorization logic here as required.
+  defp authorized?(_payload) do
+    true
+  end
+end
+&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+
+&lt;p&gt;```&lt;/p&gt;
+
+&lt;p&gt;The join method has a argument &lt;code class=&quot;highlighter-rouge&quot;&gt;user:lobby&lt;/code&gt; by default. It is called the &lt;code class=&quot;highlighter-rouge&quot;&gt;topic:subtopic&lt;/code&gt; pair. The topic here is &lt;code class=&quot;highlighter-rouge&quot;&gt;user&lt;/code&gt; and the subtopic is &lt;code class=&quot;highlighter-rouge&quot;&gt;lobbby&lt;/code&gt;. The &lt;code class=&quot;highlighter-rouge&quot;&gt;handle_in&lt;/code&gt; method has the first argument as &lt;code class=&quot;highlighter-rouge&quot;&gt;ping&lt;/code&gt; or &lt;code class=&quot;highlighter-rouge&quot;&gt;shout&lt;/code&gt;. Those are called events. Once a user is joined to the subtopic, the 	&lt;code class=&quot;highlighter-rouge&quot;&gt;handle_in&lt;/code&gt; methods can show what messages are coming to that subtopic through an event and that &lt;code class=&quot;highlighter-rouge&quot;&gt;handle_in&lt;/code&gt; method can also broadcast a message upon arrival through an event. Other subscribers (who have joined to that same subtopic) can get the message through that event.&lt;/p&gt;
+
+&lt;p&gt;Making an analogy with our required task, we need to make the subtopic unique for each user. Then we need to create 2 events. One for displaying stuff on a webpage through an event broadcast (broadcasting to a particular event), the other is to broadcast the reverse message from the user to control stuff at the machine. Let’s name those 2 events as &lt;code class=&quot;highlighter-rouge&quot;&gt;sensor_output&lt;/code&gt; and &lt;code class=&quot;highlighter-rouge&quot;&gt;control&lt;/code&gt;. So, our version of &lt;code class=&quot;highlighter-rouge&quot;&gt;user_channel.ex&lt;/code&gt; is given below.&lt;/p&gt;
+
+&lt;p&gt;```ruby
+	defmodule Iot.UserChannel do
+	  use Iot.Web, :channel&lt;/p&gt;
+
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;  def join(&quot;users:&quot; &amp;lt;&amp;gt; user_token, payload, socket) do
+    if authorized?(payload) do
+      {:ok, &quot;Joined To User:#{user_token}&quot;, socket}
+    else
+      {:error, %{reason: &quot;unauthorized&quot;}}
+    end
+  end
+
+  # Channels can be used in a request/response fashion
+  # by sending replies to requests from the client
+  
+
+  def handle_in(&quot;control&quot;, payload, socket) do
+    broadcast socket, &quot;control&quot;, payload
+    {:noreply, socket}
+  end
+
+  def handle_in(&quot;sensor_output&quot;, payload, socket) do
+    broadcast socket, &quot;sensor_output&quot;, payload
+    {:noreply, socket}
+  end
+
+  # Add authorization logic here as required.
+  defp authorized?(_payload) do
+    true
+  end
+end
+&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+
+&lt;p&gt;```&lt;/p&gt;
+
+&lt;p&gt;Now, from the above &lt;code class=&quot;highlighter-rouge&quot;&gt;user_channel&lt;/code&gt;, it’s clear what the two &lt;code class=&quot;highlighter-rouge&quot;&gt;handle_in&lt;/code&gt; methods do on arrival of a new message. They just broadcast it to the respective events. But the join event has the subtopic to be added to the topic &lt;code class=&quot;highlighter-rouge&quot;&gt;users&lt;/code&gt;. The subtopic we are using is the &lt;code class=&quot;highlighter-rouge&quot;&gt;user_token&lt;/code&gt; that is saved as a string in the &lt;code class=&quot;highlighter-rouge&quot;&gt;Users&lt;/code&gt; table whenever a user registers in the application. It has been written in the &lt;code class=&quot;highlighter-rouge&quot;&gt;Password&lt;/code&gt; library, refer to the previous blog post. Now, we have to tell our &lt;code class=&quot;highlighter-rouge&quot;&gt;socket&lt;/code&gt; file to enable the &lt;code class=&quot;highlighter-rouge&quot;&gt;users&lt;/code&gt; topic with a wild card subtopic. Add the following line.&lt;/p&gt;
+
+&lt;p&gt;&lt;code class=&quot;highlighter-rouge&quot;&gt;ruby
+	#web/channes/user_socket.ex
+	channel &quot;users:*&quot;, Iot.UserChannel
+&lt;/code&gt;&lt;/p&gt;
+
+&lt;p&gt;All set with the background process handlers. Now, let’s move to the front-end. We need a webpage to show all the messages that comes through &lt;code class=&quot;highlighter-rouge&quot;&gt;sensor_output&lt;/code&gt; event. Before that, the webpage has to be joined with the &lt;code class=&quot;highlighter-rouge&quot;&gt;users:user_token&lt;/code&gt; topic:subtopic. The front-end we will automate with some JS code. Before that, the JS code should have the knowledge of the &lt;code class=&quot;highlighter-rouge&quot;&gt;user_token&lt;/code&gt;, otherwise it can’t be able to join the topic. A plain JS code can’t invoke the &lt;code class=&quot;highlighter-rouge&quot;&gt;user_token&lt;/code&gt; from the database directly. So, we need to take that &lt;code class=&quot;highlighter-rouge&quot;&gt;user_token&lt;/code&gt; from that very template where we want to show the content. The question is, where shall the template render the &lt;code class=&quot;highlighter-rouge&quot;&gt;user_token&lt;/code&gt; from ? The answer is pretty simple. From the controller it has been associated with. Voila ! now we have figured out what to do. So, let’s make a model called &lt;code class=&quot;highlighter-rouge&quot;&gt;energy_meter&lt;/code&gt;. The model wil be used later. For now, we will use a template only. We are not doing anything with the model now. It’s just for a future use.&lt;/p&gt;
+
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;$mix phoenix.gen.model EnergyMeter energy_meters name:string pf:integer reading:integer thd:integer load:integer
+&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+
+&lt;p&gt;Then let’s change the template under the folder &lt;code class=&quot;highlighter-rouge&quot;&gt;energy_meter&lt;/code&gt; inside the templates folder. The controller is given below.&lt;/p&gt;
+
+&lt;p&gt;```ruby
+	#web/controller/energy_meter_controller.ex
+	defmodule Iot.EnergyMeterController do
+	  use Iot.Web, :controller&lt;/p&gt;
+
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;  plug Iot.Plug.Authenticate
+
+  def index(conn, _params) do
+    current_user = get_session(conn, :current_user)
+    render conn, &quot;index.html&quot;, current_user: current_user
+  end
+end 
+&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+
+&lt;p&gt;```&lt;/p&gt;
+
+&lt;p&gt;The template is given below&lt;/p&gt;
+
+&lt;p&gt;```html
+	#web/templates/energy_meter/index.html.eex
+	&amp;lt;ul id=”em” data-id=&amp;lt;%= @current_user.token %»&lt;/p&gt;
+
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&amp;lt;/ul&amp;gt;
+&amp;lt;div class = &quot;container&quot;&amp;gt;
+  &amp;lt;div class = &quot;row&quot;&amp;gt;
+  
+    &amp;lt;div class = &quot;span4&quot;&amp;gt;
+      &amp;lt;h4&amp;gt;Load&amp;lt;/h4&amp;gt;
+      &amp;lt;div id = &quot;load&quot;&amp;gt;
+      &amp;lt;/div&amp;gt;
+    &amp;lt;/div&amp;gt;
+  
+
+   
+    &amp;lt;div class = &quot;span4&quot;&amp;gt;
+      &amp;lt;h4&amp;gt;Power Factor&amp;lt;/h4&amp;gt;
+      &amp;lt;div id = &quot;pf&quot;&amp;gt;
+      &amp;lt;/div&amp;gt;
+    &amp;lt;/div&amp;gt;
+  
+
+   
+    &amp;lt;div class = &quot;span4&quot;&amp;gt;
+      &amp;lt;h4&amp;gt;THD&amp;lt;/h4&amp;gt;
+      &amp;lt;div id = &quot;thd&quot;&amp;gt;
+      &amp;lt;/div&amp;gt;
+    &amp;lt;/div&amp;gt;
+  
+
+   
+    &amp;lt;div class = &quot;span4&quot;&amp;gt;
+      &amp;lt;h4&amp;gt;Reading&amp;lt;/h4&amp;gt;
+      &amp;lt;div id = &quot;reading&quot;&amp;gt;
+      &amp;lt;/div&amp;gt;
+    &amp;lt;/div&amp;gt;
+  
+  
+&amp;lt;/div&amp;gt;
+
+
+
+
+  &amp;lt;div class = &quot;btn btn-primary&quot; id=&quot;on&quot;&amp;gt;ON&amp;lt;/div&amp;gt;
+  &amp;lt;div class = &quot;btn btn-primary&quot; id=&quot;off&quot;&amp;gt;OFF&amp;lt;/div&amp;gt;
+  &amp;lt;%= link(&quot;Logout&quot;, to: session_path(@conn, :delete), class: &quot;btn btn-success pull-right&quot;) %&amp;gt;
+&amp;lt;/div&amp;gt;
+&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+
+&lt;p&gt;```
+In this way the &lt;code class=&quot;highlighter-rouge&quot;&gt;user_token&lt;/code&gt; has been retrieved on to the template. Form the &lt;code class=&quot;highlighter-rouge&quot;&gt;data-id&lt;/code&gt; of that division, we can take away that value to our JS files.&lt;/p&gt;
+
+&lt;p&gt;Now, the html part is done. Let’s write the JS parts to automate the process. Using jQuery is a better option here as far as ease of writing code is concerned. In the parent directory of the project a bower install will install jQuery libs for us.&lt;/p&gt;
+
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;$bower install
+&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+
+&lt;p&gt;Now, let’s create a &lt;code class=&quot;highlighter-rouge&quot;&gt;user.js&lt;/code&gt; file in &lt;code class=&quot;highlighter-rouge&quot;&gt;web/static/js&lt;/code&gt; folder. Before writing something, let’s comment  the default code for joining a &lt;code class=&quot;highlighter-rouge&quot;&gt;topic:subtopic&lt;/code&gt;in &lt;code class=&quot;highlighter-rouge&quot;&gt;socket.js&lt;/code&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;code class=&quot;highlighter-rouge&quot;&gt;javascript
+	//let channel = socket.channel(&quot;topic:subtopic&quot;, {})
+	//channel.join()
+	  //.receive(&quot;ok&quot;, resp =&amp;gt; { console.log(&quot;Joined successfully&quot;, resp) })
+	  //.receive(&quot;error&quot;, resp =&amp;gt; { console.log(&quot;Unable to join&quot;, resp) })
+&lt;/code&gt;&lt;/p&gt;
+
+&lt;p&gt;Now, the content to write in the &lt;code class=&quot;highlighter-rouge&quot;&gt;user.js&lt;/code&gt; file is below.&lt;/p&gt;
+
+&lt;p&gt;```javascript&lt;/p&gt;
+
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;import socket from &quot;./socket&quot;
+
+$(function() {
+  let ul = $(&quot;ul#em&quot;)
+//let message = $(&quot;div#message&quot;) 
+  if (ul.length) {
+    var token = ul.data(&quot;id&quot;)
+    var topic = &quot;users:&quot; + token
+		
+    // Join the topic
+    let channel = socket.channel(topic, {})
+    channel.join()
+      .receive(&quot;ok&quot;, data =&amp;gt; {
+        console.log(&quot;Joined topic&quot;, topic)
+      })
+      .receive(&quot;error&quot;, resp =&amp;gt; {
+        console.log(&quot;Unable to join topic&quot;, topic)
+      })
+			
+
+			$(&quot;#on&quot;).click(function(){
+					channel.push(&quot;control&quot;, {val: &quot;on&quot;});
+			})
+			$(&quot;#off&quot;).click(function(){
+					channel.push(&quot;control&quot;, {val: &quot;off&quot;})
+			})
+
+			channel.on(&quot;control&quot;, data =&amp;gt; {
+					console.log(&quot;Recieved: &quot;, data.val);
+			})
+			channel.on(&quot;sensor_output&quot;, data =&amp;gt; {
+				$(&quot;#load&quot;).html(data[&#39;load&#39;]);
+				$(&quot;#pf&quot;).html(data[&#39;pf&#39;]);
+				$(&quot;#thd&quot;).html(data[&#39;thd&#39;]);
+				$(&quot;#reading&quot;).html(data[&#39;reading&#39;]);
+			})
+			
+  }
+}); ```
+&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+
+&lt;p&gt;This code fetches the value of token from &lt;code class=&quot;highlighter-rouge&quot;&gt;u.data(&quot;id&quot;)&lt;/code&gt; from that html template. The topic variable is the concatenation of &lt;code class=&quot;highlighter-rouge&quot;&gt;users&lt;/code&gt; and the &lt;code class=&quot;highlighter-rouge&quot;&gt;token&lt;/code&gt;. Then the JS client joins the topic. On join, the &lt;code class=&quot;highlighter-rouge&quot;&gt;topic:subtopic&lt;/code&gt; is printed on to the console of that web page. Then, there are some event based automation is written. When the button with id &lt;code class=&quot;highlighter-rouge&quot;&gt;on&lt;/code&gt; is pressed there at the webpage, the data &lt;code class=&quot;highlighter-rouge&quot;&gt;val: &quot;on&quot;&lt;/code&gt; is sent via the &lt;code class=&quot;highlighter-rouge&quot;&gt;control&lt;/code&gt; event. And similarly for the &lt;code class=&quot;highlighter-rouge&quot;&gt;off&lt;/code&gt; button, the data is sent via &lt;code class=&quot;highlighter-rouge&quot;&gt;control&lt;/code&gt; event. Again here, the message is handled and printed on to the console with the following.&lt;/p&gt;
+
+&lt;p&gt;&lt;code class=&quot;highlighter-rouge&quot;&gt;javascript
+	channel.on(&quot;control&quot;, data =&amp;gt; {
+		console.log(&quot;Recieved: &quot;, data.val);
+	})
+&lt;/code&gt;&lt;/p&gt;
+
+&lt;p&gt;So, we can view on the console what the value has been sent from the &lt;code class=&quot;highlighter-rouge&quot;&gt;on&lt;/code&gt; and &lt;code class=&quot;highlighter-rouge&quot;&gt;off&lt;/code&gt; buttons. Then the next method in the file displays the &lt;code class=&quot;highlighter-rouge&quot;&gt;sensor_output&lt;/code&gt; data on to the page. Now, let’s add this file to the app JS file so that it can be added to all the templates.&lt;/p&gt;
+
+&lt;p&gt;```javascript
+   // web/static/js/app.js
+   import user from “./user”&lt;/p&gt;
+
+&lt;p&gt;```
+Now, the button press evens can be tested. Remember, that console messages  &lt;code class=&quot;highlighter-rouge&quot;&gt;on&lt;/code&gt; and &lt;code class=&quot;highlighter-rouge&quot;&gt;off&lt;/code&gt; can only be seen for a user if he/she is logged in.&lt;/p&gt;
+
+&lt;p&gt;For the &lt;code class=&quot;highlighter-rouge&quot;&gt;sensor_output&lt;/code&gt; event, let’s broadcast something over that event from the interpreter.&lt;/p&gt;
+
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;$iex -S mix phoenix.server
+&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+
+&lt;p&gt;Then using the &lt;code class=&quot;highlighter-rouge&quot;&gt;Endpoint.broadcast&lt;/code&gt; method we can broadcast a message over a event within a topic.&lt;/p&gt;
+
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;iex(2)&amp;gt; Iot.Endpoint.broadcast(&quot;users:anVhbkBnbWFpbC5jb21qdWxpYTEyMw==&quot;, &quot;sensor_output&quot;, %{&quot;power_factor&quot; =&amp;gt; 23, &quot;load&quot; =&amp;gt; 1000, &quot;thd&quot; =&amp;gt; 4, &quot;reading&quot; =&amp;gt; 1800})
+:ok
+iex(3)&amp;gt; Iot.Endpoint.broadcast(&quot;users:anVhbkBnbWFpbC5jb21qdWxpYTEyMw==&quot;, &quot;sensor_output&quot;, %{&quot;power_factor&quot; =&amp;gt; 04, &quot;load&quot; =&amp;gt; 900, &quot;thd&quot; =&amp;gt; 2, &quot;reading&quot; =&amp;gt; 1900})
+:ok
+&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+
+&lt;p&gt;As soon as you run, you can see the values updating automatically on the webpage. Similarly, for the &lt;code class=&quot;highlighter-rouge&quot;&gt;control&lt;/code&gt; event, just clicking the &lt;code class=&quot;highlighter-rouge&quot;&gt;on&lt;/code&gt; and &lt;code class=&quot;highlighter-rouge&quot;&gt;off&lt;/code&gt; buttons will do what we want. It will print the message on to the console. A demo screen recording of that is given below. My project name was tworit so I used &lt;code class=&quot;highlighter-rouge&quot;&gt;Tworit.Endpoint&lt;/code&gt;. Likewise, here, &lt;code class=&quot;highlighter-rouge&quot;&gt;Iot.Endpoint&lt;/code&gt; can be used.&lt;/p&gt;
+
+&lt;iframe src=&quot;https://player.vimeo.com/video/177943594&quot; width=&quot;640&quot; height=&quot;400&quot; frameborder=&quot;0&quot; webkitallowfullscreen=&quot;&quot; mozallowfullscreen=&quot;&quot; allowfullscreen=&quot;&quot;&gt;&lt;/iframe&gt;
+&lt;p&gt;&lt;a href=&quot;https://vimeo.com/177943594&quot;&gt;phoenix_channels&lt;/a&gt; from &lt;a href=&quot;https://vimeo.com/user29276136&quot;&gt;Tworit&lt;/a&gt; on &lt;a href=&quot;https://vimeo.com&quot;&gt;Vimeo&lt;/a&gt;.&lt;/p&gt;
+
+&lt;p&gt;In the next part, we will do some python 3.5 asyncio. With the help of that, we can send data from a raspberry pi to the &lt;code class=&quot;highlighter-rouge&quot;&gt;sensor_output&lt;/code&gt; event. In addition to that, we can receive the &lt;code class=&quot;highlighter-rouge&quot;&gt;on&lt;/code&gt; and &lt;code class=&quot;highlighter-rouge&quot;&gt;off&lt;/code&gt; signals from the server to turn on and off our machine.&lt;/p&gt;
+
+</description>
+        <pubDate>Sun, 07 Aug 2016 17:53:42 +0200</pubDate>
+        <link>http://tworitdash.in/2016/08/07/iot-with-phoenix-part-2.html</link>
+        <guid isPermaLink="true">http://tworitdash.in/2016/08/07/iot-with-phoenix-part-2.html</guid>
+        
+        
+      </item>
+    
+      <item>
+        <title>IoT with Phoenix Part 1</title>
+        <description>&lt;p&gt;This is the first blog post that I am writing to share my experience with the Phoenix framework in building an Iot application. I have written a blog post about Elixir and Phoenix &lt;a href=&quot;https://blog.zairza.in/generators-make-the-whole-thing-look-sexy-2434154a8e0e#.riq5apurj&quot;&gt;here&lt;/a&gt;. The objectives that we are going to achieve in here are&lt;/p&gt;
+
+&lt;ol&gt;
+  &lt;li&gt;
+    &lt;p&gt;A ‘Model View Controller’ scheme for the users. So that the users can register themselves in the application and have a login access to monitor as well as control their machines.&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;A messaging interface between the machine and the user so that the application can be pretty much asynchronous and fast. This will accomplish the goal of an user specific Iot architecture, where a user can control and monitor only his/her machines, not others. There is no need of refreshing the pages to know the current state of the machines as we will be using websocket connections to make it a real time application, where the connection to the server never goes away.&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;Writing machine clients. The clients which will help the machine send sensor outputs to the server.&lt;/p&gt;
+  &lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;p&gt;Phoenix is a framework written in Elixir programming language which runs on Erlang VM. The installation instructions for the framework is given &lt;a href=&quot;http://www.phoenixframework.org/docs/installation&quot;&gt;here&lt;/a&gt;. After successful installation, let’s start building the application.&lt;/p&gt;
+
+&lt;p&gt;To create our Iot project run the following in the terminal.&lt;/p&gt;
+
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;$mix phoenix.new iot
+&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+
+&lt;p&gt;Now, enter into the application. 
+Note: you must have postgres installed in your system for the database requirements.&lt;/p&gt;
+
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;$cd iot
+&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+
+&lt;p&gt;Now run the server or you can run the server within an interpreter too.&lt;/p&gt;
+
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;$mix phoenix.server 
+
+or
+
+$iex -S mix phoenix.server 
+&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+
+&lt;p&gt;Now we can view the application at http://localhost:4000/. Now let’s change the contents of some files to have the default page as the login page for users. To achieve that, we should have an users table in the database with the details of the users as attributes. For that, we have to generate a users model using the mix model generator.&lt;/p&gt;
+
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;$mix phoenix.gen.model User user username:string encrypted_password:string email:string token:string 
+&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+
+&lt;p&gt;It will create a file called &lt;code class=&quot;highlighter-rouge&quot;&gt;user.ex&lt;/code&gt; in the &lt;code class=&quot;highlighter-rouge&quot;&gt;web/models/&lt;/code&gt; directory. Now the users table has 4 attributes called the &lt;code class=&quot;highlighter-rouge&quot;&gt;username&lt;/code&gt;, &lt;code class=&quot;highlighter-rouge&quot;&gt;encrypted_password&lt;/code&gt;, &lt;code class=&quot;highlighter-rouge&quot;&gt;email&lt;/code&gt; and a &lt;code class=&quot;highlighter-rouge&quot;&gt;token&lt;/code&gt;. But, to register a user with a password for login purposes, we should have two virtual fields, the &lt;code class=&quot;highlighter-rouge&quot;&gt;password&lt;/code&gt; field and a &lt;code class=&quot;highlighter-rouge&quot;&gt;password_confirmation&lt;/code&gt; field. These are virtual attributes and they are never stored as attributes of the users table. The password after entered in the registration form is converted into a encrypted form and saved in the database as encrypted password. When the user logs in later, again that entered password is encrypted and matched with the encrypted password already saved in the database for that user. This process helps in a secured access by not storing the password anywhere during the login or register process. The user only knows his password, no one else knows, not even the admins of the application. :D&lt;/p&gt;
+
+&lt;p&gt;Now, let’s add those virtual fields and have some validations for the attributes in &lt;code class=&quot;highlighter-rouge&quot;&gt;user.ex&lt;/code&gt; file.&lt;/p&gt;
+
+&lt;p&gt;```ruby
+	defmodule Iot.User do
+	  use Iot.Web, :model
+	  alias Iot.Repo&lt;/p&gt;
+
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;  schema &quot;users&quot; do
+    field :username, :string
+    field :email, :string
+    field :encrypted_password, :string
+    field :password, :string, virtual: true
+    field :password_confirmation, :string, virtual: true
+    field :token, :string
+    timestamps
+  end
+  
+
+  @required_fields ~w(username email password password_confirmation)
+  @optional_fields ~w()
+
+  @doc &quot;&quot;&quot;
+  Creates a changeset based on the `model` and `params`.
+
+  If no params are provided, an invalid changeset is returned
+  with no validation performed.
+  &quot;&quot;&quot;
+  def changeset(model, params \\ :empty) do
+    model
+    |&amp;gt; cast(params, @required_fields, @optional_fields)
+    |&amp;gt; unique_constraint(:username, on: Repo, downcase: true)
+    |&amp;gt; validate_length(:password, min: 8)
+    |&amp;gt; validate_length(:password_confirmation, min: 8)
+    |&amp;gt; validate_confirmation(:password)
+  end
+end ```
+&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+
+&lt;p&gt;Here, the required fields doesn’t include the &lt;code class=&quot;highlighter-rouge&quot;&gt;encrypted_password &lt;/code&gt;field and the reason is obvious. The &lt;code class=&quot;highlighter-rouge&quot;&gt;encrypted_password&lt;/code&gt; we are going to generate later. Now, to register the users, we should have a registration controller, a registration template of course with a form to be filled by the users, and a url like http://localhost:4000/registraion. So, let’s modify the &lt;code class=&quot;highlighter-rouge&quot;&gt;web/router.ex&lt;/code&gt; file.&lt;/p&gt;
+
+&lt;p&gt;```ruby
+	defmodule Iot.Router do
+	  use Iot.Web, :router&lt;/p&gt;
+
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;  pipeline :browser do
+    plug :accepts, [&quot;html&quot;]
+    plug :fetch_session
+    plug :fetch_flash
+    plug :protect_from_forgery
+    plug :put_secure_browser_headers
+  end
+
+  pipeline :api do
+    plug :accepts, [&quot;json&quot;]
+  end
+
+  scope &quot;/&quot;, Iot do
+    pipe_through :browser # Use the default browser stack
+    get &quot;/registration&quot;, RegistrationController, :new
+    post &quot;/registration&quot;, RegistrationController, :create
+    get &quot;/&quot;, PageController, :index
+    
+  end
+
+end ```
+&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+
+&lt;p&gt;Now we have added 2 routes, one to get the content (The user registration form) and the other is a post request for the same. Now we need to have a &lt;code class=&quot;highlighter-rouge&quot;&gt;registration_controller.ex&lt;/code&gt; file in the &lt;code class=&quot;highlighter-rouge&quot;&gt;web/controller&lt;/code&gt; directory, where we are going to write the &lt;code class=&quot;highlighter-rouge&quot;&gt;new&lt;/code&gt; and &lt;code class=&quot;highlighter-rouge&quot;&gt;create&lt;/code&gt; methods.&lt;/p&gt;
+
+&lt;p&gt;```ruby
+	defmodule Iot.RegistrationController do
+	  use Iot.Web, :controller&lt;/p&gt;
+
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;  alias Iot.Password
+
+  def new(conn, _params) do
+    changeset = User.changeset(%User{})
+    render conn, changeset: changeset
+  end
+
+  def create(conn, %{&quot;user&quot; =&amp;gt; user_params}) do
+    changeset = User.changeset(%User{}, user_params)
+    if changeset.valid? do
+      new_user = Password.generate_password_and_store_user(changeset)
+      conn
+        |&amp;gt; put_flash(:info, &quot;You are Sucessfully Registered :P &quot;)
+        |&amp;gt; redirect(to: page_path(conn, :index))
+    else
+      render conn, &quot;new.html&quot;, changeset: changeset 
+    end
+  end
+end ``` Here in the new method, we are accepting the attributes of the user in the variable `changeset`. The create method checks if those required fields fulfill the validations present in `web/models/user.ex` by `changeset.valid?` method and stores the user in the database and renders the page_index page. (The default page at http://localhost:4000/ ). If the `changeset.valid?` is not fulfilled again the new registration page will open up. 
+&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+
+&lt;p&gt;The saving of the user in the database by creating the &lt;code class=&quot;highlighter-rouge&quot;&gt;encrypted_password&lt;/code&gt; is done here by the &lt;code class=&quot;highlighter-rouge&quot;&gt;Password&lt;/code&gt; library. Let’s write the password library with the &lt;code class=&quot;highlighter-rouge&quot;&gt;generate_password_and_store_user&lt;/code&gt; that we have just used in the registration controller and other methods.&lt;/p&gt;
+
+&lt;p&gt;```ruby
+#lib/Iot/password.ex
+	defmodule Iot.Password do
+	  	alias Iot.Repo
+	  import Ecto.Changeset, only: [put_change: 3]
+	  import Comeonin.Bcrypt, only: [hashpwsalt: 1]&lt;/p&gt;
+
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;  def generate_password_and_token(changeset) do
+    to_be_encoded_string = Enum.join([changeset.params[&quot;email&quot;], changeset.params[&quot;password&quot;]])
+
+    token = Base.encode64(to_be_encoded_string)
+    changeset = put_change(changeset, :token, token)
+
+    put_change(changeset, :encrypted_password, hashpwsalt(changeset.params[&quot;password&quot;]))
+  end
+
+
+  def generate_password_and_store_user(changeset) do
+    changeset
+      |&amp;gt; generate_password_and_token
+      |&amp;gt; Repo.insert
+  end
+end ```
+&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+
+&lt;p&gt;Here I have used &lt;code class=&quot;highlighter-rouge&quot;&gt;comeonin&lt;/code&gt; package to encrypt the password. You can get it by adding it to the dependencies in the mix.exs file as&lt;/p&gt;
+
+&lt;p&gt;&lt;code class=&quot;highlighter-rouge&quot;&gt;ruby
+	defp deps do
+	    [{:phoenix, &quot;~&amp;gt; 1.1.4&quot;},
+	     {:postgrex, &quot;&amp;gt;= 0.0.0&quot;},
+	     {:phoenix_ecto, &quot;~&amp;gt; 2.0&quot;},
+	     {:phoenix_html, &quot;~&amp;gt; 2.4&quot;},
+	     {:phoenix_live_reload, &quot;~&amp;gt; 1.0&quot;, only: :dev},
+	     {:gettext, &quot;~&amp;gt; 0.9&quot;},
+	     {:cowboy, &quot;~&amp;gt; 1.0&quot;},
+	    {:comeonin, &quot;~&amp;gt; 2.5&quot;}]
+	  end
+&lt;/code&gt;
+Then install it through&lt;/p&gt;
+
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;$mix deps.get 
+&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+
+&lt;p&gt;The &lt;code class=&quot;highlighter-rouge&quot;&gt;generate_password_and_token&lt;/code&gt; method generates the encrypted password and a token(to be used later) for the user. The &lt;code class=&quot;highlighter-rouge&quot;&gt;generate_password_and_store_user&lt;/code&gt; method stores the user in the database. Now, it’s time to add a template for the new registration page. Create a directory named registration in the templates folder and add a new.html.eex file in it. Fill it with the content below.&lt;/p&gt;
+
+&lt;p&gt;```html
+	&amp;lt;h3&amp;gt;Registration&amp;lt;/h3&amp;gt;
+	&amp;lt;%= form_for @changeset, registration_path(@conn, :create), fn f -&amp;gt; %&amp;gt;
+	  &amp;lt;%= if f.errors != [] do %&amp;gt;
+	    &amp;lt;div class=&quot;alert alert-danger&quot;&amp;gt;
+	      &amp;lt;p&amp;gt;Oops, something went wrong! Please check the errors below:&amp;lt;/p&amp;gt;
+	      &amp;lt;ul&amp;gt;
+	        &amp;lt;%= for {attr, message} &amp;lt;- f.errors do %&amp;gt;
+	          &amp;lt;li&amp;gt;&amp;lt;%= humanize(attr) %&amp;gt; &amp;lt;%= translate_error(message) %&amp;gt;&amp;lt;/li&amp;gt;
+	        &amp;lt;% end %&amp;gt;
+	      &amp;lt;/ul&amp;gt;
+	    &amp;lt;/div&amp;gt;
+	  &amp;lt;% end %&amp;gt;&lt;/p&gt;
+
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;  &amp;lt;div class=&quot;form-group&quot;&amp;gt;
+    &amp;lt;label&amp;gt;Username&amp;lt;/label&amp;gt;
+    &amp;lt;%= text_input f, :username, class: &quot;form-control&quot; %&amp;gt;
+  &amp;lt;/div&amp;gt;
+
+  &amp;lt;div class=&quot;form-group&quot;&amp;gt;
+    &amp;lt;label&amp;gt;Email&amp;lt;/label&amp;gt;
+    &amp;lt;%= text_input f, :email, class: &quot;form-control&quot; %&amp;gt;
+  &amp;lt;/div&amp;gt;
+
+
+  &amp;lt;div class=&quot;form-group&quot;&amp;gt;
+    &amp;lt;label&amp;gt;Password&amp;lt;/label&amp;gt;
+    &amp;lt;%= password_input f, :password, class: &quot;form-control&quot; %&amp;gt;
+  &amp;lt;/div&amp;gt;
+
+  &amp;lt;div class=&quot;form-group&quot;&amp;gt;
+    &amp;lt;label&amp;gt;Password Confirmation&amp;lt;/label&amp;gt;
+    &amp;lt;%= password_input f, :password_confirmation, class: &quot;form-control&quot; %&amp;gt;
+  &amp;lt;/div&amp;gt;
+
+  &amp;lt;div class=&quot;form-group&quot;&amp;gt;
+    &amp;lt;%= submit &quot;Register&quot;, class: &quot;btn btn-primary&quot; %&amp;gt;
+    &amp;lt;%= #link(&quot;Login&quot;, to: session_path(@conn, :new), class: &quot;btn btn-success pull-right&quot;) %&amp;gt;
+  &amp;lt;/div&amp;gt;
+&amp;lt;% end %&amp;gt; ``` The session_login  button is now commented because we haven&#39;t added the sessions controller yet. 
+&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+
+&lt;p&gt;Let’s try it all out. First we have to create the database for the application using ecto.&lt;/p&gt;
+
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;$mix ecto.create
+&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+
+&lt;p&gt;Then, we have to migrate the changes that we have in the users model.&lt;/p&gt;
+
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;$mix ecto.migrate
+&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+
+&lt;p&gt;Now we have to restart the server as we have added a new lib file called &lt;code class=&quot;highlighter-rouge&quot;&gt;password.ex&lt;/code&gt;. Then, check if that registration form at http://localhost:4000/registration/ is working. If it renders the default phoenix page with a “You are Sucessfully Registered :P”, it’s working.&lt;/p&gt;
+
+&lt;p&gt;Now let’s replace the default phoenix page with a login page for the users. Let’s understand what a session is. Sessions are the users’ active time spans after login. A sessions controller matches the username and password of the user and renders the pages. A session controller stores the users data (you can customize the data to be stored) for the session. It is recommended to store minimum required data like only the username or the email in the session. With a logout request, we free the session variables. So, now we have to add a &lt;code class=&quot;highlighter-rouge&quot;&gt;login&lt;/code&gt; and a &lt;code class=&quot;highlighter-rouge&quot;&gt;logout&lt;/code&gt; route in the &lt;code class=&quot;highlighter-rouge&quot;&gt;router.ex&lt;/code&gt; along with a &lt;code class=&quot;highlighter-rouge&quot;&gt;new&lt;/code&gt; route for the session. The page route will be replaced by the &lt;code class=&quot;highlighter-rouge&quot;&gt;new&lt;/code&gt; method of the session.&lt;/p&gt;
+
+&lt;p&gt;&lt;code class=&quot;highlighter-rouge&quot;&gt;ruby
+	scope &quot;/&quot;, Iot do
+	    pipe_through :browser # Use the default browser stack
+	    get &quot;/registration&quot;, RegistrationController, :new
+	    post &quot;/registration&quot;, RegistrationController, :create
+	    get &quot;/&quot;, SessionController, :new
+	    post &quot;/login&quot;, SessionController, :create
+	    get &quot;/logout&quot;, SessionController, :delete
+	end
+&lt;/code&gt;&lt;/p&gt;
+
+&lt;p&gt;Clearly from the routes, we now know that we have to write a &lt;code class=&quot;highlighter-rouge&quot;&gt;session_controller.ex&lt;/code&gt; in the &lt;code class=&quot;highlighter-rouge&quot;&gt;web/controllers&lt;/code&gt; directory with new, create and delete methods in it.&lt;/p&gt;
+
+&lt;p&gt;```ruby
+	#web/controllers/session_controller.ex
+	defmodule Iot.SessionController do
+	  use Iot.Web, :controller&lt;/p&gt;
+
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;  plug :scrub_params, &quot;user&quot; when action in [:create]
+  plug :action
+
+  def new(conn, _params) do
+    render conn, changeset: User.changeset(%User{})
+  end
+
+  def create(conn, %{&quot;user&quot; =&amp;gt; user_params}) do
+    user = if is_nil(user_params[&quot;username&quot;]) do
+      nil
+    else
+      Repo.get_by(User, username: user_params[&quot;username&quot;])
+    end
+
+    user
+      |&amp;gt; sign_in(user_params[&quot;password&quot;], conn)
+  end
+
+  def delete(conn, _) do
+    delete_session(conn, :current_user)
+      |&amp;gt; put_flash(:info, &#39;You have been logged out&#39;)
+      |&amp;gt; redirect(to: session_path(conn, :new))
+  end
+
+  defp sign_in(user, password, conn) when is_nil(user) do
+    conn
+      |&amp;gt; put_flash(:error, &#39;Could not find a user with that username.&#39;)
+      |&amp;gt; render &quot;new.html&quot;, changeset: User.changeset(%User{})
+  end
+
+  defp sign_in(user, password, conn) when is_map(user) do
+    cond do
+      Comeonin.Bcrypt.checkpw(password, user.encrypted_password) -&amp;gt;
+        conn
+          |&amp;gt; put_session(:current_user, user)
+          |&amp;gt; put_flash(:info, &#39;You are now signed in.&#39;)
+          |&amp;gt; redirect(to: energy_meter_path(conn, :index))
+      true -&amp;gt;
+        conn
+          |&amp;gt; put_flash(:error, &#39;Username or password are incorrect.&#39;)
+          |&amp;gt; render &quot;new.html&quot;, changeset: User.changeset(%User{})
+    end
+  end
+end ``` The code above is self explanatory. The `sign_in` method lets the user log into the pages. The `put_session` method stores temporary session data. In this case the user is saved in the session as `:current_user`. Now, we will write the new template for the login form. Create a folder called session in the `web/templates/` folder and a file called new.html.eex in it. 
+&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+
+&lt;p&gt;```html
+	&amp;lt;h3&amp;gt;Login&amp;lt;/h3&amp;gt;
+	&amp;lt;%= form_for @changeset, session_path(@conn, :create), fn f -&amp;gt; %&amp;gt;
+	  &amp;lt;%= if f.errors != [] do %&amp;gt;
+	    &amp;lt;div class=&quot;alert alert-danger&quot;&amp;gt;
+	      &amp;lt;p&amp;gt;Oops, something went wrong! Please check the errors below:&amp;lt;/p&amp;gt;
+	      &amp;lt;ul&amp;gt;
+	        &amp;lt;%= for {attr, message} &amp;lt;- f.errors do %&amp;gt;
+	          &amp;lt;li&amp;gt;&amp;lt;%= humanize(attr) %&amp;gt; &amp;lt;%= translate_error(message) %&amp;gt;&amp;lt;/li&amp;gt;
+	        &amp;lt;% end %&amp;gt;
+	      &amp;lt;/ul&amp;gt;
+	    &amp;lt;/div&amp;gt;
+	  &amp;lt;% end %&amp;gt;&lt;/p&gt;
+
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;  &amp;lt;div class=&quot;form-group&quot;&amp;gt;
+    &amp;lt;label&amp;gt;Username&amp;lt;/label&amp;gt;
+    &amp;lt;%= text_input f, :username, class: &quot;form-control&quot; %&amp;gt;
+  &amp;lt;/div&amp;gt;
+
+  &amp;lt;div class=&quot;form-group&quot;&amp;gt;
+    &amp;lt;label&amp;gt;Password&amp;lt;/label&amp;gt;
+    &amp;lt;%= password_input f, :password, class: &quot;form-control&quot; %&amp;gt;
+  &amp;lt;/div&amp;gt;
+
+  &amp;lt;div class=&quot;form-group&quot;&amp;gt;
+    &amp;lt;%= submit &quot;Login&quot;, class: &quot;btn btn-primary&quot; %&amp;gt;
+    &amp;lt;%= link(&quot;Sign Up&quot;, to: registration_path(@conn, :new), class: &quot;btn btn-success pull-right&quot;) %&amp;gt;
+  &amp;lt;/div&amp;gt;
+&amp;lt;% end %&amp;gt; ```
+&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+
+&lt;p&gt;Now, we can uncomment the line in &lt;code class=&quot;highlighter-rouge&quot;&gt;web/templates/registration/new.html.eex&lt;/code&gt; for the session login path. And we change the &lt;code class=&quot;highlighter-rouge&quot;&gt;create&lt;/code&gt; method of the registration controller to render the login page rather than the default phoenix page.&lt;/p&gt;
+
+&lt;p&gt;&lt;code class=&quot;highlighter-rouge&quot;&gt;ruby
+	def create(conn, %{&quot;user&quot; =&amp;gt; user_params}) do
+	    changeset = User.changeset(%User{}, user_params)
+	    if changeset.valid? do
+	      new_user = Password.generate_password_and_store_user(changeset)
+	      conn
+	        |&amp;gt; put_flash(:info, &quot;You are Sucessfully Registered :P &quot;)
+	        |&amp;gt; redirect(to: session_path(conn, :new))
+	    else
+	      render conn, &quot;new.html&quot;, changeset: changeset 
+	    end
+	end
+&lt;/code&gt;&lt;/p&gt;
+
+&lt;p&gt;Now, where will it go after login? We must have some place where it should move to after login and we must have a control over that page so that that page can not be opened unless the user is logged in. That is why the line &lt;code class=&quot;highlighter-rouge&quot;&gt;redirect(to: energy_meter_path(conn, :index))&lt;/code&gt; is added in the &lt;code class=&quot;highlighter-rouge&quot;&gt;sign_in&lt;/code&gt; method (EnergyMeter is our Iot device). We will create a energy_meter template with only the username of the user in it. At first, let’s edit the router.ex file.&lt;/p&gt;
+
+&lt;p&gt;&lt;code class=&quot;highlighter-rouge&quot;&gt;ruby
+	scope &quot;/&quot;, Iot do
+	    pipe_through :browser # Use the default browser stack
+	    get &quot;/registration&quot;, RegistrationController, :new
+	    post &quot;/registration&quot;, RegistrationController, :create
+	    get &quot;/&quot;, SessionController, :new
+	    post &quot;/login&quot;, SessionController, :create
+	    get &quot;/logout&quot;, SessionController, :delete
+	    get &quot;/em&quot;, EnergyMeterController, :index
+	end
+&lt;/code&gt;
+Now let’s create a &lt;code class=&quot;highlighter-rouge&quot;&gt;energy_meter_controller.ex&lt;/code&gt;.&lt;/p&gt;
+
+&lt;p&gt;```ruby
+	defmodule Iot.EnergyMeterController do
+	  use Iot.Web, :controller&lt;/p&gt;
+
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;  plug Iot.Plug.Authenticate
+
+  def index(conn, _params) do
+    current_user = get_session(conn, :current_user)
+    render conn, &quot;index.html&quot;, current_user: current_user
+  end
+end ```
+&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+
+&lt;p&gt;Now let’s write the template for this.&lt;/p&gt;
+
+&lt;p&gt;&lt;code class=&quot;highlighter-rouge&quot;&gt;html
+	#web/templates/energy_meter/index.html.eex
+	&amp;lt;div&amp;gt;Hi &amp;lt;%= @current_user.username %&amp;gt;&amp;lt;/div&amp;gt;
+	&amp;lt;%= link(&quot;Logout&quot;, to: session_path(@conn, :delete), class: &quot;btn btn-success pull-right&quot;) %&amp;gt;
+&lt;/code&gt;&lt;/p&gt;
+
+&lt;p&gt;This has the username of that user and a logout button. The controller has a Authenticate Plug, which ensures the authenticity of the current user. If the user is not logged in, this Plug helps not to show any page in the EnergyMeter controller. Let’s write that Plug. We have to create a directory called &lt;code class=&quot;highlighter-rouge&quot;&gt;authentication&lt;/code&gt; in the &lt;code class=&quot;highlighter-rouge&quot;&gt;web&lt;/code&gt; directory and add &lt;code class=&quot;highlighter-rouge&quot;&gt;authenticate.ex&lt;/code&gt; file in it.&lt;/p&gt;
+
+&lt;p&gt;```ruby
+	defmodule Iot.Plug.Authenticate do
+	  import Plug.Conn
+	  import Iot.Router.Helpers 
+	  import Phoenix.Controller&lt;/p&gt;
+
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;  def init(default), do: default
+
+  def call(conn, default) do
+    current_user = get_session(conn, :current_user)
+    if current_user do
+      assign(conn, :current_user, current_user)
+    else
+      conn
+        |&amp;gt; put_flash(:error, &#39;You Need to be signed in to view this page !&#39;)
+        |&amp;gt; redirect(to: session_path(conn, :new))
+    end
+  end
+end ```
+&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+
+&lt;p&gt;The code is self explanatory. If a user is trying to get the energy_meter index page without logging in, it will throw the error as “You Need to be signed in to view this page !”. Now try that all out by going to http://localhost:4000/.&lt;/p&gt;
+
+&lt;p&gt;Note: a view must be added with all the controllers. Otherwise, it will throw an error. A demo view in the views folder is given below.&lt;/p&gt;
+
+&lt;p&gt;&lt;code class=&quot;highlighter-rouge&quot;&gt;ruby
+	#web/views/session_view.ex
+	defmodule Iot.SessionView do
+  		use Iot.Web, :view
+	end
+&lt;/code&gt;&lt;/p&gt;
+
+&lt;p&gt;Now, the authentication part is done. In the next part, we will code the messaging application that is needed for users to listen and control their machines.&lt;/p&gt;
+
+&lt;p&gt;Happy Hacking !&lt;/p&gt;
+
+&lt;p&gt;Reference - http://meatherly.github.io/2015/05/11/phoenixauthentication/&lt;/p&gt;
+
+</description>
+        <pubDate>Sun, 24 Jul 2016 16:54:01 +0200</pubDate>
+        <link>http://tworitdash.in/2016/07/24/iot-with-phoenix-part-1.html</link>
+        <guid isPermaLink="true">http://tworitdash.in/2016/07/24/iot-with-phoenix-part-1.html</guid>
+        
+        
+      </item>
+    
+      <item>
+        <title>SerialPort and Sleep Mruby Gems To Instruct Texas LaunchPad TM4C123G with ARM Cortex M4</title>
+        <description>&lt;p&gt;I always wanted to build something with mruby. After building mruby on my Raspberry Pi, I wanted to use the serialport mrbgem to instruct my Texas TM4C123G with ARM Cortex M4. I used to program the controller using Keil IDE on windows. After getting a mac, I have been writing program into it using &lt;a href=&quot;http://energia.nu/&quot;&gt;energia&lt;/a&gt;. It is as simple as programming an arduino. The pin diagram with numbers are in the figure for the use in energia.&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;/images/tm4c.jpg&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;It has a built in led connected to the pins 1, 2, 3 and 4 of Port F (PF1, PF2, PF3, PF4). Each one contributes a single unique color to the led. So, when we give power to more than one of these pins, we get different colors. It’s fun working with these colors. So I have been using a serial communication program in the board so that it glows different leds with different combinations of PF1, PF2, PF3 and PF4.&lt;/p&gt;
+
+&lt;p&gt;The code is here.&lt;/p&gt;
+
+&lt;p&gt;```
+void setup()
+{
+  // put your setup code here, to run once:
+  Serial.begin(9600);&lt;/p&gt;
+
+&lt;p&gt;pinMode(30, OUTPUT);
+  pinMode(40, OUTPUT);
+  pinMode(39, OUTPUT);
+  pinMode(31, OUTPUT);
+  digitalWrite(40, HIGH);
+}&lt;/p&gt;
+
+&lt;p&gt;void got_char(char x) {&lt;/p&gt;
+
+&lt;p&gt;//if we get l over Serial and so on 
+  if(x == ‘l’) {
+    //… blink the LED
+    digitalWrite(31,LOW);
+    digitalWrite(40,HIGH);
+    digitalWrite(39,LOW);
+    digitalWrite(30,HIGH);
+  }
+  if(x == ‘r’){
+    digitalWrite(31,HIGH);
+    digitalWrite(40,LOW);
+    digitalWrite(39,HIGH);
+    digitalWrite(30,LOW);&lt;/p&gt;
+
+&lt;p&gt;}
+  if(x == ‘b’){
+   digitalWrite(31,LOW);
+    digitalWrite(40,HIGH);
+    digitalWrite(39,HIGH);
+    digitalWrite(30,LOW);
+  }
+  if(x == ‘f’){
+    digitalWrite(31,HIGH);
+    digitalWrite(40,LOW);
+    digitalWrite(39,LOW);
+    digitalWrite(30,HIGH);
+  }
+  if(x == ‘s’){
+    digitalWrite(31,LOW);
+    digitalWrite(40,LOW);
+    digitalWrite(39,LOW);
+    digitalWrite(30,LOW);
+  }
+}
+void loop()
+{
+  if(Serial.available() &amp;gt; 0) {
+    //if there is, we read it
+    byte byte_read = Serial.read();&lt;/p&gt;
+
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;//and call &quot;got_char&quot;
+got_char((char)byte_read);   }
+&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+
+&lt;p&gt;}
+```&lt;/p&gt;
+
+&lt;p&gt;After this, I went for mruby to play with the serialport mrbgem to instruct the controller. For this we have to install mruby first by following commands.&lt;/p&gt;
+
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;git clone http://github.com/mruby/mruby.git
+cd mruby
+make 
+&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+
+&lt;p&gt;Then we have to add the path variable to .bash_profile file in the home of Raspberry Pi. Just add the line at the end of .bash_profile file.&lt;/p&gt;
+
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;export PATH=$PATH:/home/pi/mruby/bin/
+&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+
+&lt;p&gt;Then after restarting the terminal, we can have all the necessary command line tools for mruby as mirb, mruby, mrbc. Let’s install the serialport and sleep mrbgems. First of all we need to install mgem (command line utility for mrbgems).&lt;/p&gt;
+
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;gem install mgem
+&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+
+&lt;p&gt;Now, we need to add mruby-serialport and mruby-sleep to the known mrbgems.&lt;/p&gt;
+
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;mgem add mruby-serialport
+mgem add mruby-sleep
+&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+
+&lt;p&gt;Then we need to generate our content of build_config.rb in the root folder.&lt;/p&gt;
+
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;mgem config
+&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+
+&lt;p&gt;Right after this command, we need to give inputs to the required field and after that it will generate the content of build_config.rb. Then just create a file called build_config.rb and paste the content generated into it. Like my build_config.rb looks like this.&lt;/p&gt;
+
+&lt;p&gt;```
+############################
+# Start of your build_config&lt;/p&gt;
+
+&lt;p&gt;MRuby::Build.new do |conf|
+  toolchain :gcc&lt;/p&gt;
+
+&lt;p&gt;conf.bins = %w(mrbc)&lt;/p&gt;
+
+&lt;p&gt;# mruby’s Core GEMs
+  conf.gem ‘mrbgems/mruby-bin-mirb’
+  conf.gem ‘mrbgems/mruby-bin-mruby’
+  conf.gem ‘mrbgems/mruby-array-ext’
+  conf.gem ‘mrbgems/mruby-enum-ext’
+  conf.gem ‘mrbgems/mruby-eval’
+  conf.gem ‘mrbgems/mruby-exit’
+  conf.gem ‘mrbgems/mruby-fiber’
+  conf.gem ‘mrbgems/mruby-hash-ext’
+  conf.gem ‘mrbgems/mruby-math’
+  conf.gem ‘mrbgems/mruby-numeric-ext’
+  conf.gem ‘mrbgems/mruby-object-ext’
+  conf.gem ‘mrbgems/mruby-objectspace’
+  conf.gem ‘mrbgems/mruby-print’
+  conf.gem ‘mrbgems/mruby-proc-ext’
+  conf.gem ‘mrbgems/mruby-random’
+  conf.gem ‘mrbgems/mruby-range-ext’
+  conf.gem ‘mrbgems/mruby-sprintf’
+  conf.gem ‘mrbgems/mruby-string-ext’
+#  conf.gem ‘mrbgems/mruby-string-utf8’
+  conf.gem ‘mrbgems/mruby-struct’
+  conf.gem ‘mrbgems/mruby-symbol-ext’
+  conf.gem ‘mrbgems/mruby-time’
+  conf.gem ‘mrbgems/mruby-toplevel-ext’&lt;/p&gt;
+
+&lt;p&gt;# user-defined GEMs
+  conf.gem :git =&amp;gt; ‘https://github.com/monami-ya-mrb/mruby-serialport.git’
+  conf.gem :git =&amp;gt; ‘https://github.com/matsumoto-r/mruby-sleep.git’
+end&lt;/p&gt;
+
+&lt;h1 id=&quot;end-of-your-buildconfig&quot;&gt;End of your build_config&lt;/h1&gt;
+&lt;p&gt;############################&lt;/p&gt;
+
+&lt;p&gt;```&lt;/p&gt;
+
+&lt;p&gt;I have commented the mruby-string-utf8 as it created some problems while installing. Then to build this in the directory, just hit rake.&lt;/p&gt;
+
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;rake
+&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+
+&lt;p&gt;Then it will download the mebgems from git and will build it in the build directory. Before building, there are a few changes to be made in the mrbgems files. I found answers to my queries from the github repo of mruby-serialport. Just have a look &lt;a href=&quot;https://github.com/monami-ya-mrb/mruby-serialport/issues/1&quot;&gt;here&lt;/a&gt; and set everything accordingly. After that use rake to build everyhting.&lt;/p&gt;
+
+&lt;p&gt;If it gets successful, we can write program (serialport.rb) to instruct our controller.&lt;/p&gt;
+
+&lt;h3 id=&quot;from-a-ruby-file&quot;&gt;From a Ruby File&lt;/h3&gt;
+
+&lt;p&gt;```
+ sp = SerialPort.new(“/dev/ttyUSB0”, 9600, 8, 1, 0)
+ sp.read_timeout=1000&lt;/p&gt;
+
+&lt;p&gt;list = [‘f’, ‘b’, ‘r’, ‘l’, ‘s’]
+loop do 
+   list.each do |l|
+     sp.write(l)
+     Sleep::sleep(2)
+   end
+end
+```
+Provided you own the serialport file ttyUSB0 for the controller. Otherwise, do this.&lt;/p&gt;
+
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;sudo chown pi /dev/ttyUSB0
+&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+
+&lt;p&gt;I am sending the characters from the list because I have programmed my board to receive these characters to glow certain leds. The Sleep::sleep(2) adds a delay of 2 seconds between consecutive writes of characters. To run this use the following.&lt;/p&gt;
+
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;mruby serialport.rb
+&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+
+&lt;p&gt;And enjoy different colors glowing on the same led with a halt of 2 seconds.&lt;/p&gt;
+
+&lt;h3 id=&quot;from-an-executable-made-using-a-c-file&quot;&gt;From an Executable made using a C file&lt;/h3&gt;
+
+&lt;p&gt;Then I wanted to run it with an executable built using the tool mrbc.&lt;/p&gt;
+
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;mrbc -Bserialport serialport.rb
+&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+
+&lt;p&gt;It will create a file called serialport.c with an array called serialport[]. Just add the following at the end o f the serialport.c file.&lt;/p&gt;
+
+&lt;p&gt;```
+#include “mruby.h”
+#include “mruby/irep.h”
+#include “mruby/proc.h”&lt;/p&gt;
+
+&lt;p&gt;int main(void) {&lt;/p&gt;
+
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;mrb_state *mrb;
+mrb = mrb_open();
+
+mrb_load_irep(mrb, serialport);
+
+mrb_close(mrb);
+
+return 0; } ```
+&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+
+&lt;p&gt;After this run the following commands to make an executable.&lt;/p&gt;
+
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;gcc -I/home/pi/mruby/src -I/home/pi/mruby/include -c serialport.c -o serialport.o
+gcc -o serialport serialport.o -lm /home/pi/mruby/build/host/lib/libmruby.a
+&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+
+&lt;p&gt;The above command creates an executable serialport. Just run it and it will do the same that the ruby code was doing before.&lt;/p&gt;
+
+&lt;p&gt;Happy Hacking. :)&lt;/p&gt;
+
+&lt;p&gt;P.S. - make sure the baud_rate from both the sides are same. :P&lt;/p&gt;
+
+</description>
+        <pubDate>Fri, 20 Nov 2015 09:59:52 +0100</pubDate>
+        <link>http://tworitdash.in/2015/11/20/serialport-and-sleep-mruby-gems-to-instruct-texas-launchpad-tm4c123g-with-arm-cortex-m4.html</link>
+        <guid isPermaLink="true">http://tworitdash.in/2015/11/20/serialport-and-sleep-mruby-gems-to-instruct-texas-launchpad-tm4c123g-with-arm-cortex-m4.html</guid>
+        
+        
+      </item>
+    
+      <item>
+        <title>Best Practices to Recover Ruby Gems and Developer Tools in Mac OSX El Capitan</title>
+        <description>&lt;p&gt;El Capitan has Darwin-15 (different from the last kernel). The first step that I found is to disable SIP (System Integrity Protection) by the following the steps below.&lt;/p&gt;
+
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;1. Rebooting in recovery mode by long pressing command + R on reboot
+2. Accessing the terminal by going to utilities 
+3. run the following in the terminal 
+
+csrutil disable
+&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+
+&lt;p&gt;Homebrew requires access to the path /usr/local. So we need to have access to this path by using the following commands.&lt;/p&gt;
+
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;sudo chflags norestricted /usr/local &amp;amp;&amp;amp; sudo chown $(whoami):admin /usr/local &amp;amp;&amp;amp; sudo chown -R $(whoami):admin /usr/local
+&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+
+&lt;p&gt;After all these, it’s the best practice to update xcode to version 7.1 and install the command line tools as well. There are a lot of ways to do this.&lt;/p&gt;
+
+&lt;p&gt;Run the following in the terminal&lt;/p&gt;
+
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;xcode-select --install
+&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+
+&lt;p&gt;If the above way fails, just click on xcode application and go to xcode -&amp;gt; Open Developer Tool -&amp;gt; More Developer Tools. It will take to you to the apple developer site. Just login there and according to the OS and Xcode version you have, download the command line tools file with the .dmg extension and install it.&lt;/p&gt;
+
+&lt;p&gt;Or else, the best way is to click on the mac app store and check for updates. There must be an update to install the command line tools and after that it’s done.&lt;/p&gt;
+
+&lt;h3 id=&quot;fixing-gem-native-extension&quot;&gt;Fixing Gem native extension&lt;/h3&gt;
+
+&lt;p&gt;I have a blog configured with Octopress and after updating the system to 10.11, bundle install always failed. With the command line tools installed and with proper permissions set to /usr/local/, I got the error while running&lt;/p&gt;
+
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;bundle exec rake preview
+&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+
+&lt;p&gt;Error was&lt;/p&gt;
+
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;Starting to watch source with Jekyll and Compass. Starting Rack on port 4000
+rake aborted!
+Errno::ENOENT: No such file or directory - compass
+/Users/user/git/octopress/Rakefile:85:in spawn
+/Users/user/git/octopress/Rakefile:85:in block in &amp;lt;top (required)&amp;gt;
+Tasks: TOP =&amp;gt; preview
+&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+
+&lt;p&gt;To have this removed, I prefered installing ruby from rbenv. Before that I have been using the system ruby. With rbenv, we can have the flexibity of having different versions of ruby installed for different projects. With the above fixes, homebrew must be working as usual.&lt;/p&gt;
+
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;brew update
+brew install rbenv ruby-build
+&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+
+&lt;p&gt;Ruby-build is an additional dependency for rbenv. After that we need to set the path so that we can have the command line utility of rbenv.&lt;/p&gt;
+
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;echo &#39;if which rbenv &amp;gt; /dev/null; then eval &quot;$(rbenv init -)&quot;; fi&#39; &amp;gt;&amp;gt; ~/.bash_profile
+source ~/.bash_profile
+&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+
+&lt;p&gt;The above instruction adds a PATH variable to the .bash_profile to have the utility.&lt;/p&gt;
+
+&lt;p&gt;Then we need to install ruby from rbenv and to have a version of our choice globally. I preferred 2.2.3.&lt;/p&gt;
+
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;rbenv install 2.2.3
+rbenv global 2.2.3
+&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+
+&lt;p&gt;Now if we check&lt;/p&gt;
+
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;ruby -v 
+ruby 2.2.3p173 (2015-08-18 revision 51636) [x86_64-darwin15]
+&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+
+&lt;p&gt;Now I wanted to have this version installed locally in my octopress blog. I just entered into it and ran the following.&lt;/p&gt;
+
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;rbenv rehash
+rbenv local 2.2.3
+&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+
+&lt;p&gt;Then I installed all the necessary gems by&lt;/p&gt;
+
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;bundle install 
+&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+
+&lt;p&gt;But I eneded up with some errors that uses some versions specific issues. My Gemfile looked like this before.&lt;/p&gt;
+
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;cat Gemfile
+source &quot;https://rubygems.org&quot;
+
+group :development do
+  gem &#39;rake&#39;, &#39;~&amp;gt; 10.0&#39;
+  gem &#39;jekyll&#39;, &#39;~&amp;gt; 2.0&#39;
+  gem &#39;octopress-hooks&#39;, &#39;~&amp;gt; 2.2&#39;
+  gem &#39;octopress-date-format&#39;, &#39;~&amp;gt; 2.0&#39;
+  gem &#39;jekyll-sitemap&#39;
+  gem &#39;rdiscount&#39;, &#39;~&amp;gt; 2.0&#39;
+  gem &#39;RedCloth&#39;, &#39;~&amp;gt; 4.2.9&#39;
+  gem &#39;haml&#39;, &#39;~&amp;gt; 4.0&#39;
+  gem &#39;compass&#39;, &#39;~&amp;gt; 1.0.1&#39;
+  gem &#39;sass-globbing&#39;, &#39;~&amp;gt; 1.0.0&#39;
+  gem &#39;rb-fsevent&#39;, &#39;~&amp;gt; 0.9&#39;
+  gem &#39;stringex&#39;, &#39;~&amp;gt; 1.4.0&#39;
+  gem &#39;therubyracer&#39;
+end
+
+gem &#39;sinatra&#39;, &#39;~&amp;gt; 1.4.2&#39;
+&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+
+&lt;p&gt;Then I just removed the versions from the right side of each gem.&lt;/p&gt;
+
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;cat Gemfile 
+source &quot;https://rubygems.org&quot;
+
+group :development do
+  gem &#39;rake&#39;
+  gem &#39;jekyll&#39;
+  gem &#39;rdiscount&#39;
+  gem &#39;therubyracer&#39;
+  gem &#39;pygments.rb&#39;
+  gem &#39;RedCloth&#39;
+  gem &#39;haml&#39;
+  gem &#39;compass&#39;
+  gem &#39;sass&#39;
+  gem &#39;sass-globbing&#39;
+  gem &#39;rubypants&#39;
+  gem &#39;rb-fsevent&#39;
+  gem &#39;stringex&#39;
+  gem &#39;liquid&#39;
+  gem &#39;directory_watcher&#39;
+  gem &#39;json&#39;
+end
+&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+
+&lt;p&gt;Then I removed Gemfile.lock file to install gems locally from scratch again.&lt;/p&gt;
+
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;rm Gemfile.lock
+gem pristine --all 
+bundle install
+&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+
+&lt;p&gt;Now :&lt;/p&gt;
+
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;bundle exec rake preview
+Starting to watch source with Jekyll and Compass. Starting Rack on port 4000
+/Users/tworit/.rbenv/versions/2.2.3/lib/ruby/gems/2.2.0/gems/liquid-2.3.0/lib/liquid/htmltags.rb:44: warning: duplicated key at line 47 ignored: &quot;index0&quot;
+[2015-11-20 13:45:50] INFO  WEBrick 1.3.1
+[2015-11-20 13:45:50] INFO  ruby 2.2.3 (2015-08-18) [x86_64-darwin15]
+[2015-11-20 13:45:50] INFO  WEBrick::HTTPServer#start: pid=82642 port=4000
+Configuration from /Users/tworit/tworitdash.github.io/_config.yml
+Auto-regenerating enabled: source -&amp;gt; public
+[2015-11-20 13:45:50] regeneration: 150 files changed
+&amp;gt;&amp;gt;&amp;gt; Change detected at 13:45:51 to: screen.scss
+identical public/stylesheets/screen.css 
+&amp;gt;&amp;gt;&amp;gt; Compass is watching for changes. Press Ctrl-C to Stop.
+&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+
+&lt;p&gt;Now, everything should work fine. :) Happy Hacking !&lt;/p&gt;
+
+</description>
+        <pubDate>Fri, 20 Nov 2015 07:06:22 +0100</pubDate>
+        <link>http://tworitdash.in/2015/11/20/best-practices-to-recover-ruby-gems-and-developer-tools-in-mac-osx-el-capitan.html</link>
+        <guid isPermaLink="true">http://tworitdash.in/2015/11/20/best-practices-to-recover-ruby-gems-and-developer-tools-in-mac-osx-el-capitan.html</guid>
+        
+        
+      </item>
+    
+      <item>
+        <title>Compiling Anything from the Portstree failed in FreeBSD 10.1 Raspberry Pi</title>
+        <description>&lt;p&gt;After getting portsnap extracted on my FreeBSD RPi Desktop, I wanted to compile a couple of things from the ports tree. But when I wanted to compile something, It first used to fetch “pkg” and the make failed. When I ran:&lt;/p&gt;
+
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;# pkg updtae
+&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+
+&lt;p&gt;It first used to ask to install the package manager. Then it used to terminate and instruct to install pkg from /usr/ports/ports-mgmt/pkg . But that procedure also failed with the same error messages that I had got while compiling nano nad links from ports tree. I found out a simple but effective solution to this.&lt;/p&gt;
+
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;# whereis portmaster
+portmaster: /usr/ports/ports-mgmt/portmaster/
+# cd /usr/ports/ports-mgmt/portmaster &amp;amp;&amp;amp; make install clean
+&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+
+&lt;p&gt;Compiling portmaster was very time taking but it solved the issue and the pkg was successfully installed. Unfortunately I found no packagesite repositiry for “pkg update” online for FreeBSD:10.1:armv6 Release for Raspberry Pi. So, I couldn’t use the pkg tool to install packages. And I tried to compile packages from the ports tree by hand. The processor and RAM of Raspberry Pi cause problem while compiling. It even takes one whole day or more than that to compile a package from the ports tree.&lt;/p&gt;
+
+</description>
+        <pubDate>Tue, 04 Aug 2015 10:09:38 +0200</pubDate>
+        <link>http://tworitdash.in/2015/08/04/compiling-anything-from-the-portstree-failed-in-freebsd-10-dot-1-raspberry-pi.html</link>
+        <guid isPermaLink="true">http://tworitdash.in/2015/08/04/compiling-anything-from-the-portstree-failed-in-freebsd-10-dot-1-raspberry-pi.html</guid>
+        
+        
+      </item>
+    
+      <item>
+        <title>Raspberry Pi FreeBSD portsnap fetch clockktime Error</title>
+        <description>&lt;p&gt;After setting up the network, let’s try to fetch and extract the portsnap. Hell !! It resulted in something irritating.&lt;/p&gt;
+
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;# portsnap fetch
+Looking up portsnap.FreeBSD.org mirrors... 2 mirrors found.
+Fetching snapshot tag from portsnap1.FreeBSD.org... done.
+Snapshot appears to have been created more than one day into the future!
+(Is the system clock correct?)
+Cowardly refusing to proceed any further.
+&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+
+&lt;p&gt;This can be solved by using the proper timezone.&lt;/p&gt;
+
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;vi /etc/rc.conf 
+&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+
+&lt;p&gt;And add the following:&lt;/p&gt;
+
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;ntpdate_enable=&quot;YES&quot;
+&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+
+&lt;p&gt;Then set up your timezone by the following command:&lt;/p&gt;
+
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;# tzsetup
+&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+
+&lt;p&gt;Then after a reboot, the fetch will work. :)&lt;/p&gt;
+
+&lt;div class=&quot;highlighter-rouge&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;# portsnap fetch extract
+&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+</description>
+        <pubDate>Tue, 04 Aug 2015 09:59:54 +0200</pubDate>
+        <link>http://tworitdash.in/2015/08/04/raspberry-pi-freebsd-portsnap-fetch-clockktime-error.html</link>
+        <guid isPermaLink="true">http://tworitdash.in/2015/08/04/raspberry-pi-freebsd-portsnap-fetch-clockktime-error.html</guid>
+        
+        
+      </item>
+    
+  </channel>
+</rss>
