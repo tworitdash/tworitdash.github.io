@@ -16,11 +16,12 @@
 	<style>
 		@import url('https://fonts.googleapis.com/css?family=Inconsolata');
 	</style>
-  <title>Monngo DB in Fedora</title>
-  <meta name="description" content="It is somewhat difficult to run mongo db by following the conventional steps for installing it in fedora. While starting mongo db, the normal problem that is...">
+  <title>Twor Bot</title>
+  <meta name="description" content="The more Persnickety, The more Hippy.
+">
 
   <link rel="stylesheet" href="/css/main.css">
-  <link rel="canonical" href="http://tworitdash.in/2015/04/17/monngo-db-in-fedora.html">
+  <link rel="canonical" href="http://tworitdash.in/blog/page5/">
   <link rel="alternate" type="application/rss+xml" title="Twor Bot" href="http://tworitdash.in/feed.xml" />
 </head>
 
@@ -88,86 +89,34 @@
 
     <div class="page-content">
       <div class="wrapper">
-        <div class="post">
+        <div class="home" id="home">
+		  
+		<ul class="posts noList">
+				
+							<li>
+								<span class="date">June 24, 2014</span>
+								<h3><a class="post-link" href="/2014/06/24/blogging-with-octopress-and-deploying-in-github.html">Blogging with Octopress and deploying in Github</a></h3>
+								<p>After a long and tiring hot day, finally it’s raining here at Bhubaneswar. So let’s hack some codes to make an awesome blogging site.
 
-  <header class="post-header">
-    <h1 class="post-title">Monngo DB in Fedora</h1>
-    <p class="post-meta">Apr 17, 2015</p>
-  </header>
+</p>
+							</li>
+					
+							<li>
+								<span class="date">June 22, 2014</span>
+								<h3><a class="post-link" href="/2014/06/22/how-i-met-c-dot-s-lewis.html">How I met C.S.Lewis</a></h3>
+								<p>After watching the three chronicles of Narnia, I was curiously driven to know more about the writer C.S. Lewis. If I knew about the series before, I would have read the books much earlier than the release date of the first movie. I was a bit late to start, but it turned out to be more interesting than expected. I am a kind of person who take interest in some things which are not so mainstream and not adorable. As far as childrens’ fantasy is concerned, I believe in ‘em to some extent. But to think of a pretty different world in a different universe, (with a complete set of new physical laws and or you can say a complete set of new Gods of creation) has grown an immense inquisitiveness within me and for that very reason I found the Narnian series to be the best fit for my childish ( if you can say it ) imaginations. Is our world round or we just imagine it to be? Whatever that is, I found a world which is triangular flat in my dreams and happened to notice that Narnia is also flat.
 
-  <article class="post-content">
-    <p>It is somewhat difficult to run mongo db by following the conventional steps for installing it in fedora. While starting mongo db, the normal problem that is usually encountered after authenticating is</p>
-
-<div class="highlighter-rouge"><pre class="highlight"><code>$ systemctl start mongod
-   
-$ starting mongod (via systemctl):  Job failed. See system journal and 'systemctl status' for details.  [FAILED]
-</code></pre>
-</div>
-
-<p>And it is usualy found that the mongod.log is empty or rather absent. If one of the commands mongo or mongod is not working, then also the installation is incomplete becasue the mongo db server satrts with mongod and, if it is not working properly, it will be difficult to connect mongo clients to it even after providing correct authentication for the user.</p>
-
-<p>It is also usually seen that the command /usr/bin/mongod or the archive /usr/share/man/man1/mongod.1.gz is not present.</p>
-
-<h2 id="installing-mongo-db-in-fedora">Installing Mongo DB in Fedora</h2>
-
-<p>First we have to remove the installed versions (if there is any).</p>
-
-<div class="highlighter-rouge"><pre class="highlight"><code>$ sudo su
-# yum erase mongodb
-# yum erase mongo-10gen
-# yum --disablerepo= * --enablerepo=fedora,updates install mongodb mongodb-server
-</code></pre>
-</div>
-
-<p>Running Mongo</p>
-
-<div class="highlighter-rouge"><pre class="highlight"><code># systemctl start mongod.service
-</code></pre>
-</div>
-
-<p>Verifying</p>
-
- 	# systemctl status mongod.service
- 	# tail /var/log/mongodb/mongodb.log
- 	# nmap -p27017 localhost
-
-<p>Because the default port for mongo db is 27017.</p>
-
-<p>Running mongo clinet</p>
-
- 	#mongo
-
-<p>Starting mongo db each time you boot.</p>
-
- 	#systemctl enable mongod.service
-
-<p>Happy Hacking. :)</p>
-
-  </article>
-
-	<div id="disqus_thread"></div>
-  <script type="text/javascript">
-    var disqus_config = function () {
-				      // Here is an example,
-				      // this.page.url = "https://poanchen.github.io/blog/2017/07/27/how-to-add-disqus-to-your-jekyll-site";
-		this.page.url = "http://tworitdash.in/2015/04/17/monngo-db-in-fedora.html";
-				this.page.identifier = "http://tworitdash.in/2015/04/17/monngo-db-in-fedora.html";
-		};
-
-    // You should be able to get the following lines of code from your Disqus admin.
-    // https://disqus.com/admin/universalcode
-    		(function() { // DON'T EDIT BELOW THIS LINE
-				      var d = document, s = d.createElement('script');
-						s.src = 'https://tworitdash-in-blog.disqus.com/embed.js';
-							s.setAttribute('data-timestamp', +new Date());
-							(d.head || d.body).appendChild(s);
-			})();
-  </script>
-	  <noscript>
-				    Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a>
-</noscript>
-
-
+</p>
+							</li>
+					
+			</ul>
+																															  <!-- Pagination links -->
+			<div class="pagination">
+					
+							<a href="/blog/page4/" class="previous button__outline">Newer Posts</a> 
+					
+					
+			</div>
 </div>
 
       </div>

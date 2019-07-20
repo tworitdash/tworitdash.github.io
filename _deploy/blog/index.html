@@ -70,6 +70,8 @@
           
 		
           
+		
+          
 			
 			 <a class="page-link" href="http://resume.tworitdash.in">Resume</a>
 			 <a class="page-link" href="http://conferences.tworitdash.in">Conferences</a>
@@ -92,37 +94,42 @@
 		<ul class="posts noList">
 				
 							<li>
+								<span class="date">July 19, 2019</span>
+								<h3><a class="post-link" href="/2019/07/19/image-compression-using-singular-value-decomposition.html">Image Compression with Singular Value Decomposition</a></h3>
+								<p>This blog-post is about compression of jpg files using SVD (Singular Value Decomposition). This is inspired from a project that I did with Ultra Wide-band Imaging. There, forming the observation matrix was very different where real life data from a linear array of synthetic aperture radar was given with a set of frequencies of operation (large bandwidth). There, forming the image was the real task with different bandwidths and different aperture sampling of the radar elements with some theoretical electromagnetic tools and SVD.
+
+</p>
+							</li>
+					
+							<li>
+								<span class="date">October 13, 2018</span>
+								<h3><a class="post-link" href="/2018/10/13/how-sleeping-8-hours-has-a-considerable-impact-on-me.html">How sleeping 8 hours has a considerable impact</a></h3>
+								<p>My schedule before 2018 October:
+
+</p>
+							</li>
+					
+							<li>
+								<span class="date">September 02, 2018</span>
+								<h3><a class="post-link" href="/2018/09/02/moved-my-blog-to-octopress-3-dot-0.html">Moved my blog to Octopress 3.0</a></h3>
+								<p>I just moved my entire tech blog from Octopress 2 to 3.0. It was quite tiresome because I had my base folder before at /blog and somehow I had a landing page of my own on the root endpoint /. However, I managed it somehow and due to the mis-match, I was allowed to dig deep into designing after almost 3 years. Did some CSS and HTML as well. Added Github flavored markdown once again.
+
+</p>
+							</li>
+					
+							<li>
 								<span class="date">September 02, 2016</span>
 								<h3><a class="post-link" href="/2016/09/02/iot-with-phoenix-part-3.html">IoT with phoenix part 3</a></h3>
 								<p>This is the last part in the series.
+
 </p>
 							</li>
 					
 							<li>
 								<span class="date">August 07, 2016</span>
 								<h3><a class="post-link" href="/2016/08/07/iot-with-phoenix-part-2.html">iot with phoenix part 2</a></h3>
-								<p>In part 1, I have demonstrated how to create MVC based user authentication and a plug for the same with Phoenix. Now, in this tutorial we will see how to display some data using websockets. Websocket connections are consistent. So, for displaying the real time data from the machine, we need to use the channel feature of phoenix, where we can update the data on the page in real time. 
-</p>
-							</li>
-					
-							<li>
-								<span class="date">July 24, 2016</span>
-								<h3><a class="post-link" href="/2016/07/24/iot-with-phoenix-part-1.html">IoT with Phoenix Part 1</a></h3>
-								<p>This is the first blog post that I am writing to share my experience with the Phoenix framework in building an Iot application. I have written a blog post about Elixir and Phoenix here. The objectives that we are going to achieve in here are
-</p>
-							</li>
-					
-							<li>
-								<span class="date">November 20, 2015</span>
-								<h3><a class="post-link" href="/2015/11/20/serialport-and-sleep-mruby-gems-to-instruct-texas-launchpad-tm4c123g-with-arm-cortex-m4.html">SerialPort and Sleep Mruby Gems To Instruct Texas LaunchPad TM4C123G with ARM Cortex M4</a></h3>
-								<p>I always wanted to build something with mruby. After building mruby on my Raspberry Pi, I wanted to use the serialport mrbgem to instruct my Texas TM4C123G with ARM Cortex M4. I used to program the controller using Keil IDE on windows. After getting a mac, I have been writing program into it using energia. It is as simple as programming an arduino. The pin diagram with numbers are in the figure for the use in energia.
-</p>
-							</li>
-					
-							<li>
-								<span class="date">November 20, 2015</span>
-								<h3><a class="post-link" href="/2015/11/20/best-practices-to-recover-ruby-gems-and-developer-tools-in-mac-osx-el-capitan.html">Best Practices to Recover Ruby Gems and Developer Tools in Mac OSX El Capitan</a></h3>
-								<p>El Capitan has Darwin-15 (different from the last kernel). The first step that I found is to disable SIP (System Integrity Protection) by the following the steps below.
+								<p>In part 1, I have demonstrated how to create MVC based user authentication and a plug for the same with Phoenix. Now, in this tutorial we will see how to display some data using websockets. Websocket connections are consistent. So, for displaying the real time data from the machine, we need to use the channel feature of phoenix, where we can update the data on the page in real time.
+
 </p>
 							</li>
 					
@@ -198,5 +205,34 @@
 
 
   </body>
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    tex2jax: {
+      inlineMath: [ ['$','$'], ["\\(","\\)"] ],
+      processEscapes: true
+    }
+  });
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      tex2jax: {
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+      }
+    });
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax(), i;
+        for(i=0; i < all.length; i += 1) {
+            all[i].SourceElement().parentNode.className += ' has-jax';
+        }
+    });
+</script>
+
+<script type="text/javascript"
+   src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+</script>
 
 </html>

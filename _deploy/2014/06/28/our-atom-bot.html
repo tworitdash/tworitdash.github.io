@@ -69,6 +69,8 @@
           
 		
           
+		
+          
 			
 			 <a class="page-link" href="http://resume.tworitdash.in">Resume</a>
 			 <a class="page-link" href="http://conferences.tworitdash.in">Conferences</a>
@@ -96,43 +98,47 @@
   <article class="post-content">
     <p>The name is inspired from <a href="http://realsteel.wikia.com/wiki/Atom">Real Steel</a>. This is just a prototype made using ruby libraries, <a href="http://www.arduino.cc/">arduino microcontroller</a> board and <a href="http://www.raspberrypi.org/">raspberry pi</a>. The idea is to control a system or hardware from anywhere around the globe by the help of internet. What are actually the ruby libraries and how do those help?</p>
 
-<p>The concept is based on web-socket server. The server accepts websocket connections on some port (let it be 8080). The server is written by the help of em-websocket ruby. Clients are connected to it by opening the websocket connections at the same port. And as soon as a client is connected, it gets associated with a channel(internal channel). And when a client sends a message, it&#39;s pushed to that channel and after that the same message can be sent to all connected clients.</p>
+<p>The concept is based on web-socket server. The server accepts websocket connections on some port (let it be 8080). The server is written by the help of em-websocket ruby. Clients are connected to it by opening the websocket connections at the same port. And as soon as a client is connected, it gets associated with a channel(internal channel). And when a client sends a message, it’s pushed to that channel and after that the same message can be sent to all connected clients.</p>
 
-<h2>PING PONG</h2>
+<h2 id="ping-pong">PING PONG</h2>
 
 <p>The ping-pong is the concept of receiving and sending messages. The browser clients are supported by the new versions of some browsers. In the javascript of that html page, we can connect to the server at the same port(8080). And it is then associated with callbacks like when a connection is made, when a new message is received and when the connection is closed. The messages here can be sent by clicking some buttons on that html page. Then along with the browser client, we can connect another client to the same channel which can receive the same message being sent by the browser client. How to send the same message to the serialport?</p>
 
-<h2>SerialPort</h2>
+<h2 id="serialport">SerialPort</h2>
 
-<p>Here comes another ruby gem called the <a href="https://rubygems.org/gems/serialport">serialport</a>. This gem is built to use RS-232 serialports. In the client code we can also create a object of serialport. And by the help of that object we can send that same message(here it&#39;s only a single character like &#39;a&#39;) to the serialport. So now the other client can receive the message from the browser client through the websocket channel and send that to the serialport. Why to send that message (character) to the serialport?</p>
+<p>Here comes another ruby gem called the <a href="https://rubygems.org/gems/serialport">serialport</a>. This gem is built to use RS-232 serialports. In the client code we can also create a object of serialport. And by the help of that object we can send that same message(here it’s only a single character like ‘a’) to the serialport. So now the other client can receive the message from the browser client through the websocket channel and send that to the serialport. Why to send that message (character) to the serialport?</p>
 
-<h2>Arduino</h2>
+<h2 id="arduino">Arduino</h2>
 
-<p><a href="http://www.arduino.cc/">Arduino</a> is a microcontroller board which has UART (universal asynchronous receiver and transmitter). This UART helps that board to receive the commands coming to it over the serialport. After getting the command(the command I am referring here is a character constant like &#39;a&#39;), it can process the output accordingly. How can it know what to perform while that exact command is received? It can all be written in the Arduino IDE and  uploaded to that board to do the required tasks. Isn&#39;t that awesome? Arduino has IO ports and with the help of those anything at the output can be connected. </p>
+<p><a href="http://www.arduino.cc/">Arduino</a> is a microcontroller board which has UART (universal asynchronous receiver and transmitter). This UART helps that board to receive the commands coming to it over the serialport. After getting the command(the command I am referring here is a character constant like ‘a’), it can process the output accordingly. How can it know what to perform while that exact command is received? It can all be written in the Arduino IDE and  uploaded to that board to do the required tasks. Isn’t that awesome? Arduino has IO ports and with the help of those anything at the output can be connected.</p>
 
-<h2>RaspberryPi</h2>
+<h2 id="raspberrypi">RaspberryPi</h2>
 
 <p><a href="http://www.raspberrypi.org/">RaspberryPi</a> is a credit-card sized computer (linux based) which can be easily connected to the arduino through its serialport(USB) and it can be connected to the internet over wifi. This can be the device in which the client code can be executed. :) :)</p>
 
-<h2>A Prototype</h2>
+<h2 id="a-prototype">A Prototype</h2>
 
-<p>We have made a prototype using the above libraries and the set of hardwares. We have connected  arduino with the pi through its serialport. And to the output of arduino, we have connected two motors (the motors are connected to two wheels) with a motor driver circuit. And now whenever we connect to the browser client we get a connection established. After that when the client is connected from the pi we can get our things done by clicking the buttons on that web-page. Along with that, in the browser client(in the javascript) we have included the code for accelerometer. Through this feature we can connect to the browser client with some device, having the accelerometer feature, and we can send messages to the other client by only tilting the device like a game. Isn&#39;t that fun? </p>
+<p>We have made a prototype using the above libraries and the set of hardwares. We have connected  arduino with the pi through its serialport. And to the output of arduino, we have connected two motors (the motors are connected to two wheels) with a motor driver circuit. And now whenever we connect to the browser client we get a connection established. After that when the client is connected from the pi we can get our things done by clicking the buttons on that web-page. Along with that, in the browser client(in the javascript) we have included the code for accelerometer. Through this feature we can connect to the browser client with some device, having the accelerometer feature, and we can send messages to the other client by only tilting the device like a game. Isn’t that fun?</p>
 
-<p><iframe src="//player.vimeo.com/video/98682460" width="500" height="375" frameborder="0" webkitallowfullscreen mozallowfullscreen allowfullscreen></iframe> <p><a href="http://vimeo.com/98682460">MOV_0089.mp4</a> from <a href="http://vimeo.com/user29276136">Tworit</a> on <a href="https://vimeo.com">Vimeo</a>.</p></p>
+<iframe src="//player.vimeo.com/video/98682460" width="500" height="375" frameborder="0" webkitallowfullscreen="" mozallowfullscreen="" allowfullscreen=""></iframe>
+<p><a href="http://vimeo.com/98682460">MOV_0089.mp4</a> from <a href="http://vimeo.com/user29276136">Tworit</a> on <a href="https://vimeo.com">Vimeo</a>.</p>
 
-<p><img src="/images/atom.jpg"></p>
+<p><img src="/images/atom.jpg" /></p>
 
 <p>The source-code :</p>
 
 <p><a href="https://github.com/sunu/atom-bot">atom-bot</a></p>
 
-<h2>Utility</h2>
+<h2 id="utility">Utility</h2>
 
 <p>This system can help us in many ways like</p>
-<div class="highlight"><pre><code class="language-" data-lang="">1. We can automate our home like we can turn on our oven just before reaching home or we can check if the door is locked or not.
+
+<div class="highlighter-rouge"><pre class="highlight"><code>1. We can automate our home like we can turn on our oven just before reaching home or we can check if the door is locked or not.
 2. Security notifications can be sent as a app notification over the internet.
 3. Can be used in hospitals and in traffic systems
-</code></pre></div>
+</code></pre>
+</div>
+
 <p>And a lot of things can be developed with this. :)</p>
 
   </article>
@@ -142,15 +148,15 @@
     var disqus_config = function () {
 				      // Here is an example,
 				      // this.page.url = "https://poanchen.github.io/blog/2017/07/27/how-to-add-disqus-to-your-jekyll-site";
-				      this.page.url = "/2014/06/28/our-atom-bot.html";
-							    this.page.identifier = "/2014/06/28/our-atom-bot.html";
-							};
+		this.page.url = "http://tworitdash.in/2014/06/28/our-atom-bot.html";
+				this.page.identifier = "http://tworitdash.in/2014/06/28/our-atom-bot.html";
+		};
 
     // You should be able to get the following lines of code from your Disqus admin.
     // https://disqus.com/admin/universalcode
-    (function() { // DON'T EDIT BELOW THIS LINE
+    		(function() { // DON'T EDIT BELOW THIS LINE
 				      var d = document, s = d.createElement('script');
-							s.src = '//tworitdashin.disqus.com/embed.js';
+						s.src = 'https://tworitdash-in-blog.disqus.com/embed.js';
 							s.setAttribute('data-timestamp', +new Date());
 							(d.head || d.body).appendChild(s);
 			})();
@@ -224,5 +230,34 @@
 
 
   </body>
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    tex2jax: {
+      inlineMath: [ ['$','$'], ["\\(","\\)"] ],
+      processEscapes: true
+    }
+  });
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      tex2jax: {
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+      }
+    });
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax(), i;
+        for(i=0; i < all.length; i += 1) {
+            all[i].SourceElement().parentNode.className += ' has-jax';
+        }
+    });
+</script>
+
+<script type="text/javascript"
+   src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+</script>
 
 </html>

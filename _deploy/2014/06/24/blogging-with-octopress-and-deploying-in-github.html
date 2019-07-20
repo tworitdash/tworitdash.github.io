@@ -17,7 +17,7 @@
 		@import url('https://fonts.googleapis.com/css?family=Inconsolata');
 	</style>
   <title>Blogging with Octopress and deploying in Github</title>
-  <meta name="description" content="After a long and tiring hot day, finally it&#39;s raining here at Bhubaneswar. So let&#39;s hack some codes to make an awesome blogging site.">
+  <meta name="description" content="After a long and tiring hot day, finally it’s raining here at Bhubaneswar. So let’s hack some codes to make an awesome blogging site.">
 
   <link rel="stylesheet" href="/css/main.css">
   <link rel="canonical" href="http://tworitdash.in/2014/06/24/blogging-with-octopress-and-deploying-in-github.html">
@@ -69,6 +69,8 @@
           
 		
           
+		
+          
 			
 			 <a class="page-link" href="http://resume.tworitdash.in">Resume</a>
 			 <a class="page-link" href="http://conferences.tworitdash.in">Conferences</a>
@@ -94,7 +96,7 @@
   </header>
 
   <article class="post-content">
-    <p>After a long and tiring hot day, finally it&#39;s raining here at Bhubaneswar. So let&#39;s hack some codes to make an awesome blogging site.</p>
+    <p>After a long and tiring hot day, finally it’s raining here at Bhubaneswar. So let’s hack some codes to make an awesome blogging site.</p>
 
 <p>Do you feel the same as I feel about wordpress? If yes, then just get rid of it and use one of the best static page or blogging page generators called Octopress.And github provides an awesome online page generating option so that the codes can be pushed or deployed in github to share it on the web. :)</p>
 
@@ -110,110 +112,144 @@ Install ruby in your system (as octopress is based on ruby)</p>
 <p>For mac users, there is no need to install ruby perhaps as they have it pre-installed.</p>
 
 <p>Check by running either of the following.</p>
-<div class="highlight"><pre><code class="language-" data-lang="">1. ruby -v
+
+<div class="highlighter-rouge"><pre class="highlight"><code>1. ruby -v
 2. ruby --version
-</code></pre></div>
-<p>Now we are ready to go for the hack.Let&#39;s make a folder and clone the octopress github repo in that.You will need the <a href="http://git-scm.com/download/win">git command line or the git bash</a> for that in windows and for ubuntu or debian just <code>sudo apt-get install git</code> will do that same job.</p>
-<div class="highlight"><pre><code class="language-" data-lang="">1. mkdir your_repo
+</code></pre>
+</div>
+
+<p>Now we are ready to go for the hack.Let’s make a folder and clone the octopress github repo in that.You will need the <a href="http://git-scm.com/download/win">git command line or the git bash</a> for that in windows and for ubuntu or debian just <code>sudo apt-get install git</code> will do that same job.</p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>1. mkdir your_repo
 2. cd your_repo
 3. git clone git://github.com/imathis/octopress.git octopress
 4. cd octopress
-</code></pre></div>
+</code></pre>
+</div>
+
 <p>Now we are in the octopress directory and now we need to install all the ruby gems to perform our task. So we first need the bundler gem.</p>
-<div class="highlight"><pre><code class="language-" data-lang="">1. gem install bundler
-</code></pre></div>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>1. gem install bundler
+</code></pre>
+</div>
+
 <p>Not <code>sudo gem install bundler</code> as we are using rbenv for ruby.</p>
 
 <p>Then while in that directory run</p>
-<div class="highlight"><pre><code class="language-" data-lang="">1. bundle install
+
+<div class="highlighter-rouge"><pre class="highlight"><code>1. bundle install
 2. bundle exec rake install
-</code></pre></div>
+</code></pre>
+</div>
+
 <p>The rake install command follows the rake task (install) and creates a group of files and folders in that octopress directory like <code>source</code> <code>public</code> etc and if you look into the source folder you can find the folder <code>_posts</code>(where all the blog markdown files are going to be saved).</p>
 
 <p>Then for the basic configurations, open up the _config.yml file and set the things in that like ;</p>
-<div class="highlight"><pre><code class="language-" data-lang="">1. url: http://yoursite.com
+
+<div class="highlighter-rouge"><pre class="highlight"><code>1. url: http://yoursite.com
 2. title: My First Dummy Blog
 3. subtitle: 
 4. author: Me 
 5. simple_search: https://www.google.com/search
 6. description: whatever !
-</code></pre></div>
+</code></pre>
+</div>
+
 <p>All set !!! :)</p>
 
-<p>Then let&#39;s create the first blog </p>
-<div class="highlight"><pre><code class="language-" data-lang="">1. bundle exec rake new_post["your blog title"]
-</code></pre></div>
-<p>This rake task will create a markdown file in the <code>_posts</code> folder with the current date (/blog/year-month-date-title) as we see in general blogging sites.Open that file and you can see the page layout is &quot;post&quot; and I will explain how to make our own custom ones in my following blogs. 
-    ---
-    1.  layout: post
-    2.  title: &quot;Blogging with Octopress and deploying in Github&quot;
-    3.  date: 2014-06-24 22:58:00 +0530
-    4.  comments: false
-    5.  categories:
-    ----</p>
+<p>Then let’s create the first blog</p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>1. bundle exec rake new_post["your blog title"]
+</code></pre>
+</div>
+
+<p>This rake task will create a markdown file in the <code>_posts</code> folder with the current date (/blog/year-month-date-title) as we see in general blogging sites.Open that file and you can see the page layout is “post” and I will explain how to make our own custom ones in my following blogs. 
+	—
+	1. 	layout: post
+	2.	title: “Blogging with Octopress and deploying in Github”
+	3.	date: 2014-06-24 22:58:00 +0530
+	4.	comments: false
+	5.	categories:
+	—-</p>
 
 <p>Then insert your blog right below the - - - and save the file.</p>
 
-<p>After that we can see the changes by running </p>
-<div class="highlight"><pre><code class="language-" data-lang="">1. bundle exec rake generate
+<p>After that we can see the changes by running</p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>1. bundle exec rake generate
 2. bundle exec rake preview
-</code></pre></div>
+</code></pre>
+</div>
+
 <p>The preview task will create the page at port 4000 and to have a overview we can see it at <code>localhost:4000</code> in any browser.</p>
 
 <p>Then stop that browser by running <code>ctrl+c</code> and we are done.</p>
 
 <p><h2> Deploying in Github </h2></p>
-
 <p>First we need to make a github account and make it verified through the email address(this has to be done to make github free pages live on the web).</p>
 
 <p>Then we have to create a repo named <code>[username.github.io]</code></p>
 
 <p>Then we have to run the following in CLI or Terminal.</p>
-<div class="highlight"><pre><code class="language-" data-lang="">1. bundle exec rake setup_github_pages
-</code></pre></div>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>1. bundle exec rake setup_github_pages
+</code></pre>
+</div>
+
 <p>It will ask for the github repo link and we have to write the url for that github repo.</p>
 
 <p>Then just deploy the codes.</p>
-<div class="highlight"><pre><code class="language-" data-lang="">1. bundle exec rake deploy
-</code></pre></div>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>1. bundle exec rake deploy
+</code></pre>
+</div>
+
 <p>In this task the static pages that are generated in the <code>rake generate </code> command will be copied from the <code>public</code> folder to the <code>_deploy</code> folder and at the same time the codes will be pushed to the master branch of that github repo. It will ask your github user and password and after that it will be all done. Then refresh that repo and all the codes will be there. \o/</p>
 
 <p>Then wait for 15 minutes and then open <code>username.github.io</code> and you will have your blog on the web.</p>
 
 <p>Still not satisfied ?? Want to get rid of the <code>github.io</code> from your url?? Do you have your custom domain ?? If the answers to all of the above questions are yes,yes and yes then follow the steps below.</p>
 
-<p><p><h2> Custom Domain </p></h2></p>
+<p><h2> Custom Domain &lt;/p&gt;</h2>
 
-<p>Adding a CNAME file in the source directory will do the job.
+Adding a CNAME file in the source directory will do the job.
 . 
-    1. touch CNAME</p>
+	1. touch CNAME
 
-<p>Then open that file in any editor and add the url of your site.</p>
-<div class="highlight"><pre><code class="language-" data-lang="">1. your_url.com
-</code></pre></div>
-<p>Then generate and deploy the codes and wait for 10 minutes. Then go to the github repo&#39;s right hand settings bar and scroll down a bit and you will be able to see in the github pages table the url of your site. [Your site is published at your_url.com] </p>
+Then open that file in any editor and add the url of your site.
 
-<p>Then go to your service provider or domain provider link and create a new A record in the &quot;DNS manage&quot; and come back to your CLI or Terminal and run the following.</p>
-<div class="highlight"><pre><code class="language-" data-lang="">1. dig username.github.io +nostats +nocomments +nocmd
-</code></pre></div>
-<p>Then it will show up something like this.</p>
-<div class="highlight"><pre><code class="language-" data-lang="">1. github.map.fastly.net.   17  IN  A   your_address
-2. fastly.net.      *****   IN  NS  ns1.***.dynect.net.
-3. fastly.net.      *****   IN  NS  ns2.***.dynect.net.
-4. fastly.net.      *****   IN  NS  ns3.***.dynect.net.
-4. fastly.net.      *****   IN  NS  ns4.***.dynect.net.
-</code></pre></div>
-<p>After that copy that <code>your_address</code> to the A record in that domain provider.</p>
+	1. your_url.com
 
-<p>It&#39;s better if you create 2 records and name them as (your<em>url.com) and (www.your</em>url.com) and copy that address in both the records. </p>
 
-<p>Then wait for about 15 minutes and then all done. </p>
 
-<p>Your blog is now updated at your_url.com. \o/</p>
+Then generate and deploy the codes and wait for 10 minutes. Then go to the github repo's right hand settings bar and scroll down a bit and you will be able to see in the github pages table the url of your site. [Your site is published at your_url.com] 
 
-<p>Next I will show how to make custom pages using Octopress.</p>
 
-<p>Sorry for the comment bar because I don&#39;t have that active now. Will fix that later on. :)</p>
+Then go to your service provider or domain provider link and create a new A record in the "DNS manage" and come back to your CLI or Terminal and run the following.
+
+	1. dig username.github.io +nostats +nocomments +nocmd
+
+Then it will show up something like this.
+
+	
+	1. github.map.fastly.net.	17	IN	A	your_address
+	2. fastly.net.		*****	IN	NS	ns1.***.dynect.net.
+	3. fastly.net.		*****	IN	NS	ns2.***.dynect.net.
+	4. fastly.net.		*****	IN	NS	ns3.***.dynect.net.
+	4. fastly.net.		*****	IN	NS	ns4.***.dynect.net.
+
+After that copy that <code>your_address</code> to the A record in that domain provider.
+
+It's better if you create 2 records and name them as (your_url.com) and (www.your_url.com) and copy that address in both the records. 
+
+Then wait for about 15 minutes and then all done. 
+
+Your blog is now updated at your_url.com. \o/
+
+Next I will show how to make custom pages using Octopress.
+
+Sorry for the comment bar because I don't have that active now. Will fix that later on. :)
+</p>
 
   </article>
 
@@ -222,15 +258,15 @@ Install ruby in your system (as octopress is based on ruby)</p>
     var disqus_config = function () {
 				      // Here is an example,
 				      // this.page.url = "https://poanchen.github.io/blog/2017/07/27/how-to-add-disqus-to-your-jekyll-site";
-				      this.page.url = "/2014/06/24/blogging-with-octopress-and-deploying-in-github.html";
-							    this.page.identifier = "/2014/06/24/blogging-with-octopress-and-deploying-in-github.html";
-							};
+		this.page.url = "http://tworitdash.in/2014/06/24/blogging-with-octopress-and-deploying-in-github.html";
+				this.page.identifier = "http://tworitdash.in/2014/06/24/blogging-with-octopress-and-deploying-in-github.html";
+		};
 
     // You should be able to get the following lines of code from your Disqus admin.
     // https://disqus.com/admin/universalcode
-    (function() { // DON'T EDIT BELOW THIS LINE
+    		(function() { // DON'T EDIT BELOW THIS LINE
 				      var d = document, s = d.createElement('script');
-							s.src = '//tworitdashin.disqus.com/embed.js';
+						s.src = 'https://tworitdash-in-blog.disqus.com/embed.js';
 							s.setAttribute('data-timestamp', +new Date());
 							(d.head || d.body).appendChild(s);
 			})();
@@ -304,5 +340,34 @@ Install ruby in your system (as octopress is based on ruby)</p>
 
 
   </body>
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    tex2jax: {
+      inlineMath: [ ['$','$'], ["\\(","\\)"] ],
+      processEscapes: true
+    }
+  });
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      tex2jax: {
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+      }
+    });
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax(), i;
+        for(i=0; i < all.length; i += 1) {
+            all[i].SourceElement().parentNode.className += ' has-jax';
+        }
+    });
+</script>
+
+<script type="text/javascript"
+   src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+</script>
 
 </html>

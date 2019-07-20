@@ -70,6 +70,8 @@
           
 		
           
+		
+          
 			
 			 <a class="page-link" href="http://resume.tworitdash.in">Resume</a>
 			 <a class="page-link" href="http://conferences.tworitdash.in">Conferences</a>
@@ -92,9 +94,34 @@
 		<ul class="posts noList">
 				
 							<li>
+								<span class="date">August 04, 2015</span>
+								<h3><a class="post-link" href="/2015/08/04/configuring-wifi-adaptor-in-freebsd-raspberry-pi.html">Configuring WiFi Adapter in FreeBSD Raspberry Pi</a></h3>
+								<p>After banging my head a lot of times, finally I found out the solution for connecting my Raspberry Pi to my WiFi network using an adapter. The adapter is from NetGear (realtek RTL IEEE 802.11) and while my machine used to boot up, it was recognized as “urtwn0” WiFi card. At first, the adopter didn’t glow. Then I found out that is a problem adapter. So, I had to allow the license for realtek urtwn0 driver in /boot/loader.conf file. The file didn’t exist and I created one.
+
+</p>
+							</li>
+					
+							<li>
+								<span class="date">July 23, 2015</span>
+								<h3><a class="post-link" href="/2015/07/23/installing-freebsd-in-raspberry-pi-with-the-help-of-a-mac.html">Installing FreeBSD in Raspberry Pi with the help of a Mac</a></h3>
+								<p>I have a Raspberry Pi B+ model. After running FreeBSD for about a month in the VirtualBox application in my Macbook Pro, I wished to have it installed natively somewhere else. Then I thought not to use a huge system or computer. I just needed a few space to run a server in a jail. Then, I happened to notice that my Raspberry Pi had not been used for ages. I had further plans to have a RFID security system using FreeBSD jails to configure the server to use it as a IoT (Internet of Things) project. Then, I arranged a HDMI cable, a USB keyboard, a 16 GB SD card from Samsung and a USB WiFi module (Netgear Adaptor).
+
+</p>
+							</li>
+					
+							<li>
+								<span class="date">April 17, 2015</span>
+								<h3><a class="post-link" href="/2015/04/17/monngo-db-in-fedora.html">Monngo DB in Fedora</a></h3>
+								<p>It is somewhat difficult to run mongo db by following the conventional steps for installing it in fedora. While starting mongo db, the normal problem that is usually encountered after authenticating is
+
+</p>
+							</li>
+					
+							<li>
 								<span class="date">December 21, 2014</span>
 								<h3><a class="post-link" href="/2014/12/21/ruby-chronicles-the-eurucamp-story.html">Ruby Chronicles, The Eurucamp Story</a></h3>
-								<p>This is the complete story of my eurucamp journey. I had submitted a talk proposal back in April, 2014 and happened to know that they accepted the proposal on 6th of May. Then I asked myself, &quot;Do you have your passport with you?&quot;. :P . Then I happened to notice that I hadn&#39;t applied for one. Then it all started - The complete journey. 
+								<p>This is the complete story of my eurucamp journey. I had submitted a talk proposal back in April, 2014 and happened to know that they accepted the proposal on 6th of May. Then I asked myself, “Do you have your passport with you?”. :P . Then I happened to notice that I hadn’t applied for one. Then it all started - The complete journey.
+
 </p>
 							</li>
 					
@@ -102,27 +129,7 @@
 								<span class="date">November 15, 2014</span>
 								<h3><a class="post-link" href="/2014/11/15/dft-using-basic-python-and-numpy.html">DFT using basic Python and Numpy</a></h3>
 								<p>There are several in-built functions for finding out DFT in Numpy Python. But still for fun, I have tried something on my own using basic Pyhton and Numpy to obtain the DFT of a sequence of a signal given in the form of an array like [0,1,2,3].
-</p>
-							</li>
-					
-							<li>
-								<span class="date">October 16, 2014</span>
-								<h3><a class="post-link" href="/2014/10/16/ruby-class.html">Ruby Class</a></h3>
-								<p>This blog post is for the software zairza ruby class.
-</p>
-							</li>
-					
-							<li>
-								<span class="date">September 23, 2014</span>
-								<h3><a class="post-link" href="/2014/09/23/atom-bot-with-arm-cortex-m4.html">Atom Bot With ARM Cortex M4</a></h3>
-								<p>This is a new version of my atom-bot and I have used an ARM Cortex M4 (tm4c123g) microcontroller board.
-</p>
-							</li>
-					
-							<li>
-								<span class="date">July 05, 2014</span>
-								<h3><a class="post-link" href="/2014/07/05/colour-and-font-customizing.html">Colour and Font Customizing</a></h3>
-								<p>I have now changed my colour scheme and font by editing (by removing some comment lines) in sass/custom/styles.scss , sass/custom/colors.scss  and sass/custom/_fonts.scss.
+
 </p>
 							</li>
 					
@@ -200,5 +207,34 @@
 
 
   </body>
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    tex2jax: {
+      inlineMath: [ ['$','$'], ["\\(","\\)"] ],
+      processEscapes: true
+    }
+  });
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      tex2jax: {
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+      }
+    });
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax(), i;
+        for(i=0; i < all.length; i += 1) {
+            all[i].SourceElement().parentNode.className += ' has-jax';
+        }
+    });
+</script>
+
+<script type="text/javascript"
+   src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+</script>
 
 </html>

@@ -69,6 +69,8 @@
           
 		
           
+		
+          
 			
 			 <a class="page-link" href="http://resume.tworitdash.in">Resume</a>
 			 <a class="page-link" href="http://conferences.tworitdash.in">Conferences</a>
@@ -94,235 +96,288 @@
   </header>
 
   <article class="post-content">
-    <p>In part 1, I have demonstrated how to create MVC based user authentication and a plug for the same with Phoenix. Now, in this tutorial we will see how to display some data using websockets. Websocket connections are consistent. So, for displaying the real time data from the machine, we need to use the channel feature of phoenix, where we can update the data on the page in real time. </p>
+    <p>In part 1, I have demonstrated how to create MVC based user authentication and a plug for the same with Phoenix. Now, in this tutorial we will see how to display some data using websockets. Websocket connections are consistent. So, for displaying the real time data from the machine, we need to use the channel feature of phoenix, where we can update the data on the page in real time.</p>
 
 <ol>
-<li><p>The channel should be user specific. Users can view their own sensor outputs of the machines that they have privately. </p></li>
-<li><p>There should be a reverse communication from users to machines. With this, users can be able to switch on or off the machine along with some other things like controlling speed, displaying something on a LCD screen and so on. </p></li>
+  <li>
+    <p>The channel should be user specific. Users can view their own sensor outputs of the machines that they have privately.</p>
+  </li>
+  <li>
+    <p>There should be a reverse communication from users to machines. With this, users can be able to switch on or off the machine along with some other things like controlling speed, displaying something on a LCD screen and so on.</p>
+  </li>
 </ol>
 
-<p>So, let&#39;s create a channel for the users. We will make use of something that will let us make the users&#39; communication private with their machines. </p>
-<div class="highlight"><pre><code class="language-" data-lang="">$mix phoenix.gen.channel User
-</code></pre></div>
-<p>It will create a file called <code>user_channel.ex</code> in <code>web/channles/</code> directory. It contains the following, </p>
-<div class="highlight"><pre><code class="language-ruby" data-lang="ruby">    <span class="n">defmodule</span> <span class="no">Iot</span><span class="o">.</span><span class="no">UserChannel</span> <span class="k">do</span>
-      <span class="n">use</span> <span class="no">Iot</span><span class="o">.</span><span class="no">Web</span><span class="p">,</span> <span class="ss">:channel</span>
+<p>So, let’s create a channel for the users. We will make use of something that will let us make the users’ communication private with their machines.</p>
 
-      <span class="k">def</span> <span class="nf">join</span><span class="p">(</span><span class="s2">"user:lobby"</span><span class="p">,</span> <span class="n">payload</span><span class="p">,</span> <span class="n">socket</span><span class="p">)</span> <span class="k">do</span>
-        <span class="k">if</span> <span class="n">authorized?</span><span class="p">(</span><span class="n">payload</span><span class="p">)</span> <span class="k">do</span>
-          <span class="p">{</span><span class="ss">:ok</span><span class="p">,</span> <span class="n">socket</span><span class="p">}</span>
-        <span class="k">else</span>
-          <span class="p">{</span><span class="ss">:error</span><span class="p">,</span> <span class="sx">%{reason: "unauthorized"}</span><span class="p">}</span>
-        <span class="k">end</span>
-      <span class="k">end</span>
+<div class="highlighter-rouge"><pre class="highlight"><code>$mix phoenix.gen.channel User
+</code></pre>
+</div>
 
-      <span class="c1"># Channels can be used in a request/response fashion</span>
-      <span class="c1"># by sending replies to requests from the client</span>
-      <span class="k">def</span> <span class="nf">handle_in</span><span class="p">(</span><span class="s2">"ping"</span><span class="p">,</span> <span class="n">payload</span><span class="p">,</span> <span class="n">socket</span><span class="p">)</span> <span class="k">do</span>
-        <span class="p">{</span><span class="ss">:reply</span><span class="p">,</span> <span class="p">{</span><span class="ss">:ok</span><span class="p">,</span> <span class="n">payload</span><span class="p">},</span> <span class="n">socket</span><span class="p">}</span>
-      <span class="k">end</span>
+<p>It will create a file called <code class="highlighter-rouge">user_channel.ex</code> in <code class="highlighter-rouge">web/channles/</code> directory. It contains the following,</p>
 
-      <span class="c1"># It is also common to receive messages from the client and</span>
-      <span class="c1"># broadcast to everyone in the current topic (user:lobby).</span>
-      <span class="k">def</span> <span class="nf">handle_in</span><span class="p">(</span><span class="s2">"shout"</span><span class="p">,</span> <span class="n">payload</span><span class="p">,</span> <span class="n">socket</span><span class="p">)</span> <span class="k">do</span>
-        <span class="n">broadcast</span> <span class="n">socket</span><span class="p">,</span> <span class="s2">"shout"</span><span class="p">,</span> <span class="n">payload</span>
-        <span class="p">{</span><span class="ss">:noreply</span><span class="p">,</span> <span class="n">socket</span><span class="p">}</span>
-      <span class="k">end</span>
+<p>```ruby
+	defmodule Iot.UserChannel do
+	  use Iot.Web, :channel</p>
 
-      <span class="c1"># Add authorization logic here as required.</span>
-      <span class="n">defp</span> <span class="n">authorized?</span><span class="p">(</span><span class="n">_payload</span><span class="p">)</span> <span class="k">do</span>
-        <span class="kp">true</span>
-      <span class="k">end</span>
-    <span class="k">end</span>
+<div class="highlighter-rouge"><pre class="highlight"><code>  def join("user:lobby", payload, socket) do
+    if authorized?(payload) do
+      {:ok, socket}
+    else
+      {:error, %{reason: "unauthorized"}}
+    end
+  end
 
-</code></pre></div>
-<p>The join method has a argument <code>user:lobby</code> by default. It is called the <code>topic:subtopic</code> pair. The topic here is <code>user</code> and the subtopic is <code>lobbby</code>. The <code>handle_in</code> method has the first argument as <code>ping</code> or <code>shout</code>. Those are called events. Once a user is joined to the subtopic, the  <code>handle_in</code> methods can show what messages are coming to that subtopic through an event and that <code>handle_in</code> method can also broadcast a message upon arrival through an event. Other subscribers (who have joined to that same subtopic) can get the message through that event.</p>
+  # Channels can be used in a request/response fashion
+  # by sending replies to requests from the client
+  def handle_in("ping", payload, socket) do
+    {:reply, {:ok, payload}, socket}
+  end
 
-<p>Making an analogy with our required task, we need to make the subtopic unique for each user. Then we need to create 2 events. One for displaying stuff on a webpage through an event broadcast (broadcasting to a particular event), the other is to broadcast the reverse message from the user to control stuff at the machine. Let&#39;s name those 2 events as <code>sensor_output</code> and <code>control</code>. So, our version of <code>user_channel.ex</code> is given below.</p>
-<div class="highlight"><pre><code class="language-ruby" data-lang="ruby">    <span class="n">defmodule</span> <span class="no">Iot</span><span class="o">.</span><span class="no">UserChannel</span> <span class="k">do</span>
-      <span class="n">use</span> <span class="no">Iot</span><span class="o">.</span><span class="no">Web</span><span class="p">,</span> <span class="ss">:channel</span>
+  # It is also common to receive messages from the client and
+  # broadcast to everyone in the current topic (user:lobby).
+  def handle_in("shout", payload, socket) do
+    broadcast socket, "shout", payload
+    {:noreply, socket}
+  end
 
-      <span class="k">def</span> <span class="nf">join</span><span class="p">(</span><span class="s2">"users:"</span> <span class="o">&lt;&gt;</span> <span class="n">user_token</span><span class="p">,</span> <span class="n">payload</span><span class="p">,</span> <span class="n">socket</span><span class="p">)</span> <span class="k">do</span>
-        <span class="k">if</span> <span class="n">authorized?</span><span class="p">(</span><span class="n">payload</span><span class="p">)</span> <span class="k">do</span>
-          <span class="p">{</span><span class="ss">:ok</span><span class="p">,</span> <span class="s2">"Joined To User:</span><span class="si">#{</span><span class="n">user_token</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span> <span class="n">socket</span><span class="p">}</span>
-        <span class="k">else</span>
-          <span class="p">{</span><span class="ss">:error</span><span class="p">,</span> <span class="sx">%{reason: "unauthorized"}</span><span class="p">}</span>
-        <span class="k">end</span>
-      <span class="k">end</span>
+  # Add authorization logic here as required.
+  defp authorized?(_payload) do
+    true
+  end
+end
+</code></pre>
+</div>
 
-      <span class="c1"># Channels can be used in a request/response fashion</span>
-      <span class="c1"># by sending replies to requests from the client</span>
+<p>```</p>
 
+<p>The join method has a argument <code class="highlighter-rouge">user:lobby</code> by default. It is called the <code class="highlighter-rouge">topic:subtopic</code> pair. The topic here is <code class="highlighter-rouge">user</code> and the subtopic is <code class="highlighter-rouge">lobbby</code>. The <code class="highlighter-rouge">handle_in</code> method has the first argument as <code class="highlighter-rouge">ping</code> or <code class="highlighter-rouge">shout</code>. Those are called events. Once a user is joined to the subtopic, the 	<code class="highlighter-rouge">handle_in</code> methods can show what messages are coming to that subtopic through an event and that <code class="highlighter-rouge">handle_in</code> method can also broadcast a message upon arrival through an event. Other subscribers (who have joined to that same subtopic) can get the message through that event.</p>
 
-      <span class="k">def</span> <span class="nf">handle_in</span><span class="p">(</span><span class="s2">"control"</span><span class="p">,</span> <span class="n">payload</span><span class="p">,</span> <span class="n">socket</span><span class="p">)</span> <span class="k">do</span>
-        <span class="n">broadcast</span> <span class="n">socket</span><span class="p">,</span> <span class="s2">"control"</span><span class="p">,</span> <span class="n">payload</span>
-        <span class="p">{</span><span class="ss">:noreply</span><span class="p">,</span> <span class="n">socket</span><span class="p">}</span>
-      <span class="k">end</span>
+<p>Making an analogy with our required task, we need to make the subtopic unique for each user. Then we need to create 2 events. One for displaying stuff on a webpage through an event broadcast (broadcasting to a particular event), the other is to broadcast the reverse message from the user to control stuff at the machine. Let’s name those 2 events as <code class="highlighter-rouge">sensor_output</code> and <code class="highlighter-rouge">control</code>. So, our version of <code class="highlighter-rouge">user_channel.ex</code> is given below.</p>
 
-      <span class="k">def</span> <span class="nf">handle_in</span><span class="p">(</span><span class="s2">"sensor_output"</span><span class="p">,</span> <span class="n">payload</span><span class="p">,</span> <span class="n">socket</span><span class="p">)</span> <span class="k">do</span>
-        <span class="n">broadcast</span> <span class="n">socket</span><span class="p">,</span> <span class="s2">"sensor_output"</span><span class="p">,</span> <span class="n">payload</span>
-        <span class="p">{</span><span class="ss">:noreply</span><span class="p">,</span> <span class="n">socket</span><span class="p">}</span>
-      <span class="k">end</span>
+<p>```ruby
+	defmodule Iot.UserChannel do
+	  use Iot.Web, :channel</p>
 
-      <span class="c1"># Add authorization logic here as required.</span>
-      <span class="n">defp</span> <span class="n">authorized?</span><span class="p">(</span><span class="n">_payload</span><span class="p">)</span> <span class="k">do</span>
-        <span class="kp">true</span>
-      <span class="k">end</span>
-    <span class="k">end</span>
+<div class="highlighter-rouge"><pre class="highlight"><code>  def join("users:" &lt;&gt; user_token, payload, socket) do
+    if authorized?(payload) do
+      {:ok, "Joined To User:#{user_token}", socket}
+    else
+      {:error, %{reason: "unauthorized"}}
+    end
+  end
 
-</code></pre></div>
-<p>Now, from the above <code>user_channel</code>, it&#39;s clear what the two <code>handle_in</code> methods do on arrival of a new message. They just broadcast it to the respective events. But the join event has the subtopic to be added to the topic <code>users</code>. The subtopic we are using is the <code>user_token</code> that is saved as a string in the <code>Users</code> table whenever a user registers in the application. It has been written in the <code>Password</code> library, refer to the previous blog post. Now, we have to tell our <code>socket</code> file to enable the <code>users</code> topic with a wild card subtopic. Add the following line.</p>
-<div class="highlight"><pre><code class="language-ruby" data-lang="ruby">    <span class="c1">#web/channes/user_socket.ex</span>
-    <span class="n">channel</span> <span class="s2">"users:*"</span><span class="p">,</span> <span class="no">Iot</span><span class="o">.</span><span class="no">UserChannel</span>
-</code></pre></div>
-<p>All set with the background process handlers. Now, let&#39;s move to the front-end. We need a webpage to show all the messages that comes through <code>sensor_output</code> event. Before that, the webpage has to be joined with the <code>users:user_token</code> topic:subtopic. The front-end we will automate with some JS code. Before that, the JS code should have the knowledge of the <code>user_token</code>, otherwise it can&#39;t be able to join the topic. A plain JS code can&#39;t invoke the <code>user_token</code> from the database directly. So, we need to take that <code>user_token</code> from that very template where we want to show the content. The question is, where shall the template render the <code>user_token</code> from ? The answer is pretty simple. From the controller it has been associated with. Voila ! now we have figured out what to do. So, let&#39;s make a model called <code>energy_meter</code>. The model wil be used later. For now, we will use a template only. We are not doing anything with the model now. It&#39;s just for a future use. </p>
-<div class="highlight"><pre><code class="language-" data-lang="">$mix phoenix.gen.model EnergyMeter energy_meters name:string pf:integer reading:integer thd:integer load:integer
-</code></pre></div>
-<p>Then let&#39;s change the template under the folder <code>energy_meter</code> inside the templates folder. The controller is given below.</p>
-<div class="highlight"><pre><code class="language-ruby" data-lang="ruby">    <span class="c1">#web/controller/energy_meter_controller.ex</span>
-    <span class="n">defmodule</span> <span class="no">Iot</span><span class="o">.</span><span class="no">EnergyMeterController</span> <span class="k">do</span>
-      <span class="n">use</span> <span class="no">Iot</span><span class="o">.</span><span class="no">Web</span><span class="p">,</span> <span class="ss">:controller</span>
+  # Channels can be used in a request/response fashion
+  # by sending replies to requests from the client
+  
 
-      <span class="n">plug</span> <span class="no">Iot</span><span class="o">.</span><span class="no">Plug</span><span class="o">.</span><span class="no">Authenticate</span>
+  def handle_in("control", payload, socket) do
+    broadcast socket, "control", payload
+    {:noreply, socket}
+  end
 
-      <span class="k">def</span> <span class="nf">index</span><span class="p">(</span><span class="n">conn</span><span class="p">,</span> <span class="n">_params</span><span class="p">)</span> <span class="k">do</span>
-        <span class="n">current_user</span> <span class="o">=</span> <span class="n">get_session</span><span class="p">(</span><span class="n">conn</span><span class="p">,</span> <span class="ss">:current_user</span><span class="p">)</span>
-        <span class="n">render</span> <span class="n">conn</span><span class="p">,</span> <span class="s2">"index.html"</span><span class="p">,</span> <span class="ss">current_user: </span><span class="n">current_user</span>
-      <span class="k">end</span>
-    <span class="k">end</span> 
+  def handle_in("sensor_output", payload, socket) do
+    broadcast socket, "sensor_output", payload
+    {:noreply, socket}
+  end
 
-</code></pre></div>
+  # Add authorization logic here as required.
+  defp authorized?(_payload) do
+    true
+  end
+end
+</code></pre>
+</div>
+
+<p>```</p>
+
+<p>Now, from the above <code class="highlighter-rouge">user_channel</code>, it’s clear what the two <code class="highlighter-rouge">handle_in</code> methods do on arrival of a new message. They just broadcast it to the respective events. But the join event has the subtopic to be added to the topic <code class="highlighter-rouge">users</code>. The subtopic we are using is the <code class="highlighter-rouge">user_token</code> that is saved as a string in the <code class="highlighter-rouge">Users</code> table whenever a user registers in the application. It has been written in the <code class="highlighter-rouge">Password</code> library, refer to the previous blog post. Now, we have to tell our <code class="highlighter-rouge">socket</code> file to enable the <code class="highlighter-rouge">users</code> topic with a wild card subtopic. Add the following line.</p>
+
+<p><code class="highlighter-rouge">ruby
+	#web/channes/user_socket.ex
+	channel "users:*", Iot.UserChannel
+</code></p>
+
+<p>All set with the background process handlers. Now, let’s move to the front-end. We need a webpage to show all the messages that comes through <code class="highlighter-rouge">sensor_output</code> event. Before that, the webpage has to be joined with the <code class="highlighter-rouge">users:user_token</code> topic:subtopic. The front-end we will automate with some JS code. Before that, the JS code should have the knowledge of the <code class="highlighter-rouge">user_token</code>, otherwise it can’t be able to join the topic. A plain JS code can’t invoke the <code class="highlighter-rouge">user_token</code> from the database directly. So, we need to take that <code class="highlighter-rouge">user_token</code> from that very template where we want to show the content. The question is, where shall the template render the <code class="highlighter-rouge">user_token</code> from ? The answer is pretty simple. From the controller it has been associated with. Voila ! now we have figured out what to do. So, let’s make a model called <code class="highlighter-rouge">energy_meter</code>. The model wil be used later. For now, we will use a template only. We are not doing anything with the model now. It’s just for a future use.</p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>$mix phoenix.gen.model EnergyMeter energy_meters name:string pf:integer reading:integer thd:integer load:integer
+</code></pre>
+</div>
+
+<p>Then let’s change the template under the folder <code class="highlighter-rouge">energy_meter</code> inside the templates folder. The controller is given below.</p>
+
+<p>```ruby
+	#web/controller/energy_meter_controller.ex
+	defmodule Iot.EnergyMeterController do
+	  use Iot.Web, :controller</p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>  plug Iot.Plug.Authenticate
+
+  def index(conn, _params) do
+    current_user = get_session(conn, :current_user)
+    render conn, "index.html", current_user: current_user
+  end
+end 
+</code></pre>
+</div>
+
+<p>```</p>
+
 <p>The template is given below</p>
-<div class="highlight"><pre><code class="language-html" data-lang="html">    #web/templates/energy_meter/index.html.eex
-    <span class="nt">&lt;ul</span> <span class="na">id=</span><span class="s">"em"</span> <span class="na">data-id=</span><span class="s">&lt;%=</span> <span class="err">@</span><span class="na">current_user</span><span class="err">.</span><span class="na">token</span> <span class="err">%</span><span class="nt">&gt;</span>&gt;
 
-    <span class="nt">&lt;/ul&gt;</span>
-    <span class="nt">&lt;div</span> <span class="na">class =</span><span class="err"> </span><span class="s">"container"</span><span class="nt">&gt;</span>
-      <span class="nt">&lt;div</span> <span class="na">class =</span><span class="err"> </span><span class="s">"row"</span><span class="nt">&gt;</span>
+<p>```html
+	#web/templates/energy_meter/index.html.eex
+	&lt;ul id=”em” data-id=&lt;%= @current_user.token %»</p>
 
-        <span class="nt">&lt;div</span> <span class="na">class =</span><span class="err"> </span><span class="s">"span4"</span><span class="nt">&gt;</span>
-          <span class="nt">&lt;h4&gt;</span>Load<span class="nt">&lt;/h4&gt;</span>
-          <span class="nt">&lt;div</span> <span class="na">id =</span><span class="err"> </span><span class="s">"load"</span><span class="nt">&gt;</span>
-          <span class="nt">&lt;/div&gt;</span>
-        <span class="nt">&lt;/div&gt;</span>
+<div class="highlighter-rouge"><pre class="highlight"><code>&lt;/ul&gt;
+&lt;div class = "container"&gt;
+  &lt;div class = "row"&gt;
+  
+    &lt;div class = "span4"&gt;
+      &lt;h4&gt;Load&lt;/h4&gt;
+      &lt;div id = "load"&gt;
+      &lt;/div&gt;
+    &lt;/div&gt;
+  
 
+   
+    &lt;div class = "span4"&gt;
+      &lt;h4&gt;Power Factor&lt;/h4&gt;
+      &lt;div id = "pf"&gt;
+      &lt;/div&gt;
+    &lt;/div&gt;
+  
 
+   
+    &lt;div class = "span4"&gt;
+      &lt;h4&gt;THD&lt;/h4&gt;
+      &lt;div id = "thd"&gt;
+      &lt;/div&gt;
+    &lt;/div&gt;
+  
 
-        <span class="nt">&lt;div</span> <span class="na">class =</span><span class="err"> </span><span class="s">"span4"</span><span class="nt">&gt;</span>
-          <span class="nt">&lt;h4&gt;</span>Power Factor<span class="nt">&lt;/h4&gt;</span>
-          <span class="nt">&lt;div</span> <span class="na">id =</span><span class="err"> </span><span class="s">"pf"</span><span class="nt">&gt;</span>
-          <span class="nt">&lt;/div&gt;</span>
-        <span class="nt">&lt;/div&gt;</span>
-
-
-
-        <span class="nt">&lt;div</span> <span class="na">class =</span><span class="err"> </span><span class="s">"span4"</span><span class="nt">&gt;</span>
-          <span class="nt">&lt;h4&gt;</span>THD<span class="nt">&lt;/h4&gt;</span>
-          <span class="nt">&lt;div</span> <span class="na">id =</span><span class="err"> </span><span class="s">"thd"</span><span class="nt">&gt;</span>
-          <span class="nt">&lt;/div&gt;</span>
-        <span class="nt">&lt;/div&gt;</span>
-
-
-
-        <span class="nt">&lt;div</span> <span class="na">class =</span><span class="err"> </span><span class="s">"span4"</span><span class="nt">&gt;</span>
-          <span class="nt">&lt;h4&gt;</span>Reading<span class="nt">&lt;/h4&gt;</span>
-          <span class="nt">&lt;div</span> <span class="na">id =</span><span class="err"> </span><span class="s">"reading"</span><span class="nt">&gt;</span>
-          <span class="nt">&lt;/div&gt;</span>
-        <span class="nt">&lt;/div&gt;</span>
-
-
-    <span class="nt">&lt;/div&gt;</span>
-
-
-
-
-      <span class="nt">&lt;div</span> <span class="na">class =</span><span class="err"> </span><span class="s">"btn btn-primary"</span> <span class="na">id=</span><span class="s">"on"</span><span class="nt">&gt;</span>ON<span class="nt">&lt;/div&gt;</span>
-      <span class="nt">&lt;div</span> <span class="na">class =</span><span class="err"> </span><span class="s">"btn btn-primary"</span> <span class="na">id=</span><span class="s">"off"</span><span class="nt">&gt;</span>OFF<span class="nt">&lt;/div&gt;</span>
-      <span class="err">&lt;</span>%= link("Logout", to: session_path(@conn, :delete), class: "btn btn-success pull-right") %&gt;
-    <span class="nt">&lt;/div&gt;</span>
-
-</code></pre></div>
-<p>In this way the <code>user_token</code> has been retrieved on to the template. Form the <code>data-id</code> of that division, we can take away that value to our JS files.</p>
-
-<p>Now, the html part is done. Let&#39;s write the JS parts to automate the process. Using jQuery is a better option here as far as ease of writing code is concerned. In the parent directory of the project a bower install will install jQuery libs for us.</p>
-<div class="highlight"><pre><code class="language-" data-lang="">$bower install
-</code></pre></div>
-<p>Now, let&#39;s create a <code>user.js</code> file in <code>web/static/js</code> folder. Before writing something, let&#39;s comment  the default code for joining a <code>topic:subtopic</code>in <code>socket.js</code></p>
-<div class="highlight"><pre><code class="language-javascript" data-lang="javascript">    <span class="c1">//let channel = socket.channel("topic:subtopic", {})</span>
-    <span class="c1">//channel.join()</span>
-      <span class="c1">//.receive("ok", resp =&gt; { console.log("Joined successfully", resp) })</span>
-      <span class="c1">//.receive("error", resp =&gt; { console.log("Unable to join", resp) })</span>
-</code></pre></div>
-<p>Now, the content to write in the <code>user.js</code> file is below. </p>
-<div class="highlight"><pre><code class="language-javascript" data-lang="javascript">
-    <span class="kr">import</span> <span class="nx">socket</span> <span class="nx">from</span> <span class="s2">"./socket"</span>
-
-    <span class="nx">$</span><span class="p">(</span><span class="kd">function</span><span class="p">()</span> <span class="p">{</span>
-      <span class="kd">let</span> <span class="nx">ul</span> <span class="o">=</span> <span class="nx">$</span><span class="p">(</span><span class="s2">"ul#em"</span><span class="p">)</span>
-    <span class="c1">//let message = $("div#message") </span>
-      <span class="k">if</span> <span class="p">(</span><span class="nx">ul</span><span class="p">.</span><span class="nx">length</span><span class="p">)</span> <span class="p">{</span>
-        <span class="kd">var</span> <span class="nx">token</span> <span class="o">=</span> <span class="nx">ul</span><span class="p">.</span><span class="nx">data</span><span class="p">(</span><span class="s2">"id"</span><span class="p">)</span>
-        <span class="kd">var</span> <span class="nx">topic</span> <span class="o">=</span> <span class="s2">"users:"</span> <span class="o">+</span> <span class="nx">token</span>
-
-        <span class="c1">// Join the topic</span>
-        <span class="kd">let</span> <span class="nx">channel</span> <span class="o">=</span> <span class="nx">socket</span><span class="p">.</span><span class="nx">channel</span><span class="p">(</span><span class="nx">topic</span><span class="p">,</span> <span class="p">{})</span>
-        <span class="nx">channel</span><span class="p">.</span><span class="nx">join</span><span class="p">()</span>
-          <span class="p">.</span><span class="nx">receive</span><span class="p">(</span><span class="s2">"ok"</span><span class="p">,</span> <span class="nx">data</span> <span class="o">=&gt;</span> <span class="p">{</span>
-            <span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="s2">"Joined topic"</span><span class="p">,</span> <span class="nx">topic</span><span class="p">)</span>
-          <span class="p">})</span>
-          <span class="p">.</span><span class="nx">receive</span><span class="p">(</span><span class="s2">"error"</span><span class="p">,</span> <span class="nx">resp</span> <span class="o">=&gt;</span> <span class="p">{</span>
-            <span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="s2">"Unable to join topic"</span><span class="p">,</span> <span class="nx">topic</span><span class="p">)</span>
-          <span class="p">})</span>
+   
+    &lt;div class = "span4"&gt;
+      &lt;h4&gt;Reading&lt;/h4&gt;
+      &lt;div id = "reading"&gt;
+      &lt;/div&gt;
+    &lt;/div&gt;
+  
+  
+&lt;/div&gt;
 
 
-                <span class="nx">$</span><span class="p">(</span><span class="s2">"#on"</span><span class="p">).</span><span class="nx">click</span><span class="p">(</span><span class="kd">function</span><span class="p">(){</span>
-                        <span class="nx">channel</span><span class="p">.</span><span class="nx">push</span><span class="p">(</span><span class="s2">"control"</span><span class="p">,</span> <span class="p">{</span><span class="na">val</span><span class="p">:</span> <span class="s2">"on"</span><span class="p">});</span>
-                <span class="p">})</span>
-                <span class="nx">$</span><span class="p">(</span><span class="s2">"#off"</span><span class="p">).</span><span class="nx">click</span><span class="p">(</span><span class="kd">function</span><span class="p">(){</span>
-                        <span class="nx">channel</span><span class="p">.</span><span class="nx">push</span><span class="p">(</span><span class="s2">"control"</span><span class="p">,</span> <span class="p">{</span><span class="na">val</span><span class="p">:</span> <span class="s2">"off"</span><span class="p">})</span>
-                <span class="p">})</span>
 
-                <span class="nx">channel</span><span class="p">.</span><span class="nx">on</span><span class="p">(</span><span class="s2">"control"</span><span class="p">,</span> <span class="nx">data</span> <span class="o">=&gt;</span> <span class="p">{</span>
-                        <span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="s2">"Recieved: "</span><span class="p">,</span> <span class="nx">data</span><span class="p">.</span><span class="nx">val</span><span class="p">);</span>
-                <span class="p">})</span>
-                <span class="nx">channel</span><span class="p">.</span><span class="nx">on</span><span class="p">(</span><span class="s2">"sensor_output"</span><span class="p">,</span> <span class="nx">data</span> <span class="o">=&gt;</span> <span class="p">{</span>
-                    <span class="nx">$</span><span class="p">(</span><span class="s2">"#load"</span><span class="p">).</span><span class="nx">html</span><span class="p">(</span><span class="nx">data</span><span class="p">[</span><span class="s1">'load'</span><span class="p">]);</span>
-                    <span class="nx">$</span><span class="p">(</span><span class="s2">"#pf"</span><span class="p">).</span><span class="nx">html</span><span class="p">(</span><span class="nx">data</span><span class="p">[</span><span class="s1">'pf'</span><span class="p">]);</span>
-                    <span class="nx">$</span><span class="p">(</span><span class="s2">"#thd"</span><span class="p">).</span><span class="nx">html</span><span class="p">(</span><span class="nx">data</span><span class="p">[</span><span class="s1">'thd'</span><span class="p">]);</span>
-                    <span class="nx">$</span><span class="p">(</span><span class="s2">"#reading"</span><span class="p">).</span><span class="nx">html</span><span class="p">(</span><span class="nx">data</span><span class="p">[</span><span class="s1">'reading'</span><span class="p">]);</span>
-                <span class="p">})</span>
 
-      <span class="p">}</span>
-    <span class="p">});</span>
-</code></pre></div>
-<p>This code fetches the value of token from <code>u.data(&quot;id&quot;)</code> from that html template. The topic variable is the concatenation of <code>users</code> and the <code>token</code>. Then the JS client joins the topic. On join, the <code>topic:subtopic</code> is printed on to the console of that web page. Then, there are some event based automation is written. When the button with id <code>on</code> is pressed there at the webpage, the data <code>val: &quot;on&quot;</code> is sent via the <code>control</code> event. And similarly for the <code>off</code> button, the data is sent via <code>control</code> event. Again here, the message is handled and printed on to the console with the following. </p>
-<div class="highlight"><pre><code class="language-javascript" data-lang="javascript">    <span class="nx">channel</span><span class="p">.</span><span class="nx">on</span><span class="p">(</span><span class="s2">"control"</span><span class="p">,</span> <span class="nx">data</span> <span class="o">=&gt;</span> <span class="p">{</span>
-        <span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="s2">"Recieved: "</span><span class="p">,</span> <span class="nx">data</span><span class="p">.</span><span class="nx">val</span><span class="p">);</span>
-    <span class="p">})</span>
-</code></pre></div>
-<p>So, we can view on the console what the value has been sent from the <code>on</code> and <code>off</code> buttons. Then the next method in the file displays the <code>sensor_output</code> data on to the page. Now, let&#39;s add this file to the app JS file so that it can be added to all the templates.</p>
-<div class="highlight"><pre><code class="language-javascript" data-lang="javascript">   <span class="c1">// web/static/js/app.js</span>
-   <span class="kr">import</span> <span class="nx">user</span> <span class="nx">from</span> <span class="s2">"./user"</span>
+  &lt;div class = "btn btn-primary" id="on"&gt;ON&lt;/div&gt;
+  &lt;div class = "btn btn-primary" id="off"&gt;OFF&lt;/div&gt;
+  &lt;%= link("Logout", to: session_path(@conn, :delete), class: "btn btn-success pull-right") %&gt;
+&lt;/div&gt;
+</code></pre>
+</div>
 
-</code></pre></div>
-<p>Now, the button press evens can be tested. Remember, that console messages  <code>on</code> and <code>off</code> can only be seen for a user if he/she is logged in. </p>
+<p>```
+In this way the <code class="highlighter-rouge">user_token</code> has been retrieved on to the template. Form the <code class="highlighter-rouge">data-id</code> of that division, we can take away that value to our JS files.</p>
 
-<p>For the <code>sensor_output</code> event, let&#39;s broadcast something over that event from the interpreter.</p>
-<div class="highlight"><pre><code class="language-" data-lang="">$iex -S mix phoenix.server
-</code></pre></div>
-<p>Then using the <code>Endpoint.broadcast</code> method we can broadcast a message over a event within a topic. </p>
-<div class="highlight"><pre><code class="language-" data-lang="">iex(2)&gt; Iot.Endpoint.broadcast("users:anVhbkBnbWFpbC5jb21qdWxpYTEyMw==", "sensor_output", %{"power_factor" =&gt; 23, "load" =&gt; 1000, "thd" =&gt; 4, "reading" =&gt; 1800})
+<p>Now, the html part is done. Let’s write the JS parts to automate the process. Using jQuery is a better option here as far as ease of writing code is concerned. In the parent directory of the project a bower install will install jQuery libs for us.</p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>$bower install
+</code></pre>
+</div>
+
+<p>Now, let’s create a <code class="highlighter-rouge">user.js</code> file in <code class="highlighter-rouge">web/static/js</code> folder. Before writing something, let’s comment  the default code for joining a <code class="highlighter-rouge">topic:subtopic</code>in <code class="highlighter-rouge">socket.js</code></p>
+
+<p><code class="highlighter-rouge">javascript
+	//let channel = socket.channel("topic:subtopic", {})
+	//channel.join()
+	  //.receive("ok", resp =&gt; { console.log("Joined successfully", resp) })
+	  //.receive("error", resp =&gt; { console.log("Unable to join", resp) })
+</code></p>
+
+<p>Now, the content to write in the <code class="highlighter-rouge">user.js</code> file is below.</p>
+
+<p>```javascript</p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>import socket from "./socket"
+
+$(function() {
+  let ul = $("ul#em")
+//let message = $("div#message") 
+  if (ul.length) {
+    var token = ul.data("id")
+    var topic = "users:" + token
+		
+    // Join the topic
+    let channel = socket.channel(topic, {})
+    channel.join()
+      .receive("ok", data =&gt; {
+        console.log("Joined topic", topic)
+      })
+      .receive("error", resp =&gt; {
+        console.log("Unable to join topic", topic)
+      })
+			
+
+			$("#on").click(function(){
+					channel.push("control", {val: "on"});
+			})
+			$("#off").click(function(){
+					channel.push("control", {val: "off"})
+			})
+
+			channel.on("control", data =&gt; {
+					console.log("Recieved: ", data.val);
+			})
+			channel.on("sensor_output", data =&gt; {
+				$("#load").html(data['load']);
+				$("#pf").html(data['pf']);
+				$("#thd").html(data['thd']);
+				$("#reading").html(data['reading']);
+			})
+			
+  }
+}); ```
+</code></pre>
+</div>
+
+<p>This code fetches the value of token from <code class="highlighter-rouge">u.data("id")</code> from that html template. The topic variable is the concatenation of <code class="highlighter-rouge">users</code> and the <code class="highlighter-rouge">token</code>. Then the JS client joins the topic. On join, the <code class="highlighter-rouge">topic:subtopic</code> is printed on to the console of that web page. Then, there are some event based automation is written. When the button with id <code class="highlighter-rouge">on</code> is pressed there at the webpage, the data <code class="highlighter-rouge">val: "on"</code> is sent via the <code class="highlighter-rouge">control</code> event. And similarly for the <code class="highlighter-rouge">off</code> button, the data is sent via <code class="highlighter-rouge">control</code> event. Again here, the message is handled and printed on to the console with the following.</p>
+
+<p><code class="highlighter-rouge">javascript
+	channel.on("control", data =&gt; {
+		console.log("Recieved: ", data.val);
+	})
+</code></p>
+
+<p>So, we can view on the console what the value has been sent from the <code class="highlighter-rouge">on</code> and <code class="highlighter-rouge">off</code> buttons. Then the next method in the file displays the <code class="highlighter-rouge">sensor_output</code> data on to the page. Now, let’s add this file to the app JS file so that it can be added to all the templates.</p>
+
+<p>```javascript
+   // web/static/js/app.js
+   import user from “./user”</p>
+
+<p>```
+Now, the button press evens can be tested. Remember, that console messages  <code class="highlighter-rouge">on</code> and <code class="highlighter-rouge">off</code> can only be seen for a user if he/she is logged in.</p>
+
+<p>For the <code class="highlighter-rouge">sensor_output</code> event, let’s broadcast something over that event from the interpreter.</p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>$iex -S mix phoenix.server
+</code></pre>
+</div>
+
+<p>Then using the <code class="highlighter-rouge">Endpoint.broadcast</code> method we can broadcast a message over a event within a topic.</p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>iex(2)&gt; Iot.Endpoint.broadcast("users:anVhbkBnbWFpbC5jb21qdWxpYTEyMw==", "sensor_output", %{"power_factor" =&gt; 23, "load" =&gt; 1000, "thd" =&gt; 4, "reading" =&gt; 1800})
 :ok
 iex(3)&gt; Iot.Endpoint.broadcast("users:anVhbkBnbWFpbC5jb21qdWxpYTEyMw==", "sensor_output", %{"power_factor" =&gt; 04, "load" =&gt; 900, "thd" =&gt; 2, "reading" =&gt; 1900})
 :ok
-</code></pre></div>
-<p>As soon as you run, you can see the values updating automatically on the webpage. Similarly, for the <code>control</code> event, just clicking the <code>on</code> and <code>off</code> buttons will do what we want. It will print the message on to the console. A demo screen recording of that is given below. My project name was tworit so I used <code>Tworit.Endpoint</code>. Likewise, here, <code>Iot.Endpoint</code> can be used.</p>
+</code></pre>
+</div>
 
-<iframe src="https://player.vimeo.com/video/177943594" width="640" height="400" frameborder="0" webkitallowfullscreen mozallowfullscreen allowfullscreen></iframe>
+<p>As soon as you run, you can see the values updating automatically on the webpage. Similarly, for the <code class="highlighter-rouge">control</code> event, just clicking the <code class="highlighter-rouge">on</code> and <code class="highlighter-rouge">off</code> buttons will do what we want. It will print the message on to the console. A demo screen recording of that is given below. My project name was tworit so I used <code class="highlighter-rouge">Tworit.Endpoint</code>. Likewise, here, <code class="highlighter-rouge">Iot.Endpoint</code> can be used.</p>
 
+<iframe src="https://player.vimeo.com/video/177943594" width="640" height="400" frameborder="0" webkitallowfullscreen="" mozallowfullscreen="" allowfullscreen=""></iframe>
 <p><a href="https://vimeo.com/177943594">phoenix_channels</a> from <a href="https://vimeo.com/user29276136">Tworit</a> on <a href="https://vimeo.com">Vimeo</a>.</p>
 
-<p>In the next part, we will do some python 3.5 asyncio. With the help of that, we can send data from a raspberry pi to the <code>sensor_output</code> event. In addition to that, we can receive the <code>on</code> and <code>off</code> signals from the server to turn on and off our machine. </p>
+<p>In the next part, we will do some python 3.5 asyncio. With the help of that, we can send data from a raspberry pi to the <code class="highlighter-rouge">sensor_output</code> event. In addition to that, we can receive the <code class="highlighter-rouge">on</code> and <code class="highlighter-rouge">off</code> signals from the server to turn on and off our machine.</p>
+
 
   </article>
 
@@ -331,15 +386,15 @@ iex(3)&gt; Iot.Endpoint.broadcast("users:anVhbkBnbWFpbC5jb21qdWxpYTEyMw==", "sen
     var disqus_config = function () {
 				      // Here is an example,
 				      // this.page.url = "https://poanchen.github.io/blog/2017/07/27/how-to-add-disqus-to-your-jekyll-site";
-				      this.page.url = "/2016/08/07/iot-with-phoenix-part-2.html";
-							    this.page.identifier = "/2016/08/07/iot-with-phoenix-part-2.html";
-							};
+		this.page.url = "http://tworitdash.in/2016/08/07/iot-with-phoenix-part-2.html";
+				this.page.identifier = "http://tworitdash.in/2016/08/07/iot-with-phoenix-part-2.html";
+		};
 
     // You should be able to get the following lines of code from your Disqus admin.
     // https://disqus.com/admin/universalcode
-    (function() { // DON'T EDIT BELOW THIS LINE
+    		(function() { // DON'T EDIT BELOW THIS LINE
 				      var d = document, s = d.createElement('script');
-							s.src = '//tworitdashin.disqus.com/embed.js';
+						s.src = 'https://tworitdash-in-blog.disqus.com/embed.js';
 							s.setAttribute('data-timestamp', +new Date());
 							(d.head || d.body).appendChild(s);
 			})();
@@ -413,5 +468,34 @@ iex(3)&gt; Iot.Endpoint.broadcast("users:anVhbkBnbWFpbC5jb21qdWxpYTEyMw==", "sen
 
 
   </body>
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    tex2jax: {
+      inlineMath: [ ['$','$'], ["\\(","\\)"] ],
+      processEscapes: true
+    }
+  });
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      tex2jax: {
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+      }
+    });
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax(), i;
+        for(i=0; i < all.length; i += 1) {
+            all[i].SourceElement().parentNode.className += ' has-jax';
+        }
+    });
+</script>
+
+<script type="text/javascript"
+   src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+</script>
 
 </html>

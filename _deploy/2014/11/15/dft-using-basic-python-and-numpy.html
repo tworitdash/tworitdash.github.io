@@ -69,6 +69,8 @@
           
 		
           
+		
+          
 			
 			 <a class="page-link" href="http://resume.tworitdash.in">Resume</a>
 			 <a class="page-link" href="http://conferences.tworitdash.in">Conferences</a>
@@ -97,29 +99,35 @@
     <p>There are several in-built functions for finding out DFT in Numpy Python. But still for fun, I have tried something on my own using basic Pyhton and Numpy to obtain the DFT of a sequence of a signal given in the form of an array like [0,1,2,3].</p>
 
 <p>There are 3 inputs 
-    1. The &quot;N&quot; in N point DFT
-    2. The maximum number of data in the input array
-    3. The elements of the array</p>
+	1. The “N” in N point DFT
+	2. The maximum number of data in the input array
+	3. The elements of the array</p>
 
 <p>To run this file you should have python installed in your system with the <a href="http://www.scipy.org/scipylib/download.html">numpy</a> library.</p>
 
 <p>Then get my code from here <a href="https://github.com/tworitdash/dft.py">dft.py</a> either by downloading the zip file from the bottom right section of the web page or by cloning the repository if you have git (git bash in windows system):</p>
-<div class="highlight"><pre><code class="language-" data-lang="">git clone https://github.com/tworitdash/dft.py
-</code></pre></div>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>git clone https://github.com/tworitdash/dft.py
+</code></pre>
+</div>
+
 <p>Then run that file in the terminal or command line :</p>
-<div class="highlight"><pre><code class="language-" data-lang="">$ cd dft.py
+
+<div class="highlighter-rouge"><pre class="highlight"><code>$ cd dft.py
 $ python dft.py
-</code></pre></div>
+</code></pre>
+</div>
+
 <p>Sorry I have named the repository and the python file within it, with the same name called dft.py :P .</p>
 
 <p>Sample output :
-<img src="/images/dftout1.png"></p>
+<img src="/images/dftout1.png" /></p>
 
 <p>This one is for N &gt; the number of data in the array :</p>
 
-<p><img src="/images/dftout2.png"></p>
+<p><img src="/images/dftout2.png" /></p>
 
-<p>And have fun !!! :) :)  </p>
+<p>And have fun !!! :) :)</p>
 
   </article>
 
@@ -128,15 +136,15 @@ $ python dft.py
     var disqus_config = function () {
 				      // Here is an example,
 				      // this.page.url = "https://poanchen.github.io/blog/2017/07/27/how-to-add-disqus-to-your-jekyll-site";
-				      this.page.url = "/2014/11/15/dft-using-basic-python-and-numpy.html";
-							    this.page.identifier = "/2014/11/15/dft-using-basic-python-and-numpy.html";
-							};
+		this.page.url = "http://tworitdash.in/2014/11/15/dft-using-basic-python-and-numpy.html";
+				this.page.identifier = "http://tworitdash.in/2014/11/15/dft-using-basic-python-and-numpy.html";
+		};
 
     // You should be able to get the following lines of code from your Disqus admin.
     // https://disqus.com/admin/universalcode
-    (function() { // DON'T EDIT BELOW THIS LINE
+    		(function() { // DON'T EDIT BELOW THIS LINE
 				      var d = document, s = d.createElement('script');
-							s.src = '//tworitdashin.disqus.com/embed.js';
+						s.src = 'https://tworitdash-in-blog.disqus.com/embed.js';
 							s.setAttribute('data-timestamp', +new Date());
 							(d.head || d.body).appendChild(s);
 			})();
@@ -210,5 +218,34 @@ $ python dft.py
 
 
   </body>
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    tex2jax: {
+      inlineMath: [ ['$','$'], ["\\(","\\)"] ],
+      processEscapes: true
+    }
+  });
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      tex2jax: {
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+      }
+    });
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax(), i;
+        for(i=0; i < all.length; i += 1) {
+            all[i].SourceElement().parentNode.className += ' has-jax';
+        }
+    });
+</script>
+
+<script type="text/javascript"
+   src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+</script>
 
 </html>
