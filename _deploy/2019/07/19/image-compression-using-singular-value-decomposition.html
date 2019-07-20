@@ -108,7 +108,9 @@
 
 <p>The dimensions are important here. If A is a $M \times N$ matrix, then U is a square matrix with dimensions $M \times M$, S is a Diagonal matrix with a dimension of $M \times N$ and V is a matrix with dimension of $N \times N$. Note: In my actual project with the data from the radar, U was called the data space because it had the dimension containing all the frequency samples for every antenna and V was called as the object space where it indicated the number of pixels. However, as this is a static image, the observation matrix A here is just the number of points in the row and column of the 2D matrix of that image.</p>
 
-<script type="math/tex; mode=display">A \Bigg(M\Bigg[^N \quad \Bigg]\Bigg) = U \Bigg(M\Bigg[^M \quad \Bigg]\Bigg) S \Bigg(M \Bigg[^N \quad \quad \Bigg]\Bigg) V \Bigg(N \Bigg[^N \quad \Bigg]\Bigg)^H</script>
+<script type="math/tex; mode=display">\begin{equation}
+A \Bigg(M\Bigg[^N \quad \Bigg]\Bigg) = U \Bigg(M\Bigg[^M \quad \Bigg]\Bigg) S \Bigg(M \Bigg[^N \quad \quad \Bigg]\Bigg) V \Bigg(N \Bigg[^N \quad \Bigg]\Bigg)^H
+\end{equation}</script>
 
 <h3 id="singular-values">Singular Values</h3>
 
