@@ -17,7 +17,7 @@
 		@import url('https://fonts.googleapis.com/css?family=Inconsolata');
 	</style>
   <title>Raspberry Pi FreeBSD portsnap fetch clockktime Error</title>
-  <meta name="description" content="After setting up the network, let&#39;s try to fetch and extract the portsnap. Hell !! It resulted in something irritating. ">
+  <meta name="description" content="After setting up the network, let’s try to fetch and extract the portsnap. Hell !! It resulted in something irritating.">
 
   <link rel="stylesheet" href="/css/main.css">
   <link rel="canonical" href="http://tworitdash.in/2015/08/04/raspberry-pi-freebsd-portsnap-fetch-clockktime-error.html">
@@ -96,26 +96,41 @@
   </header>
 
   <article class="post-content">
-    <p>After setting up the network, let&#39;s try to fetch and extract the portsnap. Hell !! It resulted in something irritating. </p>
-<div class="highlight"><pre><code class="language-" data-lang=""># portsnap fetch
+    <p>After setting up the network, let’s try to fetch and extract the portsnap. Hell !! It resulted in something irritating.</p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code># portsnap fetch
 Looking up portsnap.FreeBSD.org mirrors... 2 mirrors found.
 Fetching snapshot tag from portsnap1.FreeBSD.org... done.
 Snapshot appears to have been created more than one day into the future!
 (Is the system clock correct?)
 Cowardly refusing to proceed any further.
-</code></pre></div>
+</code></pre>
+</div>
+
 <p>This can be solved by using the proper timezone.</p>
-<div class="highlight"><pre><code class="language-" data-lang="">vi /etc/rc.conf 
-</code></pre></div>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>vi /etc/rc.conf 
+</code></pre>
+</div>
+
 <p>And add the following:</p>
-<div class="highlight"><pre><code class="language-" data-lang="">ntpdate_enable="YES"
-</code></pre></div>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>ntpdate_enable="YES"
+</code></pre>
+</div>
+
 <p>Then set up your timezone by the following command:</p>
-<div class="highlight"><pre><code class="language-" data-lang=""># tzsetup
-</code></pre></div>
+
+<div class="highlighter-rouge"><pre class="highlight"><code># tzsetup
+</code></pre>
+</div>
+
 <p>Then after a reboot, the fetch will work. :)</p>
-<div class="highlight"><pre><code class="language-" data-lang=""># portsnap fetch extract
-</code></pre></div>
+
+<div class="highlighter-rouge"><pre class="highlight"><code># portsnap fetch extract
+</code></pre>
+</div>
+
   </article>
 
 	<div id="disqus_thread"></div>
@@ -205,5 +220,34 @@ Cowardly refusing to proceed any further.
 
 
   </body>
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    tex2jax: {
+      inlineMath: [ ['$','$'], ["\\(","\\)"] ],
+      processEscapes: true
+    }
+  });
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      tex2jax: {
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+      }
+    });
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax(), i;
+        for(i=0; i < all.length; i += 1) {
+            all[i].SourceElement().parentNode.className += ' has-jax';
+        }
+    });
+</script>
+
+<script type="text/javascript"
+   src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+</script>
 
 </html>

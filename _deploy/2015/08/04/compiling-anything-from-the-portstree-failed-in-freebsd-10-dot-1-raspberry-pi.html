@@ -96,15 +96,22 @@
   </header>
 
   <article class="post-content">
-    <p>After getting portsnap extracted on my FreeBSD RPi Desktop, I wanted to compile a couple of things from the ports tree. But when I wanted to compile something, It first used to fetch &quot;pkg&quot; and the make failed. When I ran:</p>
-<div class="highlight"><pre><code class="language-" data-lang=""># pkg updtae
-</code></pre></div>
+    <p>After getting portsnap extracted on my FreeBSD RPi Desktop, I wanted to compile a couple of things from the ports tree. But when I wanted to compile something, It first used to fetch “pkg” and the make failed. When I ran:</p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code># pkg updtae
+</code></pre>
+</div>
+
 <p>It first used to ask to install the package manager. Then it used to terminate and instruct to install pkg from /usr/ports/ports-mgmt/pkg . But that procedure also failed with the same error messages that I had got while compiling nano nad links from ports tree. I found out a simple but effective solution to this.</p>
-<div class="highlight"><pre><code class="language-" data-lang=""># whereis portmaster
+
+<div class="highlighter-rouge"><pre class="highlight"><code># whereis portmaster
 portmaster: /usr/ports/ports-mgmt/portmaster/
 # cd /usr/ports/ports-mgmt/portmaster &amp;&amp; make install clean
-</code></pre></div>
-<p>Compiling portmaster was very time taking but it solved the issue and the pkg was successfully installed. Unfortunately I found no packagesite repositiry for &quot;pkg update&quot; online for FreeBSD:10.1:armv6 Release for Raspberry Pi. So, I couldn&#39;t use the pkg tool to install packages. And I tried to compile packages from the ports tree by hand. The processor and RAM of Raspberry Pi cause problem while compiling. It even takes one whole day or more than that to compile a package from the ports tree.</p>
+</code></pre>
+</div>
+
+<p>Compiling portmaster was very time taking but it solved the issue and the pkg was successfully installed. Unfortunately I found no packagesite repositiry for “pkg update” online for FreeBSD:10.1:armv6 Release for Raspberry Pi. So, I couldn’t use the pkg tool to install packages. And I tried to compile packages from the ports tree by hand. The processor and RAM of Raspberry Pi cause problem while compiling. It even takes one whole day or more than that to compile a package from the ports tree.</p>
+
 
   </article>
 
@@ -195,5 +202,34 @@ portmaster: /usr/ports/ports-mgmt/portmaster/
 
 
   </body>
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    tex2jax: {
+      inlineMath: [ ['$','$'], ["\\(","\\)"] ],
+      processEscapes: true
+    }
+  });
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      tex2jax: {
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+      }
+    });
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax(), i;
+        for(i=0; i < all.length; i += 1) {
+            all[i].SourceElement().parentNode.className += ' has-jax';
+        }
+    });
+</script>
+
+<script type="text/javascript"
+   src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+</script>
 
 </html>

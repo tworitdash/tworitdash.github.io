@@ -15,8 +15,8 @@ author:
     name: Tworit
     job: Master's Student at TU Delft
 # Build settings
-markdown: redcarpet
-#markdown: kramdown
+#markdown: redcarpet
+markdown: kramdown
 #highlighter: rogue
 paginate_path: "/blog/page:num/"
 gems: [jekyll-paginate, jemoji]

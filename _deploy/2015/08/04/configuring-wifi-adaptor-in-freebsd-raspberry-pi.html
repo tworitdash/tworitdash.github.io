@@ -96,51 +96,87 @@
   </header>
 
   <article class="post-content">
-    <p>After banging my head a lot of times, finally I found out the solution for connecting my Raspberry Pi to my WiFi network using an adapter. The adapter is from NetGear (realtek RTL IEEE 802.11) and while my machine used to boot up, it was recognized as &quot;urtwn0&quot; WiFi card. At first, the adopter didn&#39;t glow. Then I found out that is a problem adapter. So, I had to allow the license for realtek urtwn0 driver in /boot/loader.conf file. The file didn&#39;t exist and I created one.</p>
-<div class="highlight"><pre><code class="language-" data-lang="">vi /boot/loader.conf
-</code></pre></div>
+    <p>After banging my head a lot of times, finally I found out the solution for connecting my Raspberry Pi to my WiFi network using an adapter. The adapter is from NetGear (realtek RTL IEEE 802.11) and while my machine used to boot up, it was recognized as “urtwn0” WiFi card. At first, the adopter didn’t glow. Then I found out that is a problem adapter. So, I had to allow the license for realtek urtwn0 driver in /boot/loader.conf file. The file didn’t exist and I created one.</p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>vi /boot/loader.conf
+</code></pre>
+</div>
+
 <p>Then write the following lines into it.</p>
-<div class="highlight"><pre><code class="language-" data-lang="">legal.realtek.license_ack=1
+
+<div class="highlighter-rouge"><pre class="highlight"><code>legal.realtek.license_ack=1
 if_urtwn_load="YES"
-</code></pre></div>
+</code></pre>
+</div>
+
 <p>I know editing the FreeBSD files using vi is a pain. You can use ee editor also. If you have connected the Pi before with some wired network and installed nano in it, you can also use the nano editor to edit. It is pretty smooth. Then, reboot your system.</p>
-<div class="highlight"><pre><code class="language-" data-lang="">reboot
-</code></pre></div>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>reboot
+</code></pre>
+</div>
+
 <p>After a reboot we are ready to create a network interface using wlan0.</p>
-<div class="highlight"><pre><code class="language-" data-lang="">ifconfig
-</code></pre></div>
-<p>It will show the listed cards with the IPs assigned to them. You can find no inet address for &quot;urtwn0&quot; driver. </p>
-<div class="highlight"><pre><code class="language-" data-lang="">ifconfig wlan0 create wlandev urtwn0
-</code></pre></div>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>ifconfig
+</code></pre>
+</div>
+
+<p>It will show the listed cards with the IPs assigned to them. You can find no inet address for “urtwn0” driver.</p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>ifconfig wlan0 create wlandev urtwn0
+</code></pre>
+</div>
+
 <p>It will create an interface wlan0 and the command will return the ethernet address. If you are getting the address without any error, you are ready to go. To permanently store the configuration, we have to add some line to /etc/rc.conf .</p>
-<div class="highlight"><pre><code class="language-" data-lang="">vi /etc/rc.conf
-</code></pre></div>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>vi /etc/rc.conf
+</code></pre>
+</div>
+
 <p>The lines to be added are:</p>
-<div class="highlight"><pre><code class="language-" data-lang="">wlans_urtwn0="wlan0"
+
+<div class="highlighter-rouge"><pre class="highlight"><code>wlans_urtwn0="wlan0"
 ifconfig_wlan0="WPA DHCP"
-</code></pre></div>
-<p>If you are having some difficulties while deleting characters in vi, just use <code>ESC</code> then <code>d</code> then left arrow button. Accordingly you can get how to delete multiple characters. Then <code>ESC</code> and <code>i</code> can help you edit the file again. </p>
+</code></pre>
+</div>
+
+<p>If you are having some difficulties while deleting characters in vi, just use <code>ESC</code> then <code>d</code> then left arrow button. Accordingly you can get how to delete multiple characters. Then <code>ESC</code> and <code>i</code> can help you edit the file again.</p>
 
 <p>Then to get to know about the list of WiFi networks:</p>
-<div class="highlight"><pre><code class="language-" data-lang="">ifconfig wlan0 up scan
-</code></pre></div>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>ifconfig wlan0 up scan
+</code></pre>
+</div>
+
 <p>To connect to your network, you should edit the following file.</p>
-<div class="highlight"><pre><code class="language-" data-lang="">vi /etc/wpa_supplicant.conf
-</code></pre></div>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>vi /etc/wpa_supplicant.conf
+</code></pre>
+</div>
+
 <p>And write the following lines as per your WiFi SSID and Password.</p>
-<div class="highlight"><pre><code class="language-" data-lang="">network={
-    ssid="your_ssid"
-    psk="your_password"
+
+<div class="highlighter-rouge"><pre class="highlight"><code>network={
+	ssid="your_ssid"
+	psk="your_password"
 }
-</code></pre></div>
+</code></pre>
+</div>
+
 <p>Then after a reboot, you can see the adapter glowing and you can check the IP by ifconfig.</p>
 
 <p>Checking your network is also easy. Just look at the content of your resolv.conf file.</p>
-<div class="highlight"><pre><code class="language-" data-lang="">cat /etc/resolv.conf
-</code></pre></div>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>cat /etc/resolv.conf
+</code></pre>
+</div>
+
 <p>Then ping it. Like in my case:</p>
-<div class="highlight"><pre><code class="language-" data-lang="">ping 192.168.43.1
-</code></pre></div>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>ping 192.168.43.1
+</code></pre>
+</div>
+
 <p>And you will get 0% packet loss after terminating.</p>
 
 <p>Happy Hacking ! :)</p>
@@ -234,5 +270,34 @@ ifconfig_wlan0="WPA DHCP"
 
 
   </body>
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    tex2jax: {
+      inlineMath: [ ['$','$'], ["\\(","\\)"] ],
+      processEscapes: true
+    }
+  });
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      tex2jax: {
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+      }
+    });
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax(), i;
+        for(i=0; i < all.length; i += 1) {
+            all[i].SourceElement().parentNode.className += ' has-jax';
+        }
+    });
+</script>
+
+<script type="text/javascript"
+   src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+</script>
 
 </html>

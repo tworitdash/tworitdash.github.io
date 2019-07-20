@@ -94,9 +94,18 @@
 		<ul class="posts noList">
 				
 							<li>
+								<span class="date">July 24, 2016</span>
+								<h3><a class="post-link" href="/2016/07/24/iot-with-phoenix-part-1.html">IoT with Phoenix Part 1</a></h3>
+								<p>This is the first blog post that I am writing to share my experience with the Phoenix framework in building an Iot application. I have written a blog post about Elixir and Phoenix here. The objectives that we are going to achieve in here are
+
+</p>
+							</li>
+					
+							<li>
 								<span class="date">November 20, 2015</span>
 								<h3><a class="post-link" href="/2015/11/20/serialport-and-sleep-mruby-gems-to-instruct-texas-launchpad-tm4c123g-with-arm-cortex-m4.html">SerialPort and Sleep Mruby Gems To Instruct Texas LaunchPad TM4C123G with ARM Cortex M4</a></h3>
 								<p>I always wanted to build something with mruby. After building mruby on my Raspberry Pi, I wanted to use the serialport mrbgem to instruct my Texas TM4C123G with ARM Cortex M4. I used to program the controller using Keil IDE on windows. After getting a mac, I have been writing program into it using energia. It is as simple as programming an arduino. The pin diagram with numbers are in the figure for the use in energia.
+
 </p>
 							</li>
 					
@@ -104,27 +113,23 @@
 								<span class="date">November 20, 2015</span>
 								<h3><a class="post-link" href="/2015/11/20/best-practices-to-recover-ruby-gems-and-developer-tools-in-mac-osx-el-capitan.html">Best Practices to Recover Ruby Gems and Developer Tools in Mac OSX El Capitan</a></h3>
 								<p>El Capitan has Darwin-15 (different from the last kernel). The first step that I found is to disable SIP (System Integrity Protection) by the following the steps below.
+
 </p>
 							</li>
 					
 							<li>
 								<span class="date">August 04, 2015</span>
 								<h3><a class="post-link" href="/2015/08/04/compiling-anything-from-the-portstree-failed-in-freebsd-10-dot-1-raspberry-pi.html">Compiling Anything from the Portstree failed in FreeBSD 10.1 Raspberry Pi</a></h3>
-								<p>After getting portsnap extracted on my FreeBSD RPi Desktop, I wanted to compile a couple of things from the ports tree. But when I wanted to compile something, It first used to fetch &quot;pkg&quot; and the make failed. When I ran:
+								<p>After getting portsnap extracted on my FreeBSD RPi Desktop, I wanted to compile a couple of things from the ports tree. But when I wanted to compile something, It first used to fetch “pkg” and the make failed. When I ran:
+
 </p>
 							</li>
 					
 							<li>
 								<span class="date">August 04, 2015</span>
 								<h3><a class="post-link" href="/2015/08/04/raspberry-pi-freebsd-portsnap-fetch-clockktime-error.html">Raspberry Pi FreeBSD portsnap fetch clockktime Error</a></h3>
-								<p>After setting up the network, let&#39;s try to fetch and extract the portsnap. Hell !! It resulted in something irritating. 
-</p>
-							</li>
-					
-							<li>
-								<span class="date">August 04, 2015</span>
-								<h3><a class="post-link" href="/2015/08/04/configuring-wifi-adaptor-in-freebsd-raspberry-pi.html">Configuring WiFi Adapter in FreeBSD Raspberry Pi</a></h3>
-								<p>After banging my head a lot of times, finally I found out the solution for connecting my Raspberry Pi to my WiFi network using an adapter. The adapter is from NetGear (realtek RTL IEEE 802.11) and while my machine used to boot up, it was recognized as &quot;urtwn0&quot; WiFi card. At first, the adopter didn&#39;t glow. Then I found out that is a problem adapter. So, I had to allow the license for realtek urtwn0 driver in /boot/loader.conf file. The file didn&#39;t exist and I created one.
+								<p>After setting up the network, let’s try to fetch and extract the portsnap. Hell !! It resulted in something irritating.
+
 </p>
 							</li>
 					
@@ -202,5 +207,34 @@
 
 
   </body>
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    tex2jax: {
+      inlineMath: [ ['$','$'], ["\\(","\\)"] ],
+      processEscapes: true
+    }
+  });
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      tex2jax: {
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+      }
+    });
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax(), i;
+        for(i=0; i < all.length; i += 1) {
+            all[i].SourceElement().parentNode.className += ' has-jax';
+        }
+    });
+</script>
+
+<script type="text/javascript"
+   src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+</script>
 
 </html>

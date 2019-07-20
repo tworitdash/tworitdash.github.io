@@ -17,7 +17,7 @@
 		@import url('https://fonts.googleapis.com/css?family=Inconsolata');
 	</style>
   <title>Customizing Octopress Pages</title>
-  <meta name="description" content="After creating a simple blogging site, let&#39;s now create some custom pages for our site like about and home pages.">
+  <meta name="description" content="After creating a simple blogging site, let’s now create some custom pages for our site like about and home pages.">
 
   <link rel="stylesheet" href="/css/main.css">
   <link rel="canonical" href="http://tworitdash.in/2014/06/25/customizing-octopress-pages.html">
@@ -96,88 +96,111 @@
   </header>
 
   <article class="post-content">
-    <p>After creating a simple blogging site, let&#39;s now create some custom pages for our site like about and home pages.</p>
+    <p>After creating a simple blogging site, let’s now create some custom pages for our site like about and home pages.</p>
 
-<p>Before that if you want to publish the blog page in your<em>url.com/blog instead of your</em>url.com and you just want your own index page at your<em>url.com, then just open up the Rakefile and edit the <code>blog</em>index_dir</code> to :</p>
-<div class="highlight"><pre><code class="language-" data-lang="">1. blog_index_dir  = 'source/blog'
-</code></pre></div>
+<p>Before that if you want to publish the blog page in your_url.com/blog instead of your_url.com and you just want your own index page at your_url.com, then just open up the Rakefile and edit the <code>blog_index_dir</code> to :</p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>1. blog_index_dir  = 'source/blog'
+</code></pre>
+</div>
+
 <p>so that the blog page is now created at the your_url.com/blog.</p>
 
-<p>To have your own page for the home, rake has another task for you called the <code>rake new<em>page</code>. If you are writing it as <code>bundle exec rake new</em>page[&quot;index.html&quot;]</code>, then it will create a index html page in that source directory.</p>
+<p>To have your own page for the home, rake has another task for you called the <code>rake new_page</code>. If you are writing it as <code>bundle exec rake new_page["index.html"]</code>, then it will create a index html page in that source directory.</p>
 
 <p>so follow the command:</p>
-<div class="highlight"><pre><code class="language-" data-lang="">1. bundle exec rake new_page["index.html"]
-</code></pre></div>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>1. bundle exec rake new_page["index.html"]
+</code></pre>
+</div>
+
 <p>Then go and edit it as you like.</p>
 
 <p>For an instance let us change the layout. make it something like :</p>
-<div class="highlight"><pre><code class="language-" data-lang="">1. layout: home
-</code></pre></div>
-<p>Now we are telling the index.html file to follow the home layout. But we don&#39;t have any till now. So go to your <code> layouts </code> folder and create a home.html file and add whatever you like and if you want to include your own head, header and footer files in home.html then just create those files in <code>includes</code> folder and add the lines in home.html as:</p>
-<div class="highlight"><pre><code class="language-html" data-lang="html">
 
-    <span class="nt">&lt;html&gt;</span>
+<div class="highlighter-rouge"><pre class="highlight"><code>1. layout: home
+</code></pre>
+</div>
 
-        {% include custom_head.html %}
+<p>Now we are telling the index.html file to follow the home layout. But we don’t have any till now. So go to your <code> layouts </code> folder and create a home.html file and add whatever you like and if you want to include your own head, header and footer files in home.html then just create those files in <code>includes</code> folder and add the lines in home.html as:</p>
 
-        <span class="nt">&lt;body&gt;</span>
+<p>```html</p>
 
-            <span class="nt">&lt;div</span> <span class="na">class=</span><span class="s">"any_class_in_your_css"</span> <span class="nt">&gt;</span>
+<div class="highlighter-rouge"><pre class="highlight"><code><span class="nt">&lt;html&gt;</span>
+ 
+ 	{% include custom_head.html %}
+ 
+	<span class="nt">&lt;body&gt;</span>
 
-                    {% include custom_header.html %}
+  		<span class="nt">&lt;div</span> <span class="na">class=</span><span class="s">"any_class_in_your_css"</span> <span class="nt">&gt;</span>
+  		
+    			{% include custom_header.html %}
+    	
+    			<span class="nt">&lt;div</span> <span class="na">class=</span><span class="s">"any_other-class"</span> <span class="nt">&gt;</span>
+       		 
+        
+        
+         			{{ content }}
 
-                    <span class="nt">&lt;div</span> <span class="na">class=</span><span class="s">"any_other-class"</span> <span class="nt">&gt;</span>
+        
+        
+       			{% include custom_footer.html %}
+       
+ 		 		<span class="nt">&lt;/div&gt;</span>
 
+  		<span class="nt">&lt;/div&gt;</span>
 
+ 	<span class="nt">&lt;/body&gt;</span>
 
-                        {{ content }}
+<span class="nt">&lt;/html&gt;</span>
+</code></pre>
+</div>
 
+<p>```</p>
 
-
-                    {% include custom_footer.html %}
-
-                    <span class="nt">&lt;/div&gt;</span>
-
-            <span class="nt">&lt;/div&gt;</span>
-
-        <span class="nt">&lt;/body&gt;</span>
-
-    <span class="nt">&lt;/html&gt;</span>
-
-</code></pre></div>
-<p>And add your stylesheets in the <code>stylesheets</code> folder. And write the content, as we do in the <code>_posts</code> files for the blogs, in the index.html file. </p>
+<p>And add your stylesheets in the <code>stylesheets</code> folder. And write the content, as we do in the <code class="highlighter-rouge">_posts</code> files for the blogs, in the index.html file.</p>
 
 <p>And your custom page is done. Make sure in the header the navigation bar is correctly coded like :</p>
-<div class="highlight"><pre><code class="language-html" data-lang="html">
-            <span class="nt">&lt;li&gt;&lt;a</span> <span class="na">href=</span><span class="s">"{{ root_url }}/"</span><span class="nt">&gt;</span>Home<span class="nt">&lt;/a&gt;&lt;/li&gt;</span>
-            <span class="nt">&lt;li&gt;&lt;a</span> <span class="na">href=</span><span class="s">"{{ root_url }}/about"</span><span class="nt">&gt;</span>About<span class="nt">&lt;/a&gt;&lt;/li&gt;</span>
-            <span class="nt">&lt;li&gt;&lt;a</span> <span class="na">href=</span><span class="s">"{{ root_url }}/blog"</span><span class="nt">&gt;</span>Blog<span class="nt">&lt;/a&gt;&lt;/li&gt;</span>
-            <span class="nt">&lt;li&gt;&lt;a</span> <span class="na">href=</span><span class="s">"{{ root_url }}/blog/archives/"</span><span class="nt">&gt;</span>Archives<span class="nt">&lt;/a&gt;&lt;/li&gt;</span>
-            <span class="nt">&lt;li&gt;&lt;a</span> <span class="na">href=</span><span class="s">"{{ root_url }}/atom.xml"</span><span class="nt">&gt;</span>RSS<span class="nt">&lt;/a&gt;&lt;/li&gt;</span>
 
+<p>```html</p>
 
-</code></pre></div>
-<p>Same links should be provided in the <code>_includes/custom/navigation.html</code>(as the blog page has this navigation file embedded. ). Then all done to preview. </p>
+<div class="highlighter-rouge"><pre class="highlight"><code>		&lt;li&gt;&lt;a href="{{ root_url }}/"&gt;Home&lt;/a&gt;&lt;/li&gt;
+		&lt;li&gt;&lt;a href="{{ root_url }}/about"&gt;About&lt;/a&gt;&lt;/li&gt;
+		&lt;li&gt;&lt;a href="{{ root_url }}/blog"&gt;Blog&lt;/a&gt;&lt;/li&gt;
+		&lt;li&gt;&lt;a href="{{ root_url }}/blog/archives/"&gt;Archives&lt;/a&gt;&lt;/li&gt;
+		&lt;li&gt;&lt;a href="{{ root_url }}/atom.xml"&gt;RSS&lt;/a&gt;&lt;/li&gt;
+</code></pre>
+</div>
+
+<p>```</p>
+
+<p>Same links should be provided in the <code class="highlighter-rouge">_includes/custom/navigation.html</code>(as the blog page has this navigation file embedded. ). Then all done to preview.</p>
 
 <p>But notice that in the navigation file I added the second line to link to a about folder and that will show in the browser like <code>your_url.com/about</code>.</p>
 
-<p>How to do this? It&#39;s much simpler than the first one.</p>
-<div class="highlight"><pre><code class="language-" data-lang="">1. bundle exec rake new_page[about]
-</code></pre></div>
-<p>A page without any extension is created as index.html within the desired folder (here it&#39;s about). </p>
+<p>How to do this? It’s much simpler than the first one.</p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>1. bundle exec rake new_page[about]
+</code></pre>
+</div>
+
+<p>A page without any extension is created as index.html within the desired folder (here it’s about).</p>
 
 <p>Then just open that index file and do whatever you want to customize it.</p>
 
-<p>And most importantly don&#39;t write the link for the home page as just <code>{{ root<em>url }} </code> in the navigation file and do write it as <code>{{ root</em>url }}/</code>, otherwise the link will point to the same page which is being opened up in the browser. </p>
+<p>And most importantly don’t write the link for the home page as just <code>{{ root_url }} </code> in the navigation file and do write it as <code>{{ root_url }}/</code>, otherwise the link will point to the same page which is being opened up in the browser.</p>
 
 <p>All is set now and just run the commands:</p>
-<div class="highlight"><pre><code class="language-" data-lang="">1. bundle exec rake generate
+
+<div class="highlighter-rouge"><pre class="highlight"><code>1. bundle exec rake generate
 2. bundle exec rake preview
 3. bundle exec rake deploy
-</code></pre></div>
-<p>And all your codes are on the web now. </p>
+</code></pre>
+</div>
 
-<p>Open up your<em>url.com or your</em>url.github.io and have fun. :) :)</p>
+<p>And all your codes are on the web now.</p>
+
+<p>Open up your_url.com or your_url.github.io and have fun. :) :)</p>
 
   </article>
 
@@ -268,5 +291,34 @@
 
 
   </body>
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    tex2jax: {
+      inlineMath: [ ['$','$'], ["\\(","\\)"] ],
+      processEscapes: true
+    }
+  });
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      tex2jax: {
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+      }
+    });
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax(), i;
+        for(i=0; i < all.length; i += 1) {
+            all[i].SourceElement().parentNode.className += ' has-jax';
+        }
+    });
+</script>
+
+<script type="text/javascript"
+   src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+</script>
 
 </html>

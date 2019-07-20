@@ -99,375 +99,447 @@
     <p>This is the first blog post that I am writing to share my experience with the Phoenix framework in building an Iot application. I have written a blog post about Elixir and Phoenix <a href="https://blog.zairza.in/generators-make-the-whole-thing-look-sexy-2434154a8e0e#.riq5apurj">here</a>. The objectives that we are going to achieve in here are</p>
 
 <ol>
-<li><p>A &#39;Model View Controller&#39; scheme for the users. So that the users can register themselves in the application and have a login access to monitor as well as control their machines. </p></li>
-<li><p>A messaging interface between the machine and the user so that the application can be pretty much asynchronous and fast. This will accomplish the goal of an user specific Iot architecture, where a user can control and monitor only his/her machines, not others. There is no need of refreshing the pages to know the current state of the machines as we will be using websocket connections to make it a real time application, where the connection to the server never goes away. </p></li>
-<li><p>Writing machine clients. The clients which will help the machine send sensor outputs to the server.</p></li>
+  <li>
+    <p>A ‘Model View Controller’ scheme for the users. So that the users can register themselves in the application and have a login access to monitor as well as control their machines.</p>
+  </li>
+  <li>
+    <p>A messaging interface between the machine and the user so that the application can be pretty much asynchronous and fast. This will accomplish the goal of an user specific Iot architecture, where a user can control and monitor only his/her machines, not others. There is no need of refreshing the pages to know the current state of the machines as we will be using websocket connections to make it a real time application, where the connection to the server never goes away.</p>
+  </li>
+  <li>
+    <p>Writing machine clients. The clients which will help the machine send sensor outputs to the server.</p>
+  </li>
 </ol>
 
-<p>Phoenix is a framework written in Elixir programming language which runs on Erlang VM. The installation instructions for the framework is given <a href="http://www.phoenixframework.org/docs/installation">here</a>. After successful installation, let&#39;s start building the application. </p>
+<p>Phoenix is a framework written in Elixir programming language which runs on Erlang VM. The installation instructions for the framework is given <a href="http://www.phoenixframework.org/docs/installation">here</a>. After successful installation, let’s start building the application.</p>
 
 <p>To create our Iot project run the following in the terminal.</p>
-<div class="highlight"><pre><code class="language-" data-lang="">$mix phoenix.new iot
-</code></pre></div>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>$mix phoenix.new iot
+</code></pre>
+</div>
+
 <p>Now, enter into the application. 
-Note: you must have postgres installed in your system for the database requirements. </p>
-<div class="highlight"><pre><code class="language-" data-lang="">$cd iot
-</code></pre></div>
+Note: you must have postgres installed in your system for the database requirements.</p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>$cd iot
+</code></pre>
+</div>
+
 <p>Now run the server or you can run the server within an interpreter too.</p>
-<div class="highlight"><pre><code class="language-" data-lang="">$mix phoenix.server 
+
+<div class="highlighter-rouge"><pre class="highlight"><code>$mix phoenix.server 
 
 or
 
 $iex -S mix phoenix.server 
-</code></pre></div>
-<p>Now we can view the application at http://localhost:4000/. Now let&#39;s change the contents of some files to have the default page as the login page for users. To achieve that, we should have an users table in the database with the details of the users as attributes. For that, we have to generate a users model using the mix model generator. </p>
-<div class="highlight"><pre><code class="language-" data-lang="">$mix phoenix.gen.model User user username:string encrypted_password:string email:string token:string 
-</code></pre></div>
-<p>It will create a file called <code>user.ex</code> in the <code>web/models/</code> directory. Now the users table has 4 attributes called the <code>username</code>, <code>encrypted_password</code>, <code>email</code> and a <code>token</code>. But, to register a user with a password for login purposes, we should have two virtual fields, the <code>password</code> field and a <code>password_confirmation</code> field. These are virtual attributes and they are never stored as attributes of the users table. The password after entered in the registration form is converted into a encrypted form and saved in the database as encrypted password. When the user logs in later, again that entered password is encrypted and matched with the encrypted password already saved in the database for that user. This process helps in a secured access by not storing the password anywhere during the login or register process. The user only knows his password, no one else knows, not even the admins of the application. :D </p>
+</code></pre>
+</div>
 
-<p>Now, let&#39;s add those virtual fields and have some validations for the attributes in <code>user.ex</code> file. </p>
-<div class="highlight"><pre><code class="language-ruby" data-lang="ruby">    <span class="n">defmodule</span> <span class="no">Iot</span><span class="o">.</span><span class="no">User</span> <span class="k">do</span>
-      <span class="n">use</span> <span class="no">Iot</span><span class="o">.</span><span class="no">Web</span><span class="p">,</span> <span class="ss">:model</span>
-      <span class="k">alias</span> <span class="no">Iot</span><span class="o">.</span><span class="no">Repo</span>
+<p>Now we can view the application at http://localhost:4000/. Now let’s change the contents of some files to have the default page as the login page for users. To achieve that, we should have an users table in the database with the details of the users as attributes. For that, we have to generate a users model using the mix model generator.</p>
 
-      <span class="n">schema</span> <span class="s2">"users"</span> <span class="k">do</span>
-        <span class="n">field</span> <span class="ss">:username</span><span class="p">,</span> <span class="ss">:string</span>
-        <span class="n">field</span> <span class="ss">:email</span><span class="p">,</span> <span class="ss">:string</span>
-        <span class="n">field</span> <span class="ss">:encrypted_password</span><span class="p">,</span> <span class="ss">:string</span>
-        <span class="n">field</span> <span class="ss">:password</span><span class="p">,</span> <span class="ss">:string</span><span class="p">,</span> <span class="ss">virtual: </span><span class="kp">true</span>
-        <span class="n">field</span> <span class="ss">:password_confirmation</span><span class="p">,</span> <span class="ss">:string</span><span class="p">,</span> <span class="ss">virtual: </span><span class="kp">true</span>
-        <span class="n">field</span> <span class="ss">:token</span><span class="p">,</span> <span class="ss">:string</span>
-        <span class="n">timestamps</span>
-      <span class="k">end</span>
+<div class="highlighter-rouge"><pre class="highlight"><code>$mix phoenix.gen.model User user username:string encrypted_password:string email:string token:string 
+</code></pre>
+</div>
 
+<p>It will create a file called <code class="highlighter-rouge">user.ex</code> in the <code class="highlighter-rouge">web/models/</code> directory. Now the users table has 4 attributes called the <code class="highlighter-rouge">username</code>, <code class="highlighter-rouge">encrypted_password</code>, <code class="highlighter-rouge">email</code> and a <code class="highlighter-rouge">token</code>. But, to register a user with a password for login purposes, we should have two virtual fields, the <code class="highlighter-rouge">password</code> field and a <code class="highlighter-rouge">password_confirmation</code> field. These are virtual attributes and they are never stored as attributes of the users table. The password after entered in the registration form is converted into a encrypted form and saved in the database as encrypted password. When the user logs in later, again that entered password is encrypted and matched with the encrypted password already saved in the database for that user. This process helps in a secured access by not storing the password anywhere during the login or register process. The user only knows his password, no one else knows, not even the admins of the application. :D</p>
 
-      <span class="vi">@required_fields</span> <span class="o">~</span><span class="n">w</span><span class="p">(</span><span class="n">username</span> <span class="n">email</span> <span class="n">password</span> <span class="n">password_confirmation</span><span class="p">)</span>
-      <span class="vi">@optional_fields</span> <span class="o">~</span><span class="n">w</span><span class="p">()</span>
+<p>Now, let’s add those virtual fields and have some validations for the attributes in <code class="highlighter-rouge">user.ex</code> file.</p>
 
-      <span class="vi">@doc</span> <span class="s2">"""
-      Creates a changeset based on the `model` and `params`.
+<p>```ruby
+	defmodule Iot.User do
+	  use Iot.Web, :model
+	  alias Iot.Repo</p>
 
-      If no params are provided, an invalid changeset is returned
-      with no validation performed.
-      """</span>
-      <span class="k">def</span> <span class="nf">changeset</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">params</span> <span class="p">\\</span> <span class="ss">:empty</span><span class="p">)</span> <span class="k">do</span>
-        <span class="n">model</span>
-        <span class="o">|&gt;</span> <span class="n">cast</span><span class="p">(</span><span class="n">params</span><span class="p">,</span> <span class="vi">@required_fields</span><span class="p">,</span> <span class="vi">@optional_fields</span><span class="p">)</span>
-        <span class="o">|&gt;</span> <span class="n">unique_constraint</span><span class="p">(</span><span class="ss">:username</span><span class="p">,</span> <span class="ss">on: </span><span class="no">Repo</span><span class="p">,</span> <span class="ss">downcase: </span><span class="kp">true</span><span class="p">)</span>
-        <span class="o">|&gt;</span> <span class="n">validate_length</span><span class="p">(</span><span class="ss">:password</span><span class="p">,</span> <span class="ss">min: </span><span class="mi">8</span><span class="p">)</span>
-        <span class="o">|&gt;</span> <span class="n">validate_length</span><span class="p">(</span><span class="ss">:password_confirmation</span><span class="p">,</span> <span class="ss">min: </span><span class="mi">8</span><span class="p">)</span>
-        <span class="o">|&gt;</span> <span class="n">validate_confirmation</span><span class="p">(</span><span class="ss">:password</span><span class="p">)</span>
-      <span class="k">end</span>
-    <span class="k">end</span>
-</code></pre></div>
-<p>Here, the required fields doesn&#39;t include the <code>encrypted_password</code>field and the reason is obvious. The <code>encrypted_password</code> we are going to generate later. Now, to register the users, we should have a registration controller, a registration template of course with a form to be filled by the users, and a url like http://localhost:4000/registraion. So, let&#39;s modify the <code>web/router.ex</code> file. </p>
-<div class="highlight"><pre><code class="language-ruby" data-lang="ruby">    <span class="n">defmodule</span> <span class="no">Iot</span><span class="o">.</span><span class="no">Router</span> <span class="k">do</span>
-      <span class="n">use</span> <span class="no">Iot</span><span class="o">.</span><span class="no">Web</span><span class="p">,</span> <span class="ss">:router</span>
+<div class="highlighter-rouge"><pre class="highlight"><code>  schema "users" do
+    field :username, :string
+    field :email, :string
+    field :encrypted_password, :string
+    field :password, :string, virtual: true
+    field :password_confirmation, :string, virtual: true
+    field :token, :string
+    timestamps
+  end
+  
 
+  @required_fields ~w(username email password password_confirmation)
+  @optional_fields ~w()
 
-      <span class="n">pipeline</span> <span class="ss">:browser</span> <span class="k">do</span>
-        <span class="n">plug</span> <span class="ss">:accepts</span><span class="p">,</span> <span class="p">[</span><span class="s2">"html"</span><span class="p">]</span>
-        <span class="n">plug</span> <span class="ss">:fetch_session</span>
-        <span class="n">plug</span> <span class="ss">:fetch_flash</span>
-        <span class="n">plug</span> <span class="ss">:protect_from_forgery</span>
-        <span class="n">plug</span> <span class="ss">:put_secure_browser_headers</span>
-      <span class="k">end</span>
+  @doc """
+  Creates a changeset based on the `model` and `params`.
 
-      <span class="n">pipeline</span> <span class="ss">:api</span> <span class="k">do</span>
-        <span class="n">plug</span> <span class="ss">:accepts</span><span class="p">,</span> <span class="p">[</span><span class="s2">"json"</span><span class="p">]</span>
-      <span class="k">end</span>
+  If no params are provided, an invalid changeset is returned
+  with no validation performed.
+  """
+  def changeset(model, params \\ :empty) do
+    model
+    |&gt; cast(params, @required_fields, @optional_fields)
+    |&gt; unique_constraint(:username, on: Repo, downcase: true)
+    |&gt; validate_length(:password, min: 8)
+    |&gt; validate_length(:password_confirmation, min: 8)
+    |&gt; validate_confirmation(:password)
+  end
+end ```
+</code></pre>
+</div>
 
-      <span class="n">scope</span> <span class="s2">"/"</span><span class="p">,</span> <span class="no">Iot</span> <span class="k">do</span>
-        <span class="n">pipe_through</span> <span class="ss">:browser</span> <span class="c1"># Use the default browser stack</span>
-        <span class="n">get</span> <span class="s2">"/registration"</span><span class="p">,</span> <span class="no">RegistrationController</span><span class="p">,</span> <span class="ss">:new</span>
-        <span class="n">post</span> <span class="s2">"/registration"</span><span class="p">,</span> <span class="no">RegistrationController</span><span class="p">,</span> <span class="ss">:create</span>
-        <span class="n">get</span> <span class="s2">"/"</span><span class="p">,</span> <span class="no">PageController</span><span class="p">,</span> <span class="ss">:index</span>
+<p>Here, the required fields doesn’t include the <code class="highlighter-rouge">encrypted_password </code>field and the reason is obvious. The <code class="highlighter-rouge">encrypted_password</code> we are going to generate later. Now, to register the users, we should have a registration controller, a registration template of course with a form to be filled by the users, and a url like http://localhost:4000/registraion. So, let’s modify the <code class="highlighter-rouge">web/router.ex</code> file.</p>
 
-      <span class="k">end</span>
+<p>```ruby
+	defmodule Iot.Router do
+	  use Iot.Web, :router</p>
 
-    <span class="k">end</span>
-</code></pre></div>
-<p>Now we have added 2 routes, one to get the content (The user registration form) and the other is a post request for the same. Now we need to have a <code>registration_controller.ex</code> file in the <code>web/controller</code> directory, where we are going to write the <code>new</code> and <code>create</code> methods. </p>
-<div class="highlight"><pre><code class="language-ruby" data-lang="ruby">    <span class="n">defmodule</span> <span class="no">Iot</span><span class="o">.</span><span class="no">RegistrationController</span> <span class="k">do</span>
-      <span class="n">use</span> <span class="no">Iot</span><span class="o">.</span><span class="no">Web</span><span class="p">,</span> <span class="ss">:controller</span>
+<div class="highlighter-rouge"><pre class="highlight"><code>  pipeline :browser do
+    plug :accepts, ["html"]
+    plug :fetch_session
+    plug :fetch_flash
+    plug :protect_from_forgery
+    plug :put_secure_browser_headers
+  end
 
-      <span class="k">alias</span> <span class="no">Iot</span><span class="o">.</span><span class="no">Password</span>
+  pipeline :api do
+    plug :accepts, ["json"]
+  end
 
-      <span class="k">def</span> <span class="nf">new</span><span class="p">(</span><span class="n">conn</span><span class="p">,</span> <span class="n">_params</span><span class="p">)</span> <span class="k">do</span>
-        <span class="n">changeset</span> <span class="o">=</span> <span class="no">User</span><span class="p">.</span><span class="nf">changeset</span><span class="p">(</span><span class="o">%</span><span class="no">User</span><span class="p">{})</span>
-        <span class="n">render</span> <span class="n">conn</span><span class="p">,</span> <span class="ss">changeset: </span><span class="n">changeset</span>
-      <span class="k">end</span>
+  scope "/", Iot do
+    pipe_through :browser # Use the default browser stack
+    get "/registration", RegistrationController, :new
+    post "/registration", RegistrationController, :create
+    get "/", PageController, :index
+    
+  end
 
-      <span class="k">def</span> <span class="nf">create</span><span class="p">(</span><span class="n">conn</span><span class="p">,</span> <span class="sx">%{"user" =&gt; user_params}</span><span class="p">)</span> <span class="k">do</span>
-        <span class="n">changeset</span> <span class="o">=</span> <span class="no">User</span><span class="p">.</span><span class="nf">changeset</span><span class="p">(</span><span class="o">%</span><span class="no">User</span><span class="p">{},</span> <span class="n">user_params</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">changeset</span><span class="p">.</span><span class="nf">valid?</span> <span class="k">do</span>
-          <span class="n">new_user</span> <span class="o">=</span> <span class="no">Password</span><span class="p">.</span><span class="nf">generate_password_and_store_user</span><span class="p">(</span><span class="n">changeset</span><span class="p">)</span>
-          <span class="n">conn</span>
-            <span class="o">|&gt;</span> <span class="n">put_flash</span><span class="p">(</span><span class="ss">:info</span><span class="p">,</span> <span class="s2">"You are Sucessfully Registered :P "</span><span class="p">)</span>
-            <span class="o">|&gt;</span> <span class="n">redirect</span><span class="p">(</span><span class="ss">to: </span><span class="n">page_path</span><span class="p">(</span><span class="n">conn</span><span class="p">,</span> <span class="ss">:index</span><span class="p">))</span>
-        <span class="k">else</span>
-          <span class="n">render</span> <span class="n">conn</span><span class="p">,</span> <span class="s2">"new.html"</span><span class="p">,</span> <span class="ss">changeset: </span><span class="n">changeset</span> 
-        <span class="k">end</span>
-      <span class="k">end</span>
-    <span class="k">end</span>
-</code></pre></div>
-<p>Here in the new method, we are accepting the attributes of the user in the variable <code>changeset</code>. The create method checks if those required fields fulfill the validations present in <code>web/models/user.ex</code> by <code>changeset.valid?</code> method and stores the user in the database and renders the page_index page. (The default page at http://localhost:4000/ ). If the <code>changeset.valid?</code> is not fulfilled again the new registration page will open up. </p>
+end ```
+</code></pre>
+</div>
 
-<p>The saving of the user in the database by creating the <code>encrypted_password</code> is done here by the <code>Password</code> library. Let&#39;s write the password library with the <code>generate_password_and_store_user</code> that we have just used in the registration controller and other methods. </p>
-<div class="highlight"><pre><code class="language-ruby" data-lang="ruby"><span class="c1">#lib/Iot/password.ex</span>
-    <span class="n">defmodule</span> <span class="no">Iot</span><span class="o">.</span><span class="no">Password</span> <span class="k">do</span>
-        <span class="k">alias</span> <span class="no">Iot</span><span class="o">.</span><span class="no">Repo</span>
-      <span class="n">import</span> <span class="no">Ecto</span><span class="o">.</span><span class="no">Changeset</span><span class="p">,</span> <span class="ss">only: </span><span class="p">[</span><span class="ss">put_change: </span><span class="mi">3</span><span class="p">]</span>
-      <span class="n">import</span> <span class="no">Comeonin</span><span class="o">.</span><span class="no">Bcrypt</span><span class="p">,</span> <span class="ss">only: </span><span class="p">[</span><span class="ss">hashpwsalt: </span><span class="mi">1</span><span class="p">]</span>
+<p>Now we have added 2 routes, one to get the content (The user registration form) and the other is a post request for the same. Now we need to have a <code class="highlighter-rouge">registration_controller.ex</code> file in the <code class="highlighter-rouge">web/controller</code> directory, where we are going to write the <code class="highlighter-rouge">new</code> and <code class="highlighter-rouge">create</code> methods.</p>
 
+<p>```ruby
+	defmodule Iot.RegistrationController do
+	  use Iot.Web, :controller</p>
 
-      <span class="k">def</span> <span class="nf">generate_password_and_token</span><span class="p">(</span><span class="n">changeset</span><span class="p">)</span> <span class="k">do</span>
-        <span class="n">to_be_encoded_string</span> <span class="o">=</span> <span class="no">Enum</span><span class="p">.</span><span class="nf">join</span><span class="p">([</span><span class="n">changeset</span><span class="p">.</span><span class="nf">params</span><span class="p">[</span><span class="s2">"email"</span><span class="p">],</span> <span class="n">changeset</span><span class="p">.</span><span class="nf">params</span><span class="p">[</span><span class="s2">"password"</span><span class="p">]])</span>
+<div class="highlighter-rouge"><pre class="highlight"><code>  alias Iot.Password
 
-        <span class="n">token</span> <span class="o">=</span> <span class="no">Base</span><span class="p">.</span><span class="nf">encode64</span><span class="p">(</span><span class="n">to_be_encoded_string</span><span class="p">)</span>
-        <span class="n">changeset</span> <span class="o">=</span> <span class="n">put_change</span><span class="p">(</span><span class="n">changeset</span><span class="p">,</span> <span class="ss">:token</span><span class="p">,</span> <span class="n">token</span><span class="p">)</span>
+  def new(conn, _params) do
+    changeset = User.changeset(%User{})
+    render conn, changeset: changeset
+  end
 
-        <span class="n">put_change</span><span class="p">(</span><span class="n">changeset</span><span class="p">,</span> <span class="ss">:encrypted_password</span><span class="p">,</span> <span class="n">hashpwsalt</span><span class="p">(</span><span class="n">changeset</span><span class="p">.</span><span class="nf">params</span><span class="p">[</span><span class="s2">"password"</span><span class="p">]))</span>
-      <span class="k">end</span>
+  def create(conn, %{"user" =&gt; user_params}) do
+    changeset = User.changeset(%User{}, user_params)
+    if changeset.valid? do
+      new_user = Password.generate_password_and_store_user(changeset)
+      conn
+        |&gt; put_flash(:info, "You are Sucessfully Registered :P ")
+        |&gt; redirect(to: page_path(conn, :index))
+    else
+      render conn, "new.html", changeset: changeset 
+    end
+  end
+end ``` Here in the new method, we are accepting the attributes of the user in the variable `changeset`. The create method checks if those required fields fulfill the validations present in `web/models/user.ex` by `changeset.valid?` method and stores the user in the database and renders the page_index page. (The default page at http://localhost:4000/ ). If the `changeset.valid?` is not fulfilled again the new registration page will open up. 
+</code></pre>
+</div>
 
+<p>The saving of the user in the database by creating the <code class="highlighter-rouge">encrypted_password</code> is done here by the <code class="highlighter-rouge">Password</code> library. Let’s write the password library with the <code class="highlighter-rouge">generate_password_and_store_user</code> that we have just used in the registration controller and other methods.</p>
 
-      <span class="k">def</span> <span class="nf">generate_password_and_store_user</span><span class="p">(</span><span class="n">changeset</span><span class="p">)</span> <span class="k">do</span>
-        <span class="n">changeset</span>
-          <span class="o">|&gt;</span> <span class="n">generate_password_and_token</span>
-          <span class="o">|&gt;</span> <span class="no">Repo</span><span class="p">.</span><span class="nf">insert</span>
-      <span class="k">end</span>
-    <span class="k">end</span>
-</code></pre></div>
-<p>Here I have used <code>comeonin</code> package to encrypt the password. You can get it by adding it to the dependencies in the mix.exs file as </p>
-<div class="highlight"><pre><code class="language-ruby" data-lang="ruby">    <span class="n">defp</span> <span class="n">deps</span> <span class="k">do</span>
-        <span class="p">[{</span><span class="ss">:phoenix</span><span class="p">,</span> <span class="s2">"~&gt; 1.1.4"</span><span class="p">},</span>
-         <span class="p">{</span><span class="ss">:postgrex</span><span class="p">,</span> <span class="s2">"&gt;= 0.0.0"</span><span class="p">},</span>
-         <span class="p">{</span><span class="ss">:phoenix_ecto</span><span class="p">,</span> <span class="s2">"~&gt; 2.0"</span><span class="p">},</span>
-         <span class="p">{</span><span class="ss">:phoenix_html</span><span class="p">,</span> <span class="s2">"~&gt; 2.4"</span><span class="p">},</span>
-         <span class="p">{</span><span class="ss">:phoenix_live_reload</span><span class="p">,</span> <span class="s2">"~&gt; 1.0"</span><span class="p">,</span> <span class="ss">only: :dev</span><span class="p">},</span>
-         <span class="p">{</span><span class="ss">:gettext</span><span class="p">,</span> <span class="s2">"~&gt; 0.9"</span><span class="p">},</span>
-         <span class="p">{</span><span class="ss">:cowboy</span><span class="p">,</span> <span class="s2">"~&gt; 1.0"</span><span class="p">},</span>
-        <span class="p">{</span><span class="ss">:comeonin</span><span class="p">,</span> <span class="s2">"~&gt; 2.5"</span><span class="p">}]</span>
-      <span class="k">end</span>
-</code></pre></div>
-<p>Then install it through </p>
-<div class="highlight"><pre><code class="language-" data-lang="">$mix deps.get 
-</code></pre></div>
-<p>The <code>generate_password_and_token</code> method generates the encrypted password and a token(to be used later) for the user. The <code>generate_password_and_store_user</code> method stores the user in the database. Now, it&#39;s time to add a template for the new registration page. Create a directory named registration in the templates folder and add a new.html.eex file in it. Fill it with the content below.</p>
-<div class="highlight"><pre><code class="language-html" data-lang="html">    <span class="nt">&lt;h3&gt;</span>Registration<span class="nt">&lt;/h3&gt;</span>
-    <span class="err">&lt;</span>%= form_for @changeset, registration_path(@conn, :create), fn f -&gt; %&gt;
-      <span class="err">&lt;</span>%= if f.errors != [] do %&gt;
-        <span class="nt">&lt;div</span> <span class="na">class=</span><span class="s">"alert alert-danger"</span><span class="nt">&gt;</span>
-          <span class="nt">&lt;p&gt;</span>Oops, something went wrong! Please check the errors below:<span class="nt">&lt;/p&gt;</span>
-          <span class="nt">&lt;ul&gt;</span>
-            <span class="err">&lt;</span>%= for {attr, message} <span class="nt">&lt;-</span> <span class="na">f</span><span class="err">.</span><span class="na">errors</span> <span class="na">do</span> <span class="err">%</span><span class="nt">&gt;</span>
-              <span class="nt">&lt;li&gt;</span><span class="err">&lt;</span>%= humanize(attr) %&gt; <span class="err">&lt;</span>%= translate_error(message) %&gt;<span class="nt">&lt;/li&gt;</span>
-            <span class="err">&lt;</span>% end %&gt;
-          <span class="nt">&lt;/ul&gt;</span>
-        <span class="nt">&lt;/div&gt;</span>
-      <span class="err">&lt;</span>% end %&gt;
+<p>```ruby
+#lib/Iot/password.ex
+	defmodule Iot.Password do
+	  	alias Iot.Repo
+	  import Ecto.Changeset, only: [put_change: 3]
+	  import Comeonin.Bcrypt, only: [hashpwsalt: 1]</p>
 
-      <span class="nt">&lt;div</span> <span class="na">class=</span><span class="s">"form-group"</span><span class="nt">&gt;</span>
-        <span class="nt">&lt;label&gt;</span>Username<span class="nt">&lt;/label&gt;</span>
-        <span class="err">&lt;</span>%= text_input f, :username, class: "form-control" %&gt;
-      <span class="nt">&lt;/div&gt;</span>
+<div class="highlighter-rouge"><pre class="highlight"><code>  def generate_password_and_token(changeset) do
+    to_be_encoded_string = Enum.join([changeset.params["email"], changeset.params["password"]])
 
-      <span class="nt">&lt;div</span> <span class="na">class=</span><span class="s">"form-group"</span><span class="nt">&gt;</span>
-        <span class="nt">&lt;label&gt;</span>Email<span class="nt">&lt;/label&gt;</span>
-        <span class="err">&lt;</span>%= text_input f, :email, class: "form-control" %&gt;
-      <span class="nt">&lt;/div&gt;</span>
+    token = Base.encode64(to_be_encoded_string)
+    changeset = put_change(changeset, :token, token)
+
+    put_change(changeset, :encrypted_password, hashpwsalt(changeset.params["password"]))
+  end
 
 
-      <span class="nt">&lt;div</span> <span class="na">class=</span><span class="s">"form-group"</span><span class="nt">&gt;</span>
-        <span class="nt">&lt;label&gt;</span>Password<span class="nt">&lt;/label&gt;</span>
-        <span class="err">&lt;</span>%= password_input f, :password, class: "form-control" %&gt;
-      <span class="nt">&lt;/div&gt;</span>
+  def generate_password_and_store_user(changeset) do
+    changeset
+      |&gt; generate_password_and_token
+      |&gt; Repo.insert
+  end
+end ```
+</code></pre>
+</div>
 
-      <span class="nt">&lt;div</span> <span class="na">class=</span><span class="s">"form-group"</span><span class="nt">&gt;</span>
-        <span class="nt">&lt;label&gt;</span>Password Confirmation<span class="nt">&lt;/label&gt;</span>
-        <span class="err">&lt;</span>%= password_input f, :password_confirmation, class: "form-control" %&gt;
-      <span class="nt">&lt;/div&gt;</span>
+<p>Here I have used <code class="highlighter-rouge">comeonin</code> package to encrypt the password. You can get it by adding it to the dependencies in the mix.exs file as</p>
 
-      <span class="nt">&lt;div</span> <span class="na">class=</span><span class="s">"form-group"</span><span class="nt">&gt;</span>
-        <span class="err">&lt;</span>%= submit "Register", class: "btn btn-primary" %&gt;
-        <span class="err">&lt;</span>%= #link("Login", to: session_path(@conn, :new), class: "btn btn-success pull-right") %&gt;
-      <span class="nt">&lt;/div&gt;</span>
-    <span class="err">&lt;</span>% end %&gt;
-</code></pre></div>
-<p>The session_login  button is now commented because we haven&#39;t added the sessions controller yet. </p>
+<p><code class="highlighter-rouge">ruby
+	defp deps do
+	    [{:phoenix, "~&gt; 1.1.4"},
+	     {:postgrex, "&gt;= 0.0.0"},
+	     {:phoenix_ecto, "~&gt; 2.0"},
+	     {:phoenix_html, "~&gt; 2.4"},
+	     {:phoenix_live_reload, "~&gt; 1.0", only: :dev},
+	     {:gettext, "~&gt; 0.9"},
+	     {:cowboy, "~&gt; 1.0"},
+	    {:comeonin, "~&gt; 2.5"}]
+	  end
+</code>
+Then install it through</p>
 
-<p>Let&#39;s try it all out. First we have to create the database for the application using ecto.</p>
-<div class="highlight"><pre><code class="language-" data-lang="">$mix ecto.create
-</code></pre></div>
-<p>Then, we have to migrate the changes that we have in the users model. </p>
-<div class="highlight"><pre><code class="language-" data-lang="">$mix ecto.migrate
-</code></pre></div>
-<p>Now we have to restart the server as we have added a new lib file called <code>password.ex</code>. Then, check if that registration form at http://localhost:4000/registration/ is working. If it renders the default phoenix page with a &quot;You are Sucessfully Registered :P&quot;, it&#39;s working. </p>
+<div class="highlighter-rouge"><pre class="highlight"><code>$mix deps.get 
+</code></pre>
+</div>
 
-<p>Now let&#39;s replace the default phoenix page with a login page for the users. Let&#39;s understand what a session is. Sessions are the users&#39; active time spans after login. A sessions controller matches the username and password of the user and renders the pages. A session controller stores the users data (you can customize the data to be stored) for the session. It is recommended to store minimum required data like only the username or the email in the session. With a logout request, we free the session variables. So, now we have to add a <code>login</code> and a <code>logout</code> route in the <code>router.ex</code> along with a <code>new</code> route for the session. The page route will be replaced by the <code>new</code> method of the session. </p>
-<div class="highlight"><pre><code class="language-ruby" data-lang="ruby">    <span class="n">scope</span> <span class="s2">"/"</span><span class="p">,</span> <span class="no">Iot</span> <span class="k">do</span>
-        <span class="n">pipe_through</span> <span class="ss">:browser</span> <span class="c1"># Use the default browser stack</span>
-        <span class="n">get</span> <span class="s2">"/registration"</span><span class="p">,</span> <span class="no">RegistrationController</span><span class="p">,</span> <span class="ss">:new</span>
-        <span class="n">post</span> <span class="s2">"/registration"</span><span class="p">,</span> <span class="no">RegistrationController</span><span class="p">,</span> <span class="ss">:create</span>
-        <span class="n">get</span> <span class="s2">"/"</span><span class="p">,</span> <span class="no">SessionController</span><span class="p">,</span> <span class="ss">:new</span>
-        <span class="n">post</span> <span class="s2">"/login"</span><span class="p">,</span> <span class="no">SessionController</span><span class="p">,</span> <span class="ss">:create</span>
-        <span class="n">get</span> <span class="s2">"/logout"</span><span class="p">,</span> <span class="no">SessionController</span><span class="p">,</span> <span class="ss">:delete</span>
-    <span class="k">end</span>
-</code></pre></div>
-<p>Clearly from the routes, we now know that we have to write a <code>session_controller.ex</code> in the <code>web/controllers</code> directory with new, create and delete methods in it.</p>
-<div class="highlight"><pre><code class="language-ruby" data-lang="ruby">    <span class="c1">#web/controllers/session_controller.ex</span>
-    <span class="n">defmodule</span> <span class="no">Iot</span><span class="o">.</span><span class="no">SessionController</span> <span class="k">do</span>
-      <span class="n">use</span> <span class="no">Iot</span><span class="o">.</span><span class="no">Web</span><span class="p">,</span> <span class="ss">:controller</span>
+<p>The <code class="highlighter-rouge">generate_password_and_token</code> method generates the encrypted password and a token(to be used later) for the user. The <code class="highlighter-rouge">generate_password_and_store_user</code> method stores the user in the database. Now, it’s time to add a template for the new registration page. Create a directory named registration in the templates folder and add a new.html.eex file in it. Fill it with the content below.</p>
 
-      <span class="n">plug</span> <span class="ss">:scrub_params</span><span class="p">,</span> <span class="s2">"user"</span> <span class="k">when</span> <span class="n">action</span> <span class="k">in</span> <span class="p">[</span><span class="ss">:create</span><span class="p">]</span>
-      <span class="n">plug</span> <span class="ss">:action</span>
+<p>```html
+	&lt;h3&gt;Registration&lt;/h3&gt;
+	&lt;%= form_for @changeset, registration_path(@conn, :create), fn f -&gt; %&gt;
+	  &lt;%= if f.errors != [] do %&gt;
+	    &lt;div class="alert alert-danger"&gt;
+	      &lt;p&gt;Oops, something went wrong! Please check the errors below:&lt;/p&gt;
+	      &lt;ul&gt;
+	        &lt;%= for {attr, message} &lt;- f.errors do %&gt;
+	          &lt;li&gt;&lt;%= humanize(attr) %&gt; &lt;%= translate_error(message) %&gt;&lt;/li&gt;
+	        &lt;% end %&gt;
+	      &lt;/ul&gt;
+	    &lt;/div&gt;
+	  &lt;% end %&gt;</p>
 
-      <span class="k">def</span> <span class="nf">new</span><span class="p">(</span><span class="n">conn</span><span class="p">,</span> <span class="n">_params</span><span class="p">)</span> <span class="k">do</span>
-        <span class="n">render</span> <span class="n">conn</span><span class="p">,</span> <span class="ss">changeset: </span><span class="no">User</span><span class="p">.</span><span class="nf">changeset</span><span class="p">(</span><span class="o">%</span><span class="no">User</span><span class="p">{})</span>
-      <span class="k">end</span>
+<div class="highlighter-rouge"><pre class="highlight"><code>  &lt;div class="form-group"&gt;
+    &lt;label&gt;Username&lt;/label&gt;
+    &lt;%= text_input f, :username, class: "form-control" %&gt;
+  &lt;/div&gt;
 
-      <span class="k">def</span> <span class="nf">create</span><span class="p">(</span><span class="n">conn</span><span class="p">,</span> <span class="sx">%{"user" =&gt; user_params}</span><span class="p">)</span> <span class="k">do</span>
-        <span class="n">user</span> <span class="o">=</span> <span class="k">if</span> <span class="n">is_nil</span><span class="p">(</span><span class="n">user_params</span><span class="p">[</span><span class="s2">"username"</span><span class="p">])</span> <span class="k">do</span>
-          <span class="kp">nil</span>
-        <span class="k">else</span>
-          <span class="no">Repo</span><span class="p">.</span><span class="nf">get_by</span><span class="p">(</span><span class="no">User</span><span class="p">,</span> <span class="ss">username: </span><span class="n">user_params</span><span class="p">[</span><span class="s2">"username"</span><span class="p">])</span>
-        <span class="k">end</span>
+  &lt;div class="form-group"&gt;
+    &lt;label&gt;Email&lt;/label&gt;
+    &lt;%= text_input f, :email, class: "form-control" %&gt;
+  &lt;/div&gt;
 
-        <span class="n">user</span>
-          <span class="o">|&gt;</span> <span class="n">sign_in</span><span class="p">(</span><span class="n">user_params</span><span class="p">[</span><span class="s2">"password"</span><span class="p">],</span> <span class="n">conn</span><span class="p">)</span>
-      <span class="k">end</span>
 
-      <span class="k">def</span> <span class="nf">delete</span><span class="p">(</span><span class="n">conn</span><span class="p">,</span> <span class="n">_</span><span class="p">)</span> <span class="k">do</span>
-        <span class="n">delete_session</span><span class="p">(</span><span class="n">conn</span><span class="p">,</span> <span class="ss">:current_user</span><span class="p">)</span>
-          <span class="o">|&gt;</span> <span class="n">put_flash</span><span class="p">(</span><span class="ss">:info</span><span class="p">,</span> <span class="s1">'You have been logged out'</span><span class="p">)</span>
-          <span class="o">|&gt;</span> <span class="n">redirect</span><span class="p">(</span><span class="ss">to: </span><span class="n">session_path</span><span class="p">(</span><span class="n">conn</span><span class="p">,</span> <span class="ss">:new</span><span class="p">))</span>
-      <span class="k">end</span>
+  &lt;div class="form-group"&gt;
+    &lt;label&gt;Password&lt;/label&gt;
+    &lt;%= password_input f, :password, class: "form-control" %&gt;
+  &lt;/div&gt;
 
-      <span class="n">defp</span> <span class="n">sign_in</span><span class="p">(</span><span class="n">user</span><span class="p">,</span> <span class="n">password</span><span class="p">,</span> <span class="n">conn</span><span class="p">)</span> <span class="k">when</span> <span class="n">is_nil</span><span class="p">(</span><span class="n">user</span><span class="p">)</span> <span class="k">do</span>
-        <span class="n">conn</span>
-          <span class="o">|&gt;</span> <span class="n">put_flash</span><span class="p">(</span><span class="ss">:error</span><span class="p">,</span> <span class="s1">'Could not find a user with that username.'</span><span class="p">)</span>
-          <span class="o">|&gt;</span> <span class="n">render</span> <span class="s2">"new.html"</span><span class="p">,</span> <span class="ss">changeset: </span><span class="no">User</span><span class="p">.</span><span class="nf">changeset</span><span class="p">(</span><span class="o">%</span><span class="no">User</span><span class="p">{})</span>
-      <span class="k">end</span>
+  &lt;div class="form-group"&gt;
+    &lt;label&gt;Password Confirmation&lt;/label&gt;
+    &lt;%= password_input f, :password_confirmation, class: "form-control" %&gt;
+  &lt;/div&gt;
 
-      <span class="n">defp</span> <span class="n">sign_in</span><span class="p">(</span><span class="n">user</span><span class="p">,</span> <span class="n">password</span><span class="p">,</span> <span class="n">conn</span><span class="p">)</span> <span class="k">when</span> <span class="n">is_map</span><span class="p">(</span><span class="n">user</span><span class="p">)</span> <span class="k">do</span>
-        <span class="n">cond</span> <span class="k">do</span>
-          <span class="no">Comeonin</span><span class="o">.</span><span class="no">Bcrypt</span><span class="p">.</span><span class="nf">checkpw</span><span class="p">(</span><span class="n">password</span><span class="p">,</span> <span class="n">user</span><span class="p">.</span><span class="nf">encrypted_password</span><span class="p">)</span> <span class="o">-&gt;</span>
-            <span class="n">conn</span>
-              <span class="o">|&gt;</span> <span class="n">put_session</span><span class="p">(</span><span class="ss">:current_user</span><span class="p">,</span> <span class="n">user</span><span class="p">)</span>
-              <span class="o">|&gt;</span> <span class="n">put_flash</span><span class="p">(</span><span class="ss">:info</span><span class="p">,</span> <span class="s1">'You are now signed in.'</span><span class="p">)</span>
-              <span class="o">|&gt;</span> <span class="n">redirect</span><span class="p">(</span><span class="ss">to: </span><span class="n">energy_meter_path</span><span class="p">(</span><span class="n">conn</span><span class="p">,</span> <span class="ss">:index</span><span class="p">))</span>
-          <span class="kp">true</span> <span class="o">-&gt;</span>
-            <span class="n">conn</span>
-              <span class="o">|&gt;</span> <span class="n">put_flash</span><span class="p">(</span><span class="ss">:error</span><span class="p">,</span> <span class="s1">'Username or password are incorrect.'</span><span class="p">)</span>
-              <span class="o">|&gt;</span> <span class="n">render</span> <span class="s2">"new.html"</span><span class="p">,</span> <span class="ss">changeset: </span><span class="no">User</span><span class="p">.</span><span class="nf">changeset</span><span class="p">(</span><span class="o">%</span><span class="no">User</span><span class="p">{})</span>
-        <span class="k">end</span>
-      <span class="k">end</span>
-    <span class="k">end</span>
-</code></pre></div>
-<p>The code above is self explanatory. The <code>sign_in</code> method lets the user log into the pages. The <code>put_session</code> method stores temporary session data. In this case the user is saved in the session as <code>:current_user</code>. Now, we will write the new template for the login form. Create a folder called session in the <code>web/templates/</code> folder and a file called new.html.eex in it. </p>
-<div class="highlight"><pre><code class="language-html" data-lang="html">    <span class="nt">&lt;h3&gt;</span>Login<span class="nt">&lt;/h3&gt;</span>
-    <span class="err">&lt;</span>%= form_for @changeset, session_path(@conn, :create), fn f -&gt; %&gt;
-      <span class="err">&lt;</span>%= if f.errors != [] do %&gt;
-        <span class="nt">&lt;div</span> <span class="na">class=</span><span class="s">"alert alert-danger"</span><span class="nt">&gt;</span>
-          <span class="nt">&lt;p&gt;</span>Oops, something went wrong! Please check the errors below:<span class="nt">&lt;/p&gt;</span>
-          <span class="nt">&lt;ul&gt;</span>
-            <span class="err">&lt;</span>%= for {attr, message} <span class="nt">&lt;-</span> <span class="na">f</span><span class="err">.</span><span class="na">errors</span> <span class="na">do</span> <span class="err">%</span><span class="nt">&gt;</span>
-              <span class="nt">&lt;li&gt;</span><span class="err">&lt;</span>%= humanize(attr) %&gt; <span class="err">&lt;</span>%= translate_error(message) %&gt;<span class="nt">&lt;/li&gt;</span>
-            <span class="err">&lt;</span>% end %&gt;
-          <span class="nt">&lt;/ul&gt;</span>
-        <span class="nt">&lt;/div&gt;</span>
-      <span class="err">&lt;</span>% end %&gt;
+  &lt;div class="form-group"&gt;
+    &lt;%= submit "Register", class: "btn btn-primary" %&gt;
+    &lt;%= #link("Login", to: session_path(@conn, :new), class: "btn btn-success pull-right") %&gt;
+  &lt;/div&gt;
+&lt;% end %&gt; ``` The session_login  button is now commented because we haven't added the sessions controller yet. 
+</code></pre>
+</div>
 
-      <span class="nt">&lt;div</span> <span class="na">class=</span><span class="s">"form-group"</span><span class="nt">&gt;</span>
-        <span class="nt">&lt;label&gt;</span>Username<span class="nt">&lt;/label&gt;</span>
-        <span class="err">&lt;</span>%= text_input f, :username, class: "form-control" %&gt;
-      <span class="nt">&lt;/div&gt;</span>
+<p>Let’s try it all out. First we have to create the database for the application using ecto.</p>
 
-      <span class="nt">&lt;div</span> <span class="na">class=</span><span class="s">"form-group"</span><span class="nt">&gt;</span>
-        <span class="nt">&lt;label&gt;</span>Password<span class="nt">&lt;/label&gt;</span>
-        <span class="err">&lt;</span>%= password_input f, :password, class: "form-control" %&gt;
-      <span class="nt">&lt;/div&gt;</span>
+<div class="highlighter-rouge"><pre class="highlight"><code>$mix ecto.create
+</code></pre>
+</div>
 
-      <span class="nt">&lt;div</span> <span class="na">class=</span><span class="s">"form-group"</span><span class="nt">&gt;</span>
-        <span class="err">&lt;</span>%= submit "Login", class: "btn btn-primary" %&gt;
-        <span class="err">&lt;</span>%= link("Sign Up", to: registration_path(@conn, :new), class: "btn btn-success pull-right") %&gt;
-      <span class="nt">&lt;/div&gt;</span>
-    <span class="err">&lt;</span>% end %&gt;
-</code></pre></div>
-<p>Now, we can uncomment the line in <code>web/templates/registration/new.html.eex</code> for the session login path. And we change the <code>create</code> method of the registration controller to render the login page rather than the default phoenix page.</p>
-<div class="highlight"><pre><code class="language-ruby" data-lang="ruby">    <span class="k">def</span> <span class="nf">create</span><span class="p">(</span><span class="n">conn</span><span class="p">,</span> <span class="sx">%{"user" =&gt; user_params}</span><span class="p">)</span> <span class="k">do</span>
-        <span class="n">changeset</span> <span class="o">=</span> <span class="no">User</span><span class="p">.</span><span class="nf">changeset</span><span class="p">(</span><span class="o">%</span><span class="no">User</span><span class="p">{},</span> <span class="n">user_params</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">changeset</span><span class="p">.</span><span class="nf">valid?</span> <span class="k">do</span>
-          <span class="n">new_user</span> <span class="o">=</span> <span class="no">Password</span><span class="p">.</span><span class="nf">generate_password_and_store_user</span><span class="p">(</span><span class="n">changeset</span><span class="p">)</span>
-          <span class="n">conn</span>
-            <span class="o">|&gt;</span> <span class="n">put_flash</span><span class="p">(</span><span class="ss">:info</span><span class="p">,</span> <span class="s2">"You are Sucessfully Registered :P "</span><span class="p">)</span>
-            <span class="o">|&gt;</span> <span class="n">redirect</span><span class="p">(</span><span class="ss">to: </span><span class="n">session_path</span><span class="p">(</span><span class="n">conn</span><span class="p">,</span> <span class="ss">:new</span><span class="p">))</span>
-        <span class="k">else</span>
-          <span class="n">render</span> <span class="n">conn</span><span class="p">,</span> <span class="s2">"new.html"</span><span class="p">,</span> <span class="ss">changeset: </span><span class="n">changeset</span> 
-        <span class="k">end</span>
-    <span class="k">end</span>
-</code></pre></div>
-<p>Now, where will it go after login? We must have some place where it should move to after login and we must have a control over that page so that that page can not be opened unless the user is logged in. That is why the line <code>redirect(to: energy_meter_path(conn, :index))</code> is added in the <code>sign_in</code> method (EnergyMeter is our Iot device). We will create a energy_meter template with only the username of the user in it. At first, let&#39;s edit the router.ex file.</p>
-<div class="highlight"><pre><code class="language-ruby" data-lang="ruby">    <span class="n">scope</span> <span class="s2">"/"</span><span class="p">,</span> <span class="no">Iot</span> <span class="k">do</span>
-        <span class="n">pipe_through</span> <span class="ss">:browser</span> <span class="c1"># Use the default browser stack</span>
-        <span class="n">get</span> <span class="s2">"/registration"</span><span class="p">,</span> <span class="no">RegistrationController</span><span class="p">,</span> <span class="ss">:new</span>
-        <span class="n">post</span> <span class="s2">"/registration"</span><span class="p">,</span> <span class="no">RegistrationController</span><span class="p">,</span> <span class="ss">:create</span>
-        <span class="n">get</span> <span class="s2">"/"</span><span class="p">,</span> <span class="no">SessionController</span><span class="p">,</span> <span class="ss">:new</span>
-        <span class="n">post</span> <span class="s2">"/login"</span><span class="p">,</span> <span class="no">SessionController</span><span class="p">,</span> <span class="ss">:create</span>
-        <span class="n">get</span> <span class="s2">"/logout"</span><span class="p">,</span> <span class="no">SessionController</span><span class="p">,</span> <span class="ss">:delete</span>
-        <span class="n">get</span> <span class="s2">"/em"</span><span class="p">,</span> <span class="no">EnergyMeterController</span><span class="p">,</span> <span class="ss">:index</span>
-    <span class="k">end</span>
-</code></pre></div>
-<p>Now let&#39;s create a <code>energy_meter_controller.ex</code>. </p>
-<div class="highlight"><pre><code class="language-ruby" data-lang="ruby">    <span class="n">defmodule</span> <span class="no">Iot</span><span class="o">.</span><span class="no">EnergyMeterController</span> <span class="k">do</span>
-      <span class="n">use</span> <span class="no">Iot</span><span class="o">.</span><span class="no">Web</span><span class="p">,</span> <span class="ss">:controller</span>
+<p>Then, we have to migrate the changes that we have in the users model.</p>
 
-      <span class="n">plug</span> <span class="no">Iot</span><span class="o">.</span><span class="no">Plug</span><span class="o">.</span><span class="no">Authenticate</span>
+<div class="highlighter-rouge"><pre class="highlight"><code>$mix ecto.migrate
+</code></pre>
+</div>
 
-      <span class="k">def</span> <span class="nf">index</span><span class="p">(</span><span class="n">conn</span><span class="p">,</span> <span class="n">_params</span><span class="p">)</span> <span class="k">do</span>
-        <span class="n">current_user</span> <span class="o">=</span> <span class="n">get_session</span><span class="p">(</span><span class="n">conn</span><span class="p">,</span> <span class="ss">:current_user</span><span class="p">)</span>
-        <span class="n">render</span> <span class="n">conn</span><span class="p">,</span> <span class="s2">"index.html"</span><span class="p">,</span> <span class="ss">current_user: </span><span class="n">current_user</span>
-      <span class="k">end</span>
-    <span class="k">end</span>
-</code></pre></div>
-<p>Now let&#39;s write the template for this. </p>
-<div class="highlight"><pre><code class="language-html" data-lang="html">    #web/templates/energy_meter/index.html.eex
-    <span class="nt">&lt;div&gt;</span>Hi <span class="err">&lt;</span>%= @current_user.username %&gt;<span class="nt">&lt;/div&gt;</span>
-    <span class="err">&lt;</span>%= link("Logout", to: session_path(@conn, :delete), class: "btn btn-success pull-right") %&gt;
-</code></pre></div>
-<p>This has the username of that user and a logout button. The controller has a Authenticate Plug, which ensures the authenticity of the current user. If the user is not logged in, this Plug helps not to show any page in the EnergyMeter controller. Let&#39;s write that Plug. We have to create a directory called <code>authentication</code> in the <code>web</code> directory and add <code>authenticate.ex</code> file in it. </p>
-<div class="highlight"><pre><code class="language-ruby" data-lang="ruby">    <span class="n">defmodule</span> <span class="no">Iot</span><span class="o">.</span><span class="no">Plug</span><span class="o">.</span><span class="no">Authenticate</span> <span class="k">do</span>
-      <span class="n">import</span> <span class="no">Plug</span><span class="o">.</span><span class="no">Conn</span>
-      <span class="n">import</span> <span class="no">Iot</span><span class="o">.</span><span class="no">Router</span><span class="o">.</span><span class="no">Helpers</span> 
-      <span class="n">import</span> <span class="no">Phoenix</span><span class="o">.</span><span class="no">Controller</span>
+<p>Now we have to restart the server as we have added a new lib file called <code class="highlighter-rouge">password.ex</code>. Then, check if that registration form at http://localhost:4000/registration/ is working. If it renders the default phoenix page with a “You are Sucessfully Registered :P”, it’s working.</p>
 
-      <span class="k">def</span> <span class="nf">init</span><span class="p">(</span><span class="n">default</span><span class="p">),</span> <span class="ss">do: </span><span class="n">default</span>
+<p>Now let’s replace the default phoenix page with a login page for the users. Let’s understand what a session is. Sessions are the users’ active time spans after login. A sessions controller matches the username and password of the user and renders the pages. A session controller stores the users data (you can customize the data to be stored) for the session. It is recommended to store minimum required data like only the username or the email in the session. With a logout request, we free the session variables. So, now we have to add a <code class="highlighter-rouge">login</code> and a <code class="highlighter-rouge">logout</code> route in the <code class="highlighter-rouge">router.ex</code> along with a <code class="highlighter-rouge">new</code> route for the session. The page route will be replaced by the <code class="highlighter-rouge">new</code> method of the session.</p>
 
-      <span class="k">def</span> <span class="nf">call</span><span class="p">(</span><span class="n">conn</span><span class="p">,</span> <span class="n">default</span><span class="p">)</span> <span class="k">do</span>
-        <span class="n">current_user</span> <span class="o">=</span> <span class="n">get_session</span><span class="p">(</span><span class="n">conn</span><span class="p">,</span> <span class="ss">:current_user</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">current_user</span> <span class="k">do</span>
-          <span class="n">assign</span><span class="p">(</span><span class="n">conn</span><span class="p">,</span> <span class="ss">:current_user</span><span class="p">,</span> <span class="n">current_user</span><span class="p">)</span>
-        <span class="k">else</span>
-          <span class="n">conn</span>
-            <span class="o">|&gt;</span> <span class="n">put_flash</span><span class="p">(</span><span class="ss">:error</span><span class="p">,</span> <span class="s1">'You Need to be signed in to view this page !'</span><span class="p">)</span>
-            <span class="o">|&gt;</span> <span class="n">redirect</span><span class="p">(</span><span class="ss">to: </span><span class="n">session_path</span><span class="p">(</span><span class="n">conn</span><span class="p">,</span> <span class="ss">:new</span><span class="p">))</span>
-        <span class="k">end</span>
-      <span class="k">end</span>
-    <span class="k">end</span>
-</code></pre></div>
-<p>The code is self explanatory. If a user is trying to get the energy_meter index page without logging in, it will throw the error as &quot;You Need to be signed in to view this page !&quot;. Now try that all out by going to http://localhost:4000/. </p>
+<p><code class="highlighter-rouge">ruby
+	scope "/", Iot do
+	    pipe_through :browser # Use the default browser stack
+	    get "/registration", RegistrationController, :new
+	    post "/registration", RegistrationController, :create
+	    get "/", SessionController, :new
+	    post "/login", SessionController, :create
+	    get "/logout", SessionController, :delete
+	end
+</code></p>
+
+<p>Clearly from the routes, we now know that we have to write a <code class="highlighter-rouge">session_controller.ex</code> in the <code class="highlighter-rouge">web/controllers</code> directory with new, create and delete methods in it.</p>
+
+<p>```ruby
+	#web/controllers/session_controller.ex
+	defmodule Iot.SessionController do
+	  use Iot.Web, :controller</p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>  plug :scrub_params, "user" when action in [:create]
+  plug :action
+
+  def new(conn, _params) do
+    render conn, changeset: User.changeset(%User{})
+  end
+
+  def create(conn, %{"user" =&gt; user_params}) do
+    user = if is_nil(user_params["username"]) do
+      nil
+    else
+      Repo.get_by(User, username: user_params["username"])
+    end
+
+    user
+      |&gt; sign_in(user_params["password"], conn)
+  end
+
+  def delete(conn, _) do
+    delete_session(conn, :current_user)
+      |&gt; put_flash(:info, 'You have been logged out')
+      |&gt; redirect(to: session_path(conn, :new))
+  end
+
+  defp sign_in(user, password, conn) when is_nil(user) do
+    conn
+      |&gt; put_flash(:error, 'Could not find a user with that username.')
+      |&gt; render "new.html", changeset: User.changeset(%User{})
+  end
+
+  defp sign_in(user, password, conn) when is_map(user) do
+    cond do
+      Comeonin.Bcrypt.checkpw(password, user.encrypted_password) -&gt;
+        conn
+          |&gt; put_session(:current_user, user)
+          |&gt; put_flash(:info, 'You are now signed in.')
+          |&gt; redirect(to: energy_meter_path(conn, :index))
+      true -&gt;
+        conn
+          |&gt; put_flash(:error, 'Username or password are incorrect.')
+          |&gt; render "new.html", changeset: User.changeset(%User{})
+    end
+  end
+end ``` The code above is self explanatory. The `sign_in` method lets the user log into the pages. The `put_session` method stores temporary session data. In this case the user is saved in the session as `:current_user`. Now, we will write the new template for the login form. Create a folder called session in the `web/templates/` folder and a file called new.html.eex in it. 
+</code></pre>
+</div>
+
+<p>```html
+	&lt;h3&gt;Login&lt;/h3&gt;
+	&lt;%= form_for @changeset, session_path(@conn, :create), fn f -&gt; %&gt;
+	  &lt;%= if f.errors != [] do %&gt;
+	    &lt;div class="alert alert-danger"&gt;
+	      &lt;p&gt;Oops, something went wrong! Please check the errors below:&lt;/p&gt;
+	      &lt;ul&gt;
+	        &lt;%= for {attr, message} &lt;- f.errors do %&gt;
+	          &lt;li&gt;&lt;%= humanize(attr) %&gt; &lt;%= translate_error(message) %&gt;&lt;/li&gt;
+	        &lt;% end %&gt;
+	      &lt;/ul&gt;
+	    &lt;/div&gt;
+	  &lt;% end %&gt;</p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>  &lt;div class="form-group"&gt;
+    &lt;label&gt;Username&lt;/label&gt;
+    &lt;%= text_input f, :username, class: "form-control" %&gt;
+  &lt;/div&gt;
+
+  &lt;div class="form-group"&gt;
+    &lt;label&gt;Password&lt;/label&gt;
+    &lt;%= password_input f, :password, class: "form-control" %&gt;
+  &lt;/div&gt;
+
+  &lt;div class="form-group"&gt;
+    &lt;%= submit "Login", class: "btn btn-primary" %&gt;
+    &lt;%= link("Sign Up", to: registration_path(@conn, :new), class: "btn btn-success pull-right") %&gt;
+  &lt;/div&gt;
+&lt;% end %&gt; ```
+</code></pre>
+</div>
+
+<p>Now, we can uncomment the line in <code class="highlighter-rouge">web/templates/registration/new.html.eex</code> for the session login path. And we change the <code class="highlighter-rouge">create</code> method of the registration controller to render the login page rather than the default phoenix page.</p>
+
+<p><code class="highlighter-rouge">ruby
+	def create(conn, %{"user" =&gt; user_params}) do
+	    changeset = User.changeset(%User{}, user_params)
+	    if changeset.valid? do
+	      new_user = Password.generate_password_and_store_user(changeset)
+	      conn
+	        |&gt; put_flash(:info, "You are Sucessfully Registered :P ")
+	        |&gt; redirect(to: session_path(conn, :new))
+	    else
+	      render conn, "new.html", changeset: changeset 
+	    end
+	end
+</code></p>
+
+<p>Now, where will it go after login? We must have some place where it should move to after login and we must have a control over that page so that that page can not be opened unless the user is logged in. That is why the line <code class="highlighter-rouge">redirect(to: energy_meter_path(conn, :index))</code> is added in the <code class="highlighter-rouge">sign_in</code> method (EnergyMeter is our Iot device). We will create a energy_meter template with only the username of the user in it. At first, let’s edit the router.ex file.</p>
+
+<p><code class="highlighter-rouge">ruby
+	scope "/", Iot do
+	    pipe_through :browser # Use the default browser stack
+	    get "/registration", RegistrationController, :new
+	    post "/registration", RegistrationController, :create
+	    get "/", SessionController, :new
+	    post "/login", SessionController, :create
+	    get "/logout", SessionController, :delete
+	    get "/em", EnergyMeterController, :index
+	end
+</code>
+Now let’s create a <code class="highlighter-rouge">energy_meter_controller.ex</code>.</p>
+
+<p>```ruby
+	defmodule Iot.EnergyMeterController do
+	  use Iot.Web, :controller</p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>  plug Iot.Plug.Authenticate
+
+  def index(conn, _params) do
+    current_user = get_session(conn, :current_user)
+    render conn, "index.html", current_user: current_user
+  end
+end ```
+</code></pre>
+</div>
+
+<p>Now let’s write the template for this.</p>
+
+<p><code class="highlighter-rouge">html
+	#web/templates/energy_meter/index.html.eex
+	&lt;div&gt;Hi &lt;%= @current_user.username %&gt;&lt;/div&gt;
+	&lt;%= link("Logout", to: session_path(@conn, :delete), class: "btn btn-success pull-right") %&gt;
+</code></p>
+
+<p>This has the username of that user and a logout button. The controller has a Authenticate Plug, which ensures the authenticity of the current user. If the user is not logged in, this Plug helps not to show any page in the EnergyMeter controller. Let’s write that Plug. We have to create a directory called <code class="highlighter-rouge">authentication</code> in the <code class="highlighter-rouge">web</code> directory and add <code class="highlighter-rouge">authenticate.ex</code> file in it.</p>
+
+<p>```ruby
+	defmodule Iot.Plug.Authenticate do
+	  import Plug.Conn
+	  import Iot.Router.Helpers 
+	  import Phoenix.Controller</p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>  def init(default), do: default
+
+  def call(conn, default) do
+    current_user = get_session(conn, :current_user)
+    if current_user do
+      assign(conn, :current_user, current_user)
+    else
+      conn
+        |&gt; put_flash(:error, 'You Need to be signed in to view this page !')
+        |&gt; redirect(to: session_path(conn, :new))
+    end
+  end
+end ```
+</code></pre>
+</div>
+
+<p>The code is self explanatory. If a user is trying to get the energy_meter index page without logging in, it will throw the error as “You Need to be signed in to view this page !”. Now try that all out by going to http://localhost:4000/.</p>
 
 <p>Note: a view must be added with all the controllers. Otherwise, it will throw an error. A demo view in the views folder is given below.</p>
-<div class="highlight"><pre><code class="language-ruby" data-lang="ruby">    <span class="c1">#web/views/session_view.ex</span>
-    <span class="n">defmodule</span> <span class="no">Iot</span><span class="o">.</span><span class="no">SessionView</span> <span class="k">do</span>
-        <span class="n">use</span> <span class="no">Iot</span><span class="o">.</span><span class="no">Web</span><span class="p">,</span> <span class="ss">:view</span>
-    <span class="k">end</span>
-</code></pre></div>
-<p>Now, the authentication part is done. In the next part, we will code the messaging application that is needed for users to listen and control their machines. </p>
 
-<p>Happy Hacking ! </p>
+<p><code class="highlighter-rouge">ruby
+	#web/views/session_view.ex
+	defmodule Iot.SessionView do
+  		use Iot.Web, :view
+	end
+</code></p>
 
-<p>Reference - http://meatherly.github.io/2015/05/11/phoenixauthentication/ </p>
+<p>Now, the authentication part is done. In the next part, we will code the messaging application that is needed for users to listen and control their machines.</p>
+
+<p>Happy Hacking !</p>
+
+<p>Reference - http://meatherly.github.io/2015/05/11/phoenixauthentication/</p>
+
 
   </article>
 
@@ -558,5 +630,34 @@ $iex -S mix phoenix.server
 
 
   </body>
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    tex2jax: {
+      inlineMath: [ ['$','$'], ["\\(","\\)"] ],
+      processEscapes: true
+    }
+  });
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      tex2jax: {
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+      }
+    });
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax(), i;
+        for(i=0; i < all.length; i += 1) {
+            all[i].SourceElement().parentNode.className += ' has-jax';
+        }
+    });
+</script>
+
+<script type="text/javascript"
+   src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+</script>
 
 </html>

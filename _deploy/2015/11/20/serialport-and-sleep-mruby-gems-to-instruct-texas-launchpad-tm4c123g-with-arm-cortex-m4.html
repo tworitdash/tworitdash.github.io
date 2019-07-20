@@ -98,54 +98,55 @@
   <article class="post-content">
     <p>I always wanted to build something with mruby. After building mruby on my Raspberry Pi, I wanted to use the serialport mrbgem to instruct my Texas TM4C123G with ARM Cortex M4. I used to program the controller using Keil IDE on windows. After getting a mac, I have been writing program into it using <a href="http://energia.nu/">energia</a>. It is as simple as programming an arduino. The pin diagram with numbers are in the figure for the use in energia.</p>
 
-<p><img src="/images/tm4c.jpg"></p>
+<p><img src="/images/tm4c.jpg" /></p>
 
-<p>It has a built in led connected to the pins 1, 2, 3 and 4 of Port F (PF1, PF2, PF3, PF4). Each one contributes a single unique color to the led. So, when we give power to more than one of these pins, we get different colors. It&#39;s fun working with these colors. So I have been using a serial communication program in the board so that it glows different leds with different combinations of PF1, PF2, PF3 and PF4. </p>
+<p>It has a built in led connected to the pins 1, 2, 3 and 4 of Port F (PF1, PF2, PF3, PF4). Each one contributes a single unique color to the led. So, when we give power to more than one of these pins, we get different colors. It’s fun working with these colors. So I have been using a serial communication program in the board so that it glows different leds with different combinations of PF1, PF2, PF3 and PF4.</p>
 
-<p>The code is here. </p>
-<div class="highlight"><pre><code class="language-" data-lang="">void setup()
+<p>The code is here.</p>
+
+<p>```
+void setup()
 {
   // put your setup code here, to run once:
-  Serial.begin(9600);
+  Serial.begin(9600);</p>
 
-
-  pinMode(30, OUTPUT);
+<p>pinMode(30, OUTPUT);
   pinMode(40, OUTPUT);
   pinMode(39, OUTPUT);
   pinMode(31, OUTPUT);
   digitalWrite(40, HIGH);
-}
+}</p>
 
-void got_char(char x) {
+<p>void got_char(char x) {</p>
 
-  //if we get l over Serial and so on 
-  if(x == 'l') {
-    //... blink the LED
+<p>//if we get l over Serial and so on 
+  if(x == ‘l’) {
+    //… blink the LED
     digitalWrite(31,LOW);
     digitalWrite(40,HIGH);
     digitalWrite(39,LOW);
     digitalWrite(30,HIGH);
   }
-  if(x == 'r'){
+  if(x == ‘r’){
     digitalWrite(31,HIGH);
     digitalWrite(40,LOW);
     digitalWrite(39,HIGH);
-    digitalWrite(30,LOW);
+    digitalWrite(30,LOW);</p>
 
-  }
-  if(x == 'b'){
+<p>}
+  if(x == ‘b’){
    digitalWrite(31,LOW);
     digitalWrite(40,HIGH);
     digitalWrite(39,HIGH);
     digitalWrite(30,LOW);
   }
-  if(x == 'f'){
+  if(x == ‘f’){
     digitalWrite(31,HIGH);
     digitalWrite(40,LOW);
     digitalWrite(39,LOW);
     digitalWrite(30,HIGH);
   }
-  if(x == 's'){
+  if(x == ‘s’){
     digitalWrite(31,LOW);
     digitalWrite(40,LOW);
     digitalWrite(39,LOW);
@@ -156,135 +157,174 @@ void loop()
 {
   if(Serial.available() &gt; 0) {
     //if there is, we read it
-    byte byte_read = Serial.read();
+    byte byte_read = Serial.read();</p>
 
-    //and call "got_char"
-    got_char((char)byte_read);
-  }
+<div class="highlighter-rouge"><pre class="highlight"><code>//and call "got_char"
+got_char((char)byte_read);   }
+</code></pre>
+</div>
 
-}
-</code></pre></div>
+<p>}
+```</p>
+
 <p>After this, I went for mruby to play with the serialport mrbgem to instruct the controller. For this we have to install mruby first by following commands.</p>
-<div class="highlight"><pre><code class="language-" data-lang="">git clone http://github.com/mruby/mruby.git
+
+<div class="highlighter-rouge"><pre class="highlight"><code>git clone http://github.com/mruby/mruby.git
 cd mruby
 make 
-</code></pre></div>
-<p>Then we have to add the path variable to .bash<em>profile file in the home of Raspberry Pi. Just add the line at the end of .bash</em>profile file.</p>
-<div class="highlight"><pre><code class="language-" data-lang="">export PATH=$PATH:/home/pi/mruby/bin/
-</code></pre></div>
-<p>Then after restarting the terminal, we can have all the necessary command line tools for mruby as mirb, mruby, mrbc. Let&#39;s install the serialport and sleep mrbgems. First of all we need to install mgem (command line utility for mrbgems).</p>
-<div class="highlight"><pre><code class="language-" data-lang="">gem install mgem
-</code></pre></div>
-<p>Now, we need to add mruby-serialport and mruby-sleep to the known mrbgems. </p>
-<div class="highlight"><pre><code class="language-" data-lang="">mgem add mruby-serialport
+</code></pre>
+</div>
+
+<p>Then we have to add the path variable to .bash_profile file in the home of Raspberry Pi. Just add the line at the end of .bash_profile file.</p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>export PATH=$PATH:/home/pi/mruby/bin/
+</code></pre>
+</div>
+
+<p>Then after restarting the terminal, we can have all the necessary command line tools for mruby as mirb, mruby, mrbc. Let’s install the serialport and sleep mrbgems. First of all we need to install mgem (command line utility for mrbgems).</p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>gem install mgem
+</code></pre>
+</div>
+
+<p>Now, we need to add mruby-serialport and mruby-sleep to the known mrbgems.</p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>mgem add mruby-serialport
 mgem add mruby-sleep
-</code></pre></div>
-<p>Then we need to generate our content of build_config.rb in the root folder. </p>
-<div class="highlight"><pre><code class="language-" data-lang="">mgem config
-</code></pre></div>
-<p>Right after this command, we need to give inputs to the required field and after that it will generate the content of build<em>config.rb. Then just create a file called build</em>config.rb and paste the content generated into it. Like my build_config.rb looks like this.</p>
-<div class="highlight"><pre><code class="language-" data-lang="">############################
-# Start of your build_config
+</code></pre>
+</div>
 
-MRuby::Build.new do |conf|
-  toolchain :gcc
+<p>Then we need to generate our content of build_config.rb in the root folder.</p>
 
-  conf.bins = %w(mrbc)
+<div class="highlighter-rouge"><pre class="highlight"><code>mgem config
+</code></pre>
+</div>
 
-  # mruby's Core GEMs
-  conf.gem 'mrbgems/mruby-bin-mirb'
-  conf.gem 'mrbgems/mruby-bin-mruby'
-  conf.gem 'mrbgems/mruby-array-ext'
-  conf.gem 'mrbgems/mruby-enum-ext'
-  conf.gem 'mrbgems/mruby-eval'
-  conf.gem 'mrbgems/mruby-exit'
-  conf.gem 'mrbgems/mruby-fiber'
-  conf.gem 'mrbgems/mruby-hash-ext'
-  conf.gem 'mrbgems/mruby-math'
-  conf.gem 'mrbgems/mruby-numeric-ext'
-  conf.gem 'mrbgems/mruby-object-ext'
-  conf.gem 'mrbgems/mruby-objectspace'
-  conf.gem 'mrbgems/mruby-print'
-  conf.gem 'mrbgems/mruby-proc-ext'
-  conf.gem 'mrbgems/mruby-random'
-  conf.gem 'mrbgems/mruby-range-ext'
-  conf.gem 'mrbgems/mruby-sprintf'
-  conf.gem 'mrbgems/mruby-string-ext'
-#  conf.gem 'mrbgems/mruby-string-utf8'
-  conf.gem 'mrbgems/mruby-struct'
-  conf.gem 'mrbgems/mruby-symbol-ext'
-  conf.gem 'mrbgems/mruby-time'
-  conf.gem 'mrbgems/mruby-toplevel-ext'
+<p>Right after this command, we need to give inputs to the required field and after that it will generate the content of build_config.rb. Then just create a file called build_config.rb and paste the content generated into it. Like my build_config.rb looks like this.</p>
 
-  # user-defined GEMs
-  conf.gem :git =&gt; 'https://github.com/monami-ya-mrb/mruby-serialport.git'
-  conf.gem :git =&gt; 'https://github.com/matsumoto-r/mruby-sleep.git'
-end
-
-# End of your build_config
+<p>```
 ############################
+# Start of your build_config</p>
 
-</code></pre></div>
+<p>MRuby::Build.new do |conf|
+  toolchain :gcc</p>
+
+<p>conf.bins = %w(mrbc)</p>
+
+<p># mruby’s Core GEMs
+  conf.gem ‘mrbgems/mruby-bin-mirb’
+  conf.gem ‘mrbgems/mruby-bin-mruby’
+  conf.gem ‘mrbgems/mruby-array-ext’
+  conf.gem ‘mrbgems/mruby-enum-ext’
+  conf.gem ‘mrbgems/mruby-eval’
+  conf.gem ‘mrbgems/mruby-exit’
+  conf.gem ‘mrbgems/mruby-fiber’
+  conf.gem ‘mrbgems/mruby-hash-ext’
+  conf.gem ‘mrbgems/mruby-math’
+  conf.gem ‘mrbgems/mruby-numeric-ext’
+  conf.gem ‘mrbgems/mruby-object-ext’
+  conf.gem ‘mrbgems/mruby-objectspace’
+  conf.gem ‘mrbgems/mruby-print’
+  conf.gem ‘mrbgems/mruby-proc-ext’
+  conf.gem ‘mrbgems/mruby-random’
+  conf.gem ‘mrbgems/mruby-range-ext’
+  conf.gem ‘mrbgems/mruby-sprintf’
+  conf.gem ‘mrbgems/mruby-string-ext’
+#  conf.gem ‘mrbgems/mruby-string-utf8’
+  conf.gem ‘mrbgems/mruby-struct’
+  conf.gem ‘mrbgems/mruby-symbol-ext’
+  conf.gem ‘mrbgems/mruby-time’
+  conf.gem ‘mrbgems/mruby-toplevel-ext’</p>
+
+<p># user-defined GEMs
+  conf.gem :git =&gt; ‘https://github.com/monami-ya-mrb/mruby-serialport.git’
+  conf.gem :git =&gt; ‘https://github.com/matsumoto-r/mruby-sleep.git’
+end</p>
+
+<h1 id="end-of-your-buildconfig">End of your build_config</h1>
+<p>############################</p>
+
+<p>```</p>
+
 <p>I have commented the mruby-string-utf8 as it created some problems while installing. Then to build this in the directory, just hit rake.</p>
-<div class="highlight"><pre><code class="language-" data-lang="">rake
-</code></pre></div>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>rake
+</code></pre>
+</div>
+
 <p>Then it will download the mebgems from git and will build it in the build directory. Before building, there are a few changes to be made in the mrbgems files. I found answers to my queries from the github repo of mruby-serialport. Just have a look <a href="https://github.com/monami-ya-mrb/mruby-serialport/issues/1">here</a> and set everything accordingly. After that use rake to build everyhting.</p>
 
-<p>If it gets successful, we can write program (serialport.rb) to instruct our controller. </p>
+<p>If it gets successful, we can write program (serialport.rb) to instruct our controller.</p>
 
-<h3>From a Ruby File</h3>
-<div class="highlight"><pre><code class="language-" data-lang=""> sp = SerialPort.new("/dev/ttyUSB0", 9600, 8, 1, 0)
- sp.read_timeout=1000
+<h3 id="from-a-ruby-file">From a Ruby File</h3>
 
+<p>```
+ sp = SerialPort.new(“/dev/ttyUSB0”, 9600, 8, 1, 0)
+ sp.read_timeout=1000</p>
 
-list = ['f', 'b', 'r', 'l', 's']
+<p>list = [‘f’, ‘b’, ‘r’, ‘l’, ‘s’]
 loop do 
    list.each do |l|
      sp.write(l)
      Sleep::sleep(2)
    end
 end
-</code></pre></div>
-<p>Provided you own the serialport file ttyUSB0 for the controller. Otherwise, do this.</p>
-<div class="highlight"><pre><code class="language-" data-lang="">sudo chown pi /dev/ttyUSB0
-</code></pre></div>
-<p>I am sending the characters from the list because I have programmed my board to receive these characters to glow certain leds. The Sleep::sleep(2) adds a delay of 2 seconds between consecutive writes of characters. To run this use the following.</p>
-<div class="highlight"><pre><code class="language-" data-lang="">mruby serialport.rb
-</code></pre></div>
-<p>And enjoy different colors glowing on the same led with a halt of 2 seconds. </p>
+```
+Provided you own the serialport file ttyUSB0 for the controller. Otherwise, do this.</p>
 
-<h3>From an Executable made using a C file</h3>
+<div class="highlighter-rouge"><pre class="highlight"><code>sudo chown pi /dev/ttyUSB0
+</code></pre>
+</div>
+
+<p>I am sending the characters from the list because I have programmed my board to receive these characters to glow certain leds. The Sleep::sleep(2) adds a delay of 2 seconds between consecutive writes of characters. To run this use the following.</p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>mruby serialport.rb
+</code></pre>
+</div>
+
+<p>And enjoy different colors glowing on the same led with a halt of 2 seconds.</p>
+
+<h3 id="from-an-executable-made-using-a-c-file">From an Executable made using a C file</h3>
 
 <p>Then I wanted to run it with an executable built using the tool mrbc.</p>
-<div class="highlight"><pre><code class="language-" data-lang="">mrbc -Bserialport serialport.rb
-</code></pre></div>
-<p>It will create a file called serialport.c with an array called serialport[]. Just add the following at the end o f the serialport.c file. </p>
-<div class="highlight"><pre><code class="language-" data-lang="">#include "mruby.h"
-#include "mruby/irep.h"
-#include "mruby/proc.h"
 
+<div class="highlighter-rouge"><pre class="highlight"><code>mrbc -Bserialport serialport.rb
+</code></pre>
+</div>
 
-int main(void) {
+<p>It will create a file called serialport.c with an array called serialport[]. Just add the following at the end o f the serialport.c file.</p>
 
-    mrb_state *mrb;
-    mrb = mrb_open();
+<p>```
+#include “mruby.h”
+#include “mruby/irep.h”
+#include “mruby/proc.h”</p>
 
-    mrb_load_irep(mrb, serialport);
+<p>int main(void) {</p>
 
-    mrb_close(mrb);
+<div class="highlighter-rouge"><pre class="highlight"><code>mrb_state *mrb;
+mrb = mrb_open();
 
-    return 0;
-}
-</code></pre></div>
+mrb_load_irep(mrb, serialport);
+
+mrb_close(mrb);
+
+return 0; } ```
+</code></pre>
+</div>
+
 <p>After this run the following commands to make an executable.</p>
-<div class="highlight"><pre><code class="language-" data-lang="">gcc -I/home/pi/mruby/src -I/home/pi/mruby/include -c serialport.c -o serialport.o
+
+<div class="highlighter-rouge"><pre class="highlight"><code>gcc -I/home/pi/mruby/src -I/home/pi/mruby/include -c serialport.c -o serialport.o
 gcc -o serialport serialport.o -lm /home/pi/mruby/build/host/lib/libmruby.a
-</code></pre></div>
+</code></pre>
+</div>
+
 <p>The above command creates an executable serialport. Just run it and it will do the same that the ruby code was doing before.</p>
 
-<p>Happy Hacking. :) </p>
+<p>Happy Hacking. :)</p>
 
-<p>P.S. - make sure the baud_rate from both the sides are same. :P </p>
+<p>P.S. - make sure the baud_rate from both the sides are same. :P</p>
+
 
   </article>
 
@@ -375,5 +415,34 @@ gcc -o serialport serialport.o -lm /home/pi/mruby/build/host/lib/libmruby.a
 
 
   </body>
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    tex2jax: {
+      inlineMath: [ ['$','$'], ["\\(","\\)"] ],
+      processEscapes: true
+    }
+  });
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      tex2jax: {
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+      }
+    });
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax(), i;
+        for(i=0; i < all.length; i += 1) {
+            all[i].SourceElement().parentNode.className += ' has-jax';
+        }
+    });
+</script>
+
+<script type="text/javascript"
+   src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+</script>
 
 </html>

@@ -98,122 +98,128 @@
   <article class="post-content">
     <p>This is the last part in the series.</p>
 
-<p>In the previous blog post, the browser client was getting messages from the elixir interpreter inside the project directory using the <code>Endpoint.broadcast</code> method. Now, for monitoring sensor outputs, we have to send and receive data from sensors, we need to remotely configure a client. I am using a raspberry pi with python GPIO module to interface the sensors. So, we are going to accomplish the following tasks in this part 3.</p>
+<p>In the previous blog post, the browser client was getting messages from the elixir interpreter inside the project directory using the <code class="highlighter-rouge">Endpoint.broadcast</code> method. Now, for monitoring sensor outputs, we have to send and receive data from sensors, we need to remotely configure a client. I am using a raspberry pi with python GPIO module to interface the sensors. So, we are going to accomplish the following tasks in this part 3.</p>
 
 <ol>
-<li>Join the phoenix channel and send a random value form a python client using websockets.</li>
-<li>Sending data from the serialport. (Sensors)</li>
+  <li>Join the phoenix channel and send a random value form a python client using websockets.</li>
+  <li>Sending data from the serialport. (Sensors)</li>
 </ol>
 
-<p>The Phoenix channel API is damn easy to understand. It has <code>phx_join</code> event is for joining a channel, <code>phx_reply</code> for a reply after join. Following the previous blog, we have a event called sensor<em>output with a topic `users:user</em>token` (user_token is the token generated for a user). So, the following python code is capable of joining the channel topic and sending a sample random value.</p>
-<div class="highlight"><pre><code class="language-python" data-lang="python">    <span class="kn">import</span> <span class="nn">asyncio</span>
-    <span class="kn">import</span> <span class="nn">websockets</span>
-    <span class="kn">import</span> <span class="nn">json</span>
-    <span class="kn">import</span> <span class="nn">time</span>
-    <span class="kn">from</span> <span class="nn">random</span> <span class="kn">import</span> <span class="n">randint</span>
+<p>The Phoenix channel API is damn easy to understand. It has <code class="highlighter-rouge">phx_join</code> event is for joining a channel, <code class="highlighter-rouge">phx_reply</code> for a reply after join. Following the previous blog, we have a event called sensor_output with a topic <code class="highlighter-rouge">users:user_token</code> (user_token is the token generated for a user). So, the following python code is capable of joining the channel topic and sending a sample random value.</p>
 
-    <span class="n">async</span> <span class="k">def</span> <span class="nf">hello</span><span class="p">():</span>
-        <span class="n">async</span> <span class="k">with</span> <span class="n">websockets</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="s">'ws://127.0.0.1:4000/socket/websocket'</span><span class="p">)</span> <span class="k">as</span> <span class="n">websocket</span><span class="p">:</span>
-            <span class="n">data</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">topic</span><span class="o">=</span><span class="s">"users:your_user_token"</span><span class="p">,</span> <span class="n">event</span><span class="o">=</span><span class="s">"phx_join"</span><span class="p">,</span> <span class="n">payload</span><span class="o">=</span><span class="p">{},</span> <span class="n">ref</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+<p>```python
+    import asyncio
+    import websockets
+    import json
+    import time
+    from random import randint</p>
 
-            <span class="c">#data is a dictionary containing necessary info for a join request to the topic.</span>
+<div class="highlighter-rouge"><pre class="highlight"><code>async def hello():
+    async with websockets.connect('ws://127.0.0.1:4000/socket/websocket') as websocket:
+        data = dict(topic="users:your_user_token", event="phx_join", payload={}, ref=1)
 
-            <span class="n">await</span> <span class="n">websocket</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">data</span><span class="p">))</span>
-            <span class="k">print</span><span class="p">(</span><span class="s">"joined"</span><span class="p">)</span>
+        #data is a dictionary containing necessary info for a join request to the topic.
 
-            <span class="k">print</span><span class="p">(</span><span class="s">"Joined"</span><span class="p">)</span> <span class="c">#joined the topic user:user_token</span>
-            <span class="k">while</span> <span class="bp">True</span><span class="p">:</span>
-                <span class="n">msg</span> <span class="o">=</span> <span class="n">await</span> <span class="n">retrieve</span><span class="p">()</span> <span class="c">#waiting for retrieve function to return a value</span>
+        await websocket.send(json.dumps(data))
+        print("joined")
+          
+        print("Joined") #joined the topic user:user_token
+        while True:
+            msg = await retrieve() #waiting for retrieve function to return a value
 
-                <span class="n">await</span> <span class="n">websocket</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">msg</span><span class="p">))</span>
-                <span class="c">#sending the message to the phoenix channel</span>
+            await websocket.send(json.dumps(msg))
+            #sending the message to the phoenix channel
+              
+            call = await websocket.recv() #constantly receiving data from the channel
+            control = json.loads(call) #converting to json
+            print(control)
+              
+            time.sleep(0.5) #0.5 second delay
 
-                <span class="n">call</span> <span class="o">=</span> <span class="n">await</span> <span class="n">websocket</span><span class="o">.</span><span class="n">recv</span><span class="p">()</span> <span class="c">#constantly receiving data from the channel</span>
-                <span class="n">control</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">call</span><span class="p">)</span> <span class="c">#converting to json</span>
-                <span class="k">print</span><span class="p">(</span><span class="n">control</span><span class="p">)</span>
+    async def retrieve():
+      
+      msg = dict(topic="users:your_user_token", event="sensor_output", payload={"load":"1000", "pf":str(randint(0,100)), "thd":"120", "reading":"1800"}, ref=None)
 
-                <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mf">0.5</span><span class="p">)</span> <span class="c">#0.5 second delay</span>
-
-        <span class="n">async</span> <span class="k">def</span> <span class="nf">retrieve</span><span class="p">():</span>
-
-          <span class="n">msg</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">topic</span><span class="o">=</span><span class="s">"users:your_user_token"</span><span class="p">,</span> <span class="n">event</span><span class="o">=</span><span class="s">"sensor_output"</span><span class="p">,</span> <span class="n">payload</span><span class="o">=</span><span class="p">{</span><span class="s">"load"</span><span class="p">:</span><span class="s">"1000"</span><span class="p">,</span> <span class="s">"pf"</span><span class="p">:</span><span class="nb">str</span><span class="p">(</span><span class="n">randint</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mi">100</span><span class="p">)),</span> <span class="s">"thd"</span><span class="p">:</span><span class="s">"120"</span><span class="p">,</span> <span class="s">"reading"</span><span class="p">:</span><span class="s">"1800"</span><span class="p">},</span> <span class="n">ref</span><span class="o">=</span><span class="bp">None</span><span class="p">)</span>
-
-          <span class="c">#message dictionary containing necessary info for sending the data to the channel</span>
-          <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mf">0.5</span><span class="p">)</span>
-          <span class="k">return</span> <span class="n">msg</span>
+      #message dictionary containing necessary info for sending the data to the channel
+      time.sleep(0.5)
+      return msg
 
 
-    <span class="n">asyncio</span><span class="o">.</span><span class="n">get_event_loop</span><span class="p">()</span><span class="o">.</span><span class="n">run_until_complete</span><span class="p">(</span><span class="n">hello</span><span class="p">())</span>
-    <span class="n">asyncio</span><span class="o">.</span><span class="n">get_event_loop</span><span class="p">()</span><span class="o">.</span><span class="n">run_forever</span><span class="p">()</span>
-</code></pre></div>
-<p>This is a piece of asynchronous code written in python, in which it joins the phoenix channel and waits until data comes form another function and sends it to the phoenix server.</p>
+asyncio.get_event_loop().run_until_complete(hello())
+asyncio.get_event_loop().run_forever() ```` This is a piece of asynchronous code written in python, in which it joins the phoenix channel and waits until data comes form another function and sends it to the phoenix server.
+</code></pre>
+</div>
 
 <p>Now if we run this script, we can see the data updated in the webpage from time to time with random values.</p>
 
-<p>Now, there was a outward message from the channel too through the <code>control</code> event. We can keep track of that too (The button click events of blog post 2) just by comparing the <code>event</code> key of the json string <code>control</code>. If the event name is <code>control</code>, we can make use of that too.</p>
-<div class="highlight"><pre><code class="language-python" data-lang="python">    <span class="kn">import</span> <span class="nn">asyncio</span>
-    <span class="kn">import</span> <span class="nn">websockets</span>
-    <span class="kn">import</span> <span class="nn">json</span>
-    <span class="kn">import</span> <span class="nn">time</span>
-    <span class="kn">from</span> <span class="nn">random</span> <span class="kn">import</span> <span class="n">randint</span>
+<p>Now, there was a outward message from the channel too through the <code class="highlighter-rouge">control</code> event. We can keep track of that too (The button click events of blog post 2) just by comparing the <code class="highlighter-rouge">event</code> key of the json string <code class="highlighter-rouge">control</code>. If the event name is <code class="highlighter-rouge">control</code>, we can make use of that too.</p>
 
-    <span class="n">async</span> <span class="k">def</span> <span class="nf">hello</span><span class="p">():</span>
-        <span class="n">async</span> <span class="k">with</span> <span class="n">websockets</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="s">'ws://127.0.0.1:4000/socket/websocket'</span><span class="p">)</span> <span class="k">as</span> <span class="n">websocket</span><span class="p">:</span>
-            <span class="n">data</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">topic</span><span class="o">=</span><span class="s">"users:your_user_token"</span><span class="p">,</span> <span class="n">event</span><span class="o">=</span><span class="s">"phx_join"</span><span class="p">,</span> <span class="n">payload</span><span class="o">=</span><span class="p">{},</span> <span class="n">ref</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+<p>```python
+    import asyncio
+    import websockets
+    import json
+    import time
+    from random import randint</p>
 
-            <span class="c">#data is a dictionary containing necessary info for a join request to the topic.</span>
+<div class="highlighter-rouge"><pre class="highlight"><code>async def hello():
+    async with websockets.connect('ws://127.0.0.1:4000/socket/websocket') as websocket:
+        data = dict(topic="users:your_user_token", event="phx_join", payload={}, ref=1)
 
-            <span class="n">await</span> <span class="n">websocket</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">data</span><span class="p">))</span>
-            <span class="k">print</span><span class="p">(</span><span class="s">"joined"</span><span class="p">)</span>
+        #data is a dictionary containing necessary info for a join request to the topic.
 
-            <span class="k">print</span><span class="p">(</span><span class="s">"Joined"</span><span class="p">)</span> <span class="c">#joined the topic user:user_token</span>
-            <span class="k">while</span> <span class="bp">True</span><span class="p">:</span>
-                <span class="n">msg</span> <span class="o">=</span> <span class="n">await</span> <span class="n">retrieve</span><span class="p">()</span> <span class="c">#waiting for retrieve function to return a value</span>
+        await websocket.send(json.dumps(data))
+        print("joined")
+        
+        print("Joined") #joined the topic user:user_token
+        while True:
+            msg = await retrieve() #waiting for retrieve function to return a value
 
-                <span class="n">await</span> <span class="n">websocket</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">msg</span><span class="p">))</span>
-                <span class="k">print</span><span class="p">(</span><span class="s">"sent {}"</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">msg</span><span class="p">))</span>
-                <span class="c">#sending the message to the phoenix channel</span>
+            await websocket.send(json.dumps(msg))
+            print("sent {}".format(msg))
+            #sending the message to the phoenix channel
+            
+            call = await websocket.recv() #constantly receiving data from the channel
+            control = json.loads(call) #converting to json
 
-                <span class="n">call</span> <span class="o">=</span> <span class="n">await</span> <span class="n">websocket</span><span class="o">.</span><span class="n">recv</span><span class="p">()</span> <span class="c">#constantly receiving data from the channel</span>
-                <span class="n">control</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">call</span><span class="p">)</span> <span class="c">#converting to json</span>
+            if(control['event'] == 'control'):
+                print(control['payload']['value'])
+            
+            time.sleep(0.5) #0.5 second delay
 
-                <span class="k">if</span><span class="p">(</span><span class="n">control</span><span class="p">[</span><span class="s">'event'</span><span class="p">]</span> <span class="o">==</span> <span class="s">'control'</span><span class="p">):</span>
-                    <span class="k">print</span><span class="p">(</span><span class="n">control</span><span class="p">[</span><span class="s">'payload'</span><span class="p">][</span><span class="s">'value'</span><span class="p">])</span>
+async def retrieve():
+    
+    msg = dict(topic="users:your_user_token", event="sensor_output", payload={"load":"1000", "pf":str(randint(0,100)), "thd":"120", "reading":"1800"}, ref=None)
 
-                <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mf">0.5</span><span class="p">)</span> <span class="c">#0.5 second delay</span>
-
-    <span class="n">async</span> <span class="k">def</span> <span class="nf">retrieve</span><span class="p">():</span>
-
-        <span class="n">msg</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">topic</span><span class="o">=</span><span class="s">"users:your_user_token"</span><span class="p">,</span> <span class="n">event</span><span class="o">=</span><span class="s">"sensor_output"</span><span class="p">,</span> <span class="n">payload</span><span class="o">=</span><span class="p">{</span><span class="s">"load"</span><span class="p">:</span><span class="s">"1000"</span><span class="p">,</span> <span class="s">"pf"</span><span class="p">:</span><span class="nb">str</span><span class="p">(</span><span class="n">randint</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mi">100</span><span class="p">)),</span> <span class="s">"thd"</span><span class="p">:</span><span class="s">"120"</span><span class="p">,</span> <span class="s">"reading"</span><span class="p">:</span><span class="s">"1800"</span><span class="p">},</span> <span class="n">ref</span><span class="o">=</span><span class="bp">None</span><span class="p">)</span>
-
-        <span class="c">#message dictionary containing necessary info for sending the data to the channel</span>
-        <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mf">0.5</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">msg</span>
+    #message dictionary containing necessary info for sending the data to the channel
+    time.sleep(0.5)
+    return msg
 
 
-    <span class="n">asyncio</span><span class="o">.</span><span class="n">get_event_loop</span><span class="p">()</span><span class="o">.</span><span class="n">run_until_complete</span><span class="p">(</span><span class="n">hello</span><span class="p">())</span>
-    <span class="n">asyncio</span><span class="o">.</span><span class="n">get_event_loop</span><span class="p">()</span><span class="o">.</span><span class="n">run_forever</span><span class="p">()</span>
-</code></pre></div>
-<p>This script prints the <code>payload</code> value if the event name is <code>control</code>. That is when there is a button click event, it will print <code>on</code> or <code>off</code> depending on the buttons.</p>
+asyncio.get_event_loop().run_until_complete(hello())
+asyncio.get_event_loop().run_forever() ``` This script prints the `payload` value if the event name is `control`. That is when there is a button click event, it will print `on` or `off` depending on the buttons.
+</code></pre>
+</div>
 
-<p>Now, let’s write some code where we can get data from the serialport. All you need is the <code>pyserial</code> library and receiving some data from there like the following.</p>
-<div class="highlight"><pre><code class="language-python" data-lang="python">    <span class="kn">import</span> <span class="nn">serial</span>
+<p>Now, let’s write some code where we can get data from the serialport. All you need is the <code class="highlighter-rouge">pyserial</code> library and receiving some data from there like the following.</p>
 
-    <span class="n">ser</span> <span class="o">=</span> <span class="c">#ser =serial.Serial("/dev/ttyAMA0", 9600, timeout=1)</span>
+<p>```python
+	import serial</p>
 
-    <span class="c">#rest of the code</span>
+<div class="highlighter-rouge"><pre class="highlight"><code>ser = #ser =serial.Serial("/dev/ttyAMA0", 9600, timeout=1)
 
-    <span class="n">async</span> <span class="k">def</span> <span class="nf">retrieve</span><span class="p">()</span>
+#rest of the code
 
-        <span class="n">data</span> <span class="o">=</span> <span class="n">ser</span><span class="o">.</span><span class="n">readline</span><span class="p">()</span><span class="o">.</span><span class="n">decode</span><span class="p">()</span>
-        <span class="n">msg</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">topic</span><span class="o">=</span><span class="s">"users:your_user_token"</span><span class="p">,</span> <span class="n">event</span><span class="o">=</span><span class="s">"sensor_output"</span><span class="p">,</span> <span class="n">payload</span><span class="o">=</span><span class="p">{</span><span class="s">"load"</span><span class="p">:</span><span class="s">"1000"</span><span class="p">,</span> <span class="s">"pf"</span><span class="p">:</span><span class="nb">str</span><span class="p">(</span><span class="n">randint</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mi">100</span><span class="p">)),</span> <span class="s">"thd"</span><span class="p">:</span><span class="n">data</span><span class="p">,</span> <span class="s">"reading"</span><span class="p">:</span><span class="s">"1800"</span><span class="p">},</span> <span class="n">ref</span><span class="o">=</span><span class="bp">None</span><span class="p">)</span>
+async def retrieve()
 
-        <span class="k">return</span> <span class="n">msg</span>
-        <span class="c">#rest of the code</span>
-</code></pre></div>
-<p>Here the data will be received from the serialport and will be updated at <code>thd</code> on the webpage.</p>
+	data = ser.readline().decode()
+	msg = dict(topic="users:your_user_token", event="sensor_output", payload={"load":"1000", "pf":str(randint(0,100)), "thd":data, "reading":"1800"}, ref=None)
 
-<p>There are several other examples I have written, by using those in raspberry pi, we can send and receive data from the websocket phoenix server. Examples include some <code>arduino firmata</code> codes too.</p>
+	return msg
+	#rest of the code ``` Here the data will be received from the serialport and will be updated at `thd` on the webpage.
+</code></pre>
+</div>
+
+<p>There are several other examples I have written, by using those in raspberry pi, we can send and receive data from the websocket phoenix server. Examples include some <code class="highlighter-rouge">arduino firmata</code> codes too.</p>
 
 <p>Python clients are here.</p>
 
@@ -308,5 +314,34 @@
 
 
   </body>
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    tex2jax: {
+      inlineMath: [ ['$','$'], ["\\(","\\)"] ],
+      processEscapes: true
+    }
+  });
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      tex2jax: {
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+      }
+    });
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax(), i;
+        for(i=0; i < all.length; i += 1) {
+            all[i].SourceElement().parentNode.className += ' has-jax';
+        }
+    });
+</script>
+
+<script type="text/javascript"
+   src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+</script>
 
 </html>

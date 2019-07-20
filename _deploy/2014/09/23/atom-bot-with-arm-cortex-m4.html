@@ -100,21 +100,21 @@
 
 <p>The microcontroller has a clock speed of 80Mhz and it is a bit difficult to write code for it(as far as Arduino is concerned).</p>
 
-<p>It is <a href="http://edx.org/">edx</a>, from which I learned how to use a texas ARM board. During the course, I got a sample code for the UART functions (universal asynchronous receiver and transmitter). And I modified it a bit for the tasks of my atom-bot. </p>
+<p>It is <a href="http://edx.org/">edx</a>, from which I learned how to use a texas ARM board. During the course, I got a sample code for the UART functions (universal asynchronous receiver and transmitter). And I modified it a bit for the tasks of my atom-bot.</p>
 
-<p>The difficulty was with the OS. I love to work on linux, but to burn a program to the ARM, one has to use windows. So whenever I needed a modification in the microcontroller task, I had to switch on to windows :( . And my windows system is damn slow. Believe me, after using it for 2 or 3 days, you will probably prefer to die instead. </p>
+<p>The difficulty was with the OS. I love to work on linux, but to burn a program to the ARM, one has to use windows. So whenever I needed a modification in the microcontroller task, I had to switch on to windows :( . And my windows system is damn slow. Believe me, after using it for 2 or 3 days, you will probably prefer to die instead.</p>
 
 <p>After burning the program to the microcontroller, it was easy for me to send serial commands from the raspberry pi. :) :) (Now everything can be done from any OS). And for obviuos reasons I used ubuntu for making a ssh connection to the raspberry pi and pi does its work from raspbian(debian for raspberry).</p>
 
-<p>For obvious reasons :P !!! because I don&#39;t have a mac. :(</p>
+<p>For obvious reasons :P !!! because I don’t have a mac. :(</p>
 
 <p>As mentioned in my first atom-bot blog, the ruby machine client is in the raspberry pi. And this machine client connects to the server and draws the commands that the browser client sends through websockets.</p>
 
-<p>The codes are here </p>
+<p>The codes are here</p>
 
 <p><a href="http://github.com/tworitdash/atom-bot-with-arm-cortex/">atom-bot-with-arm-cortex</a></p>
 
-<p><a href="http://keil.com/">Keil</a> is the IDE for the TIVA tm4c123g microcontroller. :)  :) </p>
+<p><a href="http://keil.com/">Keil</a> is the IDE for the TIVA tm4c123g microcontroller. :)  :)</p>
 
   </article>
 
@@ -205,5 +205,34 @@
 
 
   </body>
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    tex2jax: {
+      inlineMath: [ ['$','$'], ["\\(","\\)"] ],
+      processEscapes: true
+    }
+  });
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      tex2jax: {
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+      }
+    });
+</script>
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax(), i;
+        for(i=0; i < all.length; i += 1) {
+            all[i].SourceElement().parentNode.className += ' has-jax';
+        }
+    });
+</script>
+
+<script type="text/javascript"
+   src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+</script>
 
 </html>
