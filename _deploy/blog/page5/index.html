@@ -16,11 +16,12 @@
 	<style>
 		@import url('https://fonts.googleapis.com/css?family=Inconsolata');
 	</style>
-  <title>Configuring WiFi Adapter in FreeBSD Raspberry Pi</title>
-  <meta name="description" content="After banging my head a lot of times, finally I found out the solution for connecting my Raspberry Pi to my WiFi network using an adapter. The adapter is fro...">
+  <title>Twor Bot</title>
+  <meta name="description" content="The more Persnickety, The more Hippy.
+">
 
   <link rel="stylesheet" href="/css/main.css">
-  <link rel="canonical" href="http://tworitdash.in/2015/08/04/configuring-wifi-adaptor-in-freebsd-raspberry-pi.html">
+  <link rel="canonical" href="http://tworitdash.in/blog/page5/">
   <link rel="alternate" type="application/rss+xml" title="Twor Bot" href="http://tworitdash.in/feed.xml" />
 </head>
 
@@ -88,88 +89,25 @@
 
     <div class="page-content">
       <div class="wrapper">
-        <div class="post">
-
-  <header class="post-header">
-    <h1 class="post-title">Configuring WiFi Adapter in FreeBSD Raspberry Pi</h1>
-    <p class="post-meta">Aug 4, 2015</p>
-  </header>
-
-  <article class="post-content">
-    <p>After banging my head a lot of times, finally I found out the solution for connecting my Raspberry Pi to my WiFi network using an adapter. The adapter is from NetGear (realtek RTL IEEE 802.11) and while my machine used to boot up, it was recognized as &quot;urtwn0&quot; WiFi card. At first, the adopter didn&#39;t glow. Then I found out that is a problem adapter. So, I had to allow the license for realtek urtwn0 driver in /boot/loader.conf file. The file didn&#39;t exist and I created one.</p>
-<div class="highlight"><pre><code class="language-" data-lang="">vi /boot/loader.conf
-</code></pre></div>
-<p>Then write the following lines into it.</p>
-<div class="highlight"><pre><code class="language-" data-lang="">legal.realtek.license_ack=1
-if_urtwn_load="YES"
-</code></pre></div>
-<p>I know editing the FreeBSD files using vi is a pain. You can use ee editor also. If you have connected the Pi before with some wired network and installed nano in it, you can also use the nano editor to edit. It is pretty smooth. Then, reboot your system.</p>
-<div class="highlight"><pre><code class="language-" data-lang="">reboot
-</code></pre></div>
-<p>After a reboot we are ready to create a network interface using wlan0.</p>
-<div class="highlight"><pre><code class="language-" data-lang="">ifconfig
-</code></pre></div>
-<p>It will show the listed cards with the IPs assigned to them. You can find no inet address for &quot;urtwn0&quot; driver. </p>
-<div class="highlight"><pre><code class="language-" data-lang="">ifconfig wlan0 create wlandev urtwn0
-</code></pre></div>
-<p>It will create an interface wlan0 and the command will return the ethernet address. If you are getting the address without any error, you are ready to go. To permanently store the configuration, we have to add some line to /etc/rc.conf .</p>
-<div class="highlight"><pre><code class="language-" data-lang="">vi /etc/rc.conf
-</code></pre></div>
-<p>The lines to be added are:</p>
-<div class="highlight"><pre><code class="language-" data-lang="">wlans_urtwn0="wlan0"
-ifconfig_wlan0="WPA DHCP"
-</code></pre></div>
-<p>If you are having some difficulties while deleting characters in vi, just use <code>ESC</code> then <code>d</code> then left arrow button. Accordingly you can get how to delete multiple characters. Then <code>ESC</code> and <code>i</code> can help you edit the file again. </p>
-
-<p>Then to get to know about the list of WiFi networks:</p>
-<div class="highlight"><pre><code class="language-" data-lang="">ifconfig wlan0 up scan
-</code></pre></div>
-<p>To connect to your network, you should edit the following file.</p>
-<div class="highlight"><pre><code class="language-" data-lang="">vi /etc/wpa_supplicant.conf
-</code></pre></div>
-<p>And write the following lines as per your WiFi SSID and Password.</p>
-<div class="highlight"><pre><code class="language-" data-lang="">network={
-    ssid="your_ssid"
-    psk="your_password"
-}
-</code></pre></div>
-<p>Then after a reboot, you can see the adapter glowing and you can check the IP by ifconfig.</p>
-
-<p>Checking your network is also easy. Just look at the content of your resolv.conf file.</p>
-<div class="highlight"><pre><code class="language-" data-lang="">cat /etc/resolv.conf
-</code></pre></div>
-<p>Then ping it. Like in my case:</p>
-<div class="highlight"><pre><code class="language-" data-lang="">ping 192.168.43.1
-</code></pre></div>
-<p>And you will get 0% packet loss after terminating.</p>
-
-<p>Happy Hacking ! :)</p>
-
-  </article>
-
-	<div id="disqus_thread"></div>
-  <script type="text/javascript">
-    var disqus_config = function () {
-				      // Here is an example,
-				      // this.page.url = "https://poanchen.github.io/blog/2017/07/27/how-to-add-disqus-to-your-jekyll-site";
-		this.page.url = "http://tworitdash.in/2015/08/04/configuring-wifi-adaptor-in-freebsd-raspberry-pi.html";
-				this.page.identifier = "http://tworitdash.in/2015/08/04/configuring-wifi-adaptor-in-freebsd-raspberry-pi.html";
-		};
-
-    // You should be able to get the following lines of code from your Disqus admin.
-    // https://disqus.com/admin/universalcode
-    		(function() { // DON'T EDIT BELOW THIS LINE
-				      var d = document, s = d.createElement('script');
-						s.src = 'https://tworitdash-in-blog.disqus.com/embed.js';
-							s.setAttribute('data-timestamp', +new Date());
-							(d.head || d.body).appendChild(s);
-			})();
-  </script>
-	  <noscript>
-				    Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a>
-</noscript>
-
-
+        <div class="home" id="home">
+		  
+		<ul class="posts noList">
+				
+							<li>
+								<span class="date">June 22, 2014</span>
+								<h3><a class="post-link" href="/2014/06/22/how-i-met-c-dot-s-lewis.html">How I met C.S.Lewis</a></h3>
+								<p>After watching the three chronicles of Narnia, I was curiously driven to know more about the writer C.S. Lewis. If I knew about the series before, I would have read the books much earlier than the release date of the first movie. I was a bit late to start, but it turned out to be more interesting than expected. I am a kind of person who take interest in some things which are not so mainstream and not adorable. As far as childrens&#39; fantasy is concerned, I believe in &#39;em to some extent. But to think of a pretty different world in a different universe, (with a complete set of new physical laws and or you can say a complete set of new Gods of creation) has grown an immense inquisitiveness within me and for that very reason I found the Narnian series to be the best fit for my childish ( if you can say it ) imaginations. Is our world round or we just imagine it to be? Whatever that is, I found a world which is triangular flat in my dreams and happened to notice that Narnia is also flat.
+</p>
+							</li>
+					
+			</ul>
+																															  <!-- Pagination links -->
+			<div class="pagination">
+					
+							<a href="/blog/page4/" class="previous button__outline">Newer Posts</a> 
+					
+					
+			</div>
 </div>
 
       </div>

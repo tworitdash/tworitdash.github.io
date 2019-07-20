@@ -13,4 +13,5 @@ end
 gem 'redcarpet'
 gem 'rogue'
 gem 'jemoji'
-
+gem 'rack'
+gem 'stringex'
