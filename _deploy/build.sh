@@ -1,4 +1,4 @@
-jekyll build --destination _deploy
+bundle exec jekyll build --destination _deploy
 
 
 cd _deploy
